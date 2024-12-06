@@ -3,46 +3,83 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/hashes/utils';
 import * as secp256k1 from '@noble/secp256k1';
-import { NostrSeedPhrase } from '@humanjavaenterprises/nostr-nsec-seedphrase';
-import { generateSecretKey, getPublicKey } from 'nostr-tools';
+import { generateSecretKey, getPublicKey as getNostrPublicKey } from 'nostr-tools';
 import type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult } from './types';
 
 /**
- * Generate a new secp256k1 key pair for use with NOSTR
- * @param seedPhrase - Optional seed phrase to use for key generation
- * @returns Promise<KeyPair> A promise that resolves to a key pair object
+ * Generate a private key for use with NOSTR
  */
-export async function generateKeyPair(seedPhrase?: string): Promise<KeyPair> {
-  let privateKey: string;
-  if (!seedPhrase) {
-    privateKey = bytesToHex(generateSecretKey());
-  } else {
-    const keyPair = NostrSeedPhrase.seedToNsec(seedPhrase);
-    privateKey = keyPair.privateKeyHex;
-  }
-  const publicKey = await derivePublicKey(privateKey);
+export function generatePrivateKey(): string {
+  return bytesToHex(generateSecretKey());
+}
+
+/**
+ * Get a public key from a private key
+ */
+export function getPublicKey(privateKey: string): string {
+  return getNostrPublicKey(hexToBytes(privateKey));
+}
+
+/**
+ * Generate a new key pair
+ */
+export function generateKeyPair(): KeyPair {
+  const privateKey = generatePrivateKey();
+  const publicKey = getPublicKey(privateKey);
   return { privateKey, publicKey };
 }
 
 /**
- * Derive a public key from a private key
- * @param privateKey - Hex-encoded private key
- * @returns Promise<string> A promise that resolves to the hex-encoded public key
+ * Get the hash of a NOSTR event
  */
-export async function derivePublicKey(privateKey: string): Promise<string> {
-  const pubKey = getPublicKey(hexToBytes(privateKey));
-  return pubKey;
+export function getEventHash(event: NostrEvent): string {
+  const serialized = JSON.stringify([
+    0,
+    event.pubkey,
+    event.created_at,
+    event.kind,
+    event.tags,
+    event.content,
+  ]);
+  const hash = sha256(new TextEncoder().encode(serialized));
+  return bytesToHex(hash);
+}
+
+/**
+ * Sign a NOSTR event
+ */
+export function signEvent(event: NostrEvent, privateKey: string): SignedNostrEvent {
+  const hash = getEventHash(event);
+  const signature = bytesToHex(
+    await schnorr.sign(hexToBytes(hash), hexToBytes(privateKey))
+  );
+
+  return {
+    ...event,
+    id: hash,
+    sig: signature,
+    pubkey: getPublicKey(privateKey)
+  };
+}
+
+/**
+ * Verify a signature
+ */
+export function verifySignature(event: SignedNostrEvent): boolean {
+  const hash = getEventHash(event);
+  return schnorr.verify(
+    hexToBytes(event.sig),
+    hexToBytes(hash),
+    hexToBytes(event.pubkey)
+  );
 }
 
 /**
  * Validate a key pair
- * @param publicKey - Hex-encoded public key
- * @param privateKey - Hex-encoded private key
- * @returns Promise<ValidationResult> A promise that resolves to the validation result
  */
-export async function validateKeyPair(publicKey: string, privateKey: string): Promise<ValidationResult> {
+export function validateKeyPair(publicKey: string, privateKey: string): ValidationResult {
   try {
-    const derivedPubKey = await derivePublicKey(privateKey);
+    const derivedPubKey = getPublicKey(privateKey);
     return {
       isValid: derivedPubKey === publicKey,
       error: derivedPubKey !== publicKey ? 'Public key does not match derived key' : undefined
@@ -56,66 +93,9 @@ export async function validateKeyPair(publicKey: string, privateKey: string): Pr
 }
 
 /**
- * Calculate the hash of a NOSTR event
- * @param event - The event to hash
- * @returns Promise<string> A promise that resolves to the hex-encoded event hash
- */
-export async function getEventHash(event: NostrEvent): Promise<string> {
-  const serialized = JSON.stringify([
-    0,
-    event.pubkey,
-    event.created_at,
-    event.kind,
-    event.tags,
-    event.content
-  ]);
-  
-  const hash = sha256(new TextEncoder().encode(serialized));
-  return bytesToHex(hash);
-}
-
-/**
- * Sign a NOSTR event
- * @param event - The event to sign
- * @param privateKey - Hex-encoded private key
- * @returns Promise<SignedNostrEvent> A promise that resolves to the signed event
- */
-export async function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent> {
-  const hash = await getEventHash(event);
-  const signature = bytesToHex(
-    await schnorr.sign(hexToBytes(hash), hexToBytes(privateKey))
-  );
-
-  return {
-    ...event,
-    id: hash,
-    sig: signature,
-    pubkey: await derivePublicKey(privateKey)
-  };
-}
-
-/**
- * Verify the signature of a signed NOSTR event
- * @param event - The signed event to verify
- * @returns Promise<boolean> A promise that resolves to true if the signature is valid
- */
-export async function verifySignature(event: SignedNostrEvent): Promise<boolean> {
-  const hash = await getEventHash(event);
-  return schnorr.verify(
-    hexToBytes(event.sig),
-    hexToBytes(hash),
-    hexToBytes(event.pubkey)
-  );
-}
-
-/**
  * Encrypt a message using NIP-04
- * @param message - The message to encrypt
- * @param recipientPubKey - Recipient's hex-encoded public key
- * @param senderPrivKey - Sender's hex-encoded private key
- * @returns Promise<string> A promise that resolves to the encrypted message
  */
-export async function encrypt(
+export function encrypt(
   message: string,
   recipientPubKey: string,
   senderPrivKey: string
@@ -131,9 +111,9 @@ export async function encrypt(
   const textEncoder = new TextEncoder();
   const textDecoder = new TextDecoder();
   
-  const encrypted = await crypto.subtle.encrypt(
+  const encrypted = crypto.subtle.encrypt(
     { name: 'AES-CBC', iv },
-    await crypto.subtle.importKey(
+    crypto.subtle.importKey(
       'raw',
       key,
       { name: 'AES-CBC' },
@@ -148,12 +128,8 @@ export async function encrypt(
 
 /**
  * Decrypt a message using NIP-04
- * @param encryptedMessage - The encrypted message
- * @param senderPubKey - Sender's hex-encoded public key
- * @param recipientPrivKey - Recipient's hex-encoded private key
- * @returns Promise<string> A promise that resolves to the decrypted message
  */
-export async function decrypt(
+export function decrypt(
   encryptedMessage: string,
   senderPubKey: string,
   recipientPrivKey: string
@@ -169,9 +145,9 @@ export async function decrypt(
   
   const textDecoder = new TextDecoder();
   
-  const decrypted = await crypto.subtle.decrypt(
+  const decrypted = crypto.subtle.decrypt(
     { name: 'AES-CBC', iv },
-    await crypto.subtle.importKey(
+    crypto.subtle.importKey(
       'raw',
       key,
       { name: 'AES-CBC' },
