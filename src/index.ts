@@ -48,7 +48,7 @@ export function getEventHash(event: NostrEvent): string {
 /**
  * Sign a NOSTR event
  */
-export function signEvent(event: NostrEvent, privateKey: string): SignedNostrEvent {
+export async function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent> {
   const hash = getEventHash(event);
   const signature = bytesToHex(
     await schnorr.sign(hexToBytes(hash), hexToBytes(privateKey))
@@ -95,7 +95,7 @@ export function validateKeyPair(publicKey: string, privateKey: string): Validati
 /**
  * Encrypt a message using NIP-04
  */
-export function encrypt(
+export async function encrypt(
   message: string,
   recipientPubKey: string,
   senderPrivKey: string
@@ -109,17 +109,18 @@ export function encrypt(
   const key = sha256(sharedSecret);
   
   const textEncoder = new TextEncoder();
-  const textDecoder = new TextDecoder();
   
-  const encrypted = crypto.subtle.encrypt(
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    key,
+    { name: 'AES-CBC' },
+    false,
+    ['encrypt']
+  );
+  
+  const encrypted = await crypto.subtle.encrypt(
     { name: 'AES-CBC', iv },
-    crypto.subtle.importKey(
-      'raw',
-      key,
-      { name: 'AES-CBC' },
-      false,
-      ['encrypt']
-    ),
+    cryptoKey,
     textEncoder.encode(message)
   );
   
@@ -129,7 +130,7 @@ export function encrypt(
 /**
  * Decrypt a message using NIP-04
  */
-export function decrypt(
+export async function decrypt(
   encryptedMessage: string,
   senderPubKey: string,
   recipientPrivKey: string
@@ -145,15 +146,17 @@ export function decrypt(
   
   const textDecoder = new TextDecoder();
   
-  const decrypted = crypto.subtle.decrypt(
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    key,
+    { name: 'AES-CBC' },
+    false,
+    ['decrypt']
+  );
+  
+  const decrypted = await crypto.subtle.decrypt(
     { name: 'AES-CBC', iv },
-    crypto.subtle.importKey(
-      'raw',
-      key,
-      { name: 'AES-CBC' },
-      false,
-      ['decrypt']
-    ),
+    cryptoKey,
     ciphertext
   );
   
