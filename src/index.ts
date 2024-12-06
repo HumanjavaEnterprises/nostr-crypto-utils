@@ -4,7 +4,19 @@ import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/hashes/utils';
 import * as secp256k1 from '@noble/secp256k1';
 import { generateSecretKey, getPublicKey as getNostrPublicKey } from 'nostr-tools';
+import { webcrypto } from 'node:crypto';
 import type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult } from './types';
+
+// Use Node.js crypto API
+const crypto = webcrypto;
+
+export type {
+  KeyPair,
+  NostrEvent,
+  SignedNostrEvent,
+  ValidationResult,
+  EncryptionResult
+};
 
 /**
  * Generate a private key for use with NOSTR
@@ -22,8 +34,19 @@ export function getPublicKey(privateKey: string): string {
 
 /**
  * Generate a new key pair
+ * @param seedPhrase Optional seed phrase to generate deterministic key pair
  */
-export function generateKeyPair(): KeyPair {
+export function generateKeyPair(seedPhrase?: string): KeyPair {
+  if (seedPhrase) {
+    // Use the seed phrase to generate a deterministic private key
+    const encoder = new TextEncoder();
+    const seedBytes = encoder.encode(seedPhrase);
+    const hash = sha256(seedBytes);
+    const privateKey = bytesToHex(hash);
+    const publicKey = getPublicKey(privateKey);
+    return { privateKey, publicKey };
+  }
+  
   const privateKey = generatePrivateKey();
   const publicKey = getPublicKey(privateKey);
   return { privateKey, publicKey };
@@ -49,16 +72,21 @@ export function getEventHash(event: NostrEvent): string {
  * Sign a NOSTR event
  */
 export async function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent> {
-  const hash = getEventHash(event);
-  const signature = bytesToHex(
-    await schnorr.sign(hexToBytes(hash), hexToBytes(privateKey))
-  );
-
-  return {
+  const pubkey = getPublicKey(privateKey);
+  const eventToSign = {
     ...event,
+    pubkey,
+    created_at: event.created_at || Math.floor(Date.now() / 1000),
+    tags: event.tags || []
+  };
+  
+  const hash = getEventHash(eventToSign);
+  const sig = bytesToHex(await schnorr.sign(hexToBytes(hash), hexToBytes(privateKey)));
+  
+  return {
+    ...eventToSign,
     id: hash,
-    sig: signature,
-    pubkey: getPublicKey(privateKey)
+    sig
   };
 }
 
@@ -66,12 +94,27 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
  * Verify a signature
  */
 export function verifySignature(event: SignedNostrEvent): boolean {
-  const hash = getEventHash(event);
-  return schnorr.verify(
-    hexToBytes(event.sig),
-    hexToBytes(hash),
-    hexToBytes(event.pubkey)
-  );
+  try {
+    const hash = getEventHash({
+      kind: event.kind,
+      created_at: event.created_at,
+      tags: event.tags,
+      content: event.content,
+      pubkey: event.pubkey
+    });
+    
+    if (hash !== event.id) {
+      return false;
+    }
+    
+    return schnorr.verify(
+      hexToBytes(event.sig),
+      hexToBytes(hash),
+      hexToBytes(event.pubkey)
+    );
+  } catch (error) {
+    return false;
+  }
 }
 
 /**
@@ -79,15 +122,18 @@ export function verifySignature(event: SignedNostrEvent): boolean {
  */
 export function validateKeyPair(publicKey: string, privateKey: string): ValidationResult {
   try {
-    const derivedPubKey = getPublicKey(privateKey);
-    return {
-      isValid: derivedPubKey === publicKey,
-      error: derivedPubKey !== publicKey ? 'Public key does not match derived key' : undefined
-    };
+    const derivedPublicKey = getPublicKey(privateKey);
+    if (derivedPublicKey !== publicKey) {
+      return {
+        isValid: false,
+        error: 'Public key does not match private key'
+      };
+    }
+    return { isValid: true };
   } catch (error) {
     return {
       isValid: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: 'Invalid key pair'
     };
   }
 }
@@ -100,31 +146,31 @@ export async function encrypt(
   recipientPubKey: string,
   senderPrivKey: string
 ): Promise<string> {
-  const sharedSecret = secp256k1.getSharedSecret(
-    senderPrivKey,
-    '02' + recipientPubKey
-  );
-  
+  const sharedPoint = secp256k1.getSharedSecret(senderPrivKey, '02' + recipientPubKey);
+  const sharedX = sharedPoint.slice(1, 33);
+
   const iv = randomBytes(16);
-  const key = sha256(sharedSecret);
-  
   const textEncoder = new TextEncoder();
-  
-  const cryptoKey = await crypto.subtle.importKey(
+  const plaintext = textEncoder.encode(message);
+
+  const key = await crypto.subtle.importKey(
     'raw',
-    key,
-    { name: 'AES-CBC' },
+    sharedX,
+    { name: 'AES-CBC', length: 256 },
     false,
     ['encrypt']
   );
-  
-  const encrypted = await crypto.subtle.encrypt(
+
+  const ciphertext = await crypto.subtle.encrypt(
     { name: 'AES-CBC', iv },
-    cryptoKey,
-    textEncoder.encode(message)
+    key,
+    plaintext
   );
-  
-  return bytesToHex(iv) + bytesToHex(new Uint8Array(encrypted));
+
+  const ctb64 = Buffer.from(new Uint8Array(ciphertext)).toString('base64');
+  const ivb64 = Buffer.from(new Uint8Array(iv)).toString('base64');
+
+  return `${ctb64}?iv=${ivb64}`;
 }
 
 /**
@@ -135,30 +181,28 @@ export async function decrypt(
   senderPubKey: string,
   recipientPrivKey: string
 ): Promise<string> {
-  const sharedSecret = secp256k1.getSharedSecret(
-    recipientPrivKey,
-    '02' + senderPubKey
-  );
+  const [ctb64, ivb64] = encryptedMessage.split('?iv=');
   
-  const key = sha256(sharedSecret);
-  const iv = hexToBytes(encryptedMessage.slice(0, 32));
-  const ciphertext = hexToBytes(encryptedMessage.slice(32));
-  
-  const textDecoder = new TextDecoder();
-  
-  const cryptoKey = await crypto.subtle.importKey(
+  const sharedPoint = secp256k1.getSharedSecret(recipientPrivKey, '02' + senderPubKey);
+  const sharedX = sharedPoint.slice(1, 33);
+
+  const key = await crypto.subtle.importKey(
     'raw',
-    key,
-    { name: 'AES-CBC' },
+    sharedX,
+    { name: 'AES-CBC', length: 256 },
     false,
     ['decrypt']
   );
-  
+
+  const iv = Buffer.from(ivb64, 'base64');
+  const ciphertext = Buffer.from(ctb64, 'base64');
+
   const decrypted = await crypto.subtle.decrypt(
     { name: 'AES-CBC', iv },
-    cryptoKey,
+    key,
     ciphertext
   );
   
+  const textDecoder = new TextDecoder();
   return textDecoder.decode(new Uint8Array(decrypted));
 }

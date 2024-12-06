@@ -1,6 +1,6 @@
 import {
   generateKeyPair,
-  derivePublicKey,
+  getPublicKey,
   validateKeyPair,
   signEvent,
   verifySignature,
@@ -10,31 +10,31 @@ import {
 
 describe('NOSTR Crypto Utils', () => {
   describe('Key Management', () => {
-    it('should generate valid key pairs', async () => {
-      const keyPair = await generateKeyPair();
+    it('should generate valid key pairs', () => {
+      const keyPair = generateKeyPair();
       expect(keyPair.privateKey).toBeDefined();
       expect(keyPair.publicKey).toBeDefined();
       expect(keyPair.privateKey).toHaveLength(64);
       expect(keyPair.publicKey).toHaveLength(64);
     });
 
-    it('should derive the correct public key', async () => {
-      const keyPair = await generateKeyPair();
-      const derivedPubKey = await derivePublicKey(keyPair.privateKey);
+    it('should derive the correct public key', () => {
+      const keyPair = generateKeyPair();
+      const derivedPubKey = getPublicKey(keyPair.privateKey);
       expect(derivedPubKey).toBe(keyPair.publicKey);
     });
 
-    it('should validate key pairs', async () => {
-      const keyPair = await generateKeyPair();
-      const result = await validateKeyPair(keyPair.publicKey, keyPair.privateKey);
+    it('should validate key pairs', () => {
+      const keyPair = generateKeyPair();
+      const result = validateKeyPair(keyPair.publicKey, keyPair.privateKey);
       expect(result.isValid).toBe(true);
       expect(result.error).toBeUndefined();
     });
 
-    it('should generate consistent key pairs from seed phrase', async () => {
+    it('should generate consistent key pairs from seed phrase', () => {
       const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-      const keyPair1 = await generateKeyPair(seedPhrase);
-      const keyPair2 = await generateKeyPair(seedPhrase);
+      const keyPair1 = generateKeyPair(seedPhrase);
+      const keyPair2 = generateKeyPair(seedPhrase);
       
       expect(keyPair1.privateKey).toBe(keyPair2.privateKey);
       expect(keyPair1.publicKey).toBe(keyPair2.publicKey);

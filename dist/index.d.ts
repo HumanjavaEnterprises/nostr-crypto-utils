@@ -1,4 +1,5 @@
-import type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult } from './types';
+import type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult } from './types';
+export type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult };
 /**
  * Generate a private key for use with NOSTR
  */
@@ -9,8 +10,9 @@ export declare function generatePrivateKey(): string;
 export declare function getPublicKey(privateKey: string): string;
 /**
  * Generate a new key pair
+ * @param seedPhrase Optional seed phrase to generate deterministic key pair
  */
-export declare function generateKeyPair(): KeyPair;
+export declare function generateKeyPair(seedPhrase?: string): KeyPair;
 /**
  * Get the hash of a NOSTR event
  */
@@ -18,7 +20,7 @@ export declare function getEventHash(event: NostrEvent): string;
 /**
  * Sign a NOSTR event
  */
-export declare function signEvent(event: NostrEvent, privateKey: string): SignedNostrEvent;
+export declare function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent>;
 /**
  * Verify a signature
  */
