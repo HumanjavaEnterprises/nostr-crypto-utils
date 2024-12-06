@@ -1,6 +1,6 @@
 {
   "name": "@humanjavaenterprises/nostr-crypto-utils",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Cryptographic utilities for NOSTR",
   "type": "module",
   "main": "dist/index.js",
