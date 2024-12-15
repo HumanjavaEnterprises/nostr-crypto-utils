@@ -5,25 +5,23 @@ import { randomBytes } from '@noble/hashes/utils';
 import * as secp256k1 from '@noble/secp256k1';
 import { generateSecretKey, getPublicKey as getNostrPublicKey } from 'nostr-tools';
 import { webcrypto } from 'node:crypto';
+import { NostrEventKind, NostrMessageType } from './types';
+import { NOSTR_KIND, NOSTR_TAG } from './constants';
+import { validateEvent, validateSignedEvent, validateFilter } from './validation';
+import { isNostrEvent, isSignedNostrEvent } from './types/guards';
+import { formatEventForRelay, parseNostrMessage, createMetadataEvent, extractReferencedEvents, formatSubscriptionForRelay, formatCloseForRelay, formatAuthForRelay, createTextNoteEvent, createDirectMessageEvent, createChannelMessageEvent, extractMentionedPubkeys, createKindFilter, createAuthorFilter, createReplyFilter } from './integration';
 // Use Node.js crypto API
 const crypto = webcrypto;
-/**
- * Generate a private key for use with NOSTR
- */
-export function generatePrivateKey() {
+// Export enums and constants
+export { NostrMessageType, NostrEventKind, NOSTR_KIND, NOSTR_TAG };
+// Function implementations
+function generatePrivateKey() {
     return bytesToHex(generateSecretKey());
 }
-/**
- * Get a public key from a private key
- */
-export function getPublicKey(privateKey) {
+function getPublicKey(privateKey) {
     return getNostrPublicKey(hexToBytes(privateKey));
 }
-/**
- * Generate a new key pair
- * @param seedPhrase Optional seed phrase to generate deterministic key pair
- */
-export function generateKeyPair(seedPhrase) {
+function generateKeyPair(seedPhrase) {
     if (seedPhrase) {
         // Use the seed phrase to generate a deterministic private key
         const encoder = new TextEncoder();
@@ -37,10 +35,7 @@ export function generateKeyPair(seedPhrase) {
     const publicKey = getPublicKey(privateKey);
     return { privateKey, publicKey };
 }
-/**
- * Get the hash of a NOSTR event
- */
-export function getEventHash(event) {
+function getEventHash(event) {
     const serialized = JSON.stringify([
         0,
         event.pubkey,
@@ -52,10 +47,16 @@ export function getEventHash(event) {
     const hash = sha256(new TextEncoder().encode(serialized));
     return bytesToHex(hash);
 }
-/**
- * Sign a NOSTR event
- */
-export async function signEvent(event, privateKey) {
+function createEvent(params) {
+    return {
+        kind: params.kind,
+        content: params.content,
+        tags: params.tags || [],
+        created_at: params.created_at || Math.floor(Date.now() / 1000),
+        pubkey: params.pubkey || '' // This will be filled in when signing if not provided
+    };
+}
+async function signEvent(event, privateKey) {
     const pubkey = getPublicKey(privateKey);
     const eventToSign = {
         ...event,
@@ -71,18 +72,17 @@ export async function signEvent(event, privateKey) {
         sig
     };
 }
-/**
- * Verify a signature
- */
-export function verifySignature(event) {
+function verifySignature(event) {
     try {
-        const hash = getEventHash({
+        // Create a NostrEvent object from the SignedNostrEvent
+        const eventData = {
             kind: event.kind,
             created_at: event.created_at,
             tags: event.tags,
             content: event.content,
             pubkey: event.pubkey
-        });
+        };
+        const hash = getEventHash(eventData);
         if (hash !== event.id) {
             return false;
         }
@@ -92,10 +92,7 @@ export function verifySignature(event) {
         return false;
     }
 }
-/**
- * Validate a key pair
- */
-export function validateKeyPair(publicKey, privateKey) {
+function validateKeyPair(publicKey, privateKey) {
     try {
         const derivedPublicKey = getPublicKey(privateKey);
         if (derivedPublicKey !== publicKey) {
@@ -113,10 +110,7 @@ export function validateKeyPair(publicKey, privateKey) {
         };
     }
 }
-/**
- * Encrypt a message using NIP-04
- */
-export async function encrypt(message, recipientPubKey, senderPrivKey) {
+async function encrypt(message, recipientPubKey, senderPrivKey) {
     const sharedPoint = secp256k1.getSharedSecret(senderPrivKey, '02' + recipientPubKey);
     const sharedX = sharedPoint.slice(1, 33);
     const iv = randomBytes(16);
@@ -128,10 +122,7 @@ export async function encrypt(message, recipientPubKey, senderPrivKey) {
     const ivb64 = Buffer.from(new Uint8Array(iv)).toString('base64');
     return `${ctb64}?iv=${ivb64}`;
 }
-/**
- * Decrypt a message using NIP-04
- */
-export async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
+async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
     const [ctb64, ivb64] = encryptedMessage.split('?iv=');
     const sharedPoint = secp256k1.getSharedSecret(recipientPrivKey, '02' + senderPubKey);
     const sharedX = sharedPoint.slice(1, 33);
@@ -142,3 +133,11 @@ export async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) 
     const textDecoder = new TextDecoder();
     return textDecoder.decode(new Uint8Array(decrypted));
 }
+// Export all functions
+export { 
+// Core functions
+generatePrivateKey, getPublicKey, generateKeyPair, validateKeyPair, createEvent, signEvent, verifySignature, encrypt, decrypt, 
+// Integration functions
+formatEventForRelay, formatSubscriptionForRelay, formatCloseForRelay, formatAuthForRelay, parseNostrMessage, createMetadataEvent, createTextNoteEvent, createDirectMessageEvent, createChannelMessageEvent, extractReferencedEvents, extractMentionedPubkeys, createKindFilter, createAuthorFilter, createReplyFilter, 
+// Validation functions
+validateEvent, validateSignedEvent, validateFilter, isNostrEvent, isSignedNostrEvent };

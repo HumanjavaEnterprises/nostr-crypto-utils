@@ -5,38 +5,81 @@ import { randomBytes } from '@noble/hashes/utils';
 import * as secp256k1 from '@noble/secp256k1';
 import { generateSecretKey, getPublicKey as getNostrPublicKey } from 'nostr-tools';
 import { webcrypto } from 'node:crypto';
-import type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult } from './types';
+import type { 
+  KeyPair, 
+  NostrEvent, 
+  SignedNostrEvent, 
+  ValidationResult, 
+  EncryptionResult,
+  NostrFilter,
+  NostrSubscription,
+  NostrMessage,
+  NostrResponse,
+  NostrError
+} from './types';
+import { NostrEventKind, NostrMessageType } from './types';
+import { NOSTR_KIND, NOSTR_TAG } from './constants';
+import { 
+  validateEvent, 
+  validateSignedEvent,
+  validateFilter
+} from './validation';
+import {
+  isNostrEvent,
+  isSignedNostrEvent
+} from './types/guards';
+import {
+  formatEventForRelay,
+  parseNostrMessage,
+  createMetadataEvent,
+  extractReferencedEvents,
+  formatSubscriptionForRelay,
+  formatCloseForRelay,
+  formatAuthForRelay,
+  createTextNoteEvent,
+  createDirectMessageEvent,
+  createChannelMessageEvent,
+  extractMentionedPubkeys,
+  createKindFilter,
+  createAuthorFilter,
+  createReplyFilter
+} from './integration';
 
 // Use Node.js crypto API
 const crypto = webcrypto;
 
+// Export types
 export type {
   KeyPair,
   NostrEvent,
   SignedNostrEvent,
   ValidationResult,
-  EncryptionResult
+  EncryptionResult,
+  NostrFilter,
+  NostrSubscription,
+  NostrMessage,
+  NostrResponse,
+  NostrError
 };
 
-/**
- * Generate a private key for use with NOSTR
- */
-export function generatePrivateKey(): string {
+// Export enums and constants
+export {
+  NostrMessageType,
+  NostrEventKind,
+  NOSTR_KIND,
+  NOSTR_TAG
+};
+
+// Function implementations
+function generatePrivateKey(): string {
   return bytesToHex(generateSecretKey());
 }
 
-/**
- * Get a public key from a private key
- */
-export function getPublicKey(privateKey: string): string {
+function getPublicKey(privateKey: string): string {
   return getNostrPublicKey(hexToBytes(privateKey));
 }
 
-/**
- * Generate a new key pair
- * @param seedPhrase Optional seed phrase to generate deterministic key pair
- */
-export function generateKeyPair(seedPhrase?: string): KeyPair {
+function generateKeyPair(seedPhrase?: string): KeyPair {
   if (seedPhrase) {
     // Use the seed phrase to generate a deterministic private key
     const encoder = new TextEncoder();
@@ -52,10 +95,7 @@ export function generateKeyPair(seedPhrase?: string): KeyPair {
   return { privateKey, publicKey };
 }
 
-/**
- * Get the hash of a NOSTR event
- */
-export function getEventHash(event: NostrEvent): string {
+function getEventHash(event: NostrEvent): string {
   const serialized = JSON.stringify([
     0,
     event.pubkey,
@@ -68,10 +108,23 @@ export function getEventHash(event: NostrEvent): string {
   return bytesToHex(hash);
 }
 
-/**
- * Sign a NOSTR event
- */
-export async function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent> {
+function createEvent(params: {
+  kind: NostrEventKind;
+  content: string;
+  tags?: string[][];
+  created_at?: number;
+  pubkey?: string;
+}): NostrEvent {
+  return {
+    kind: params.kind,
+    content: params.content,
+    tags: params.tags || [],
+    created_at: params.created_at || Math.floor(Date.now() / 1000),
+    pubkey: params.pubkey || ''  // This will be filled in when signing if not provided
+  };
+}
+
+async function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent> {
   const pubkey = getPublicKey(privateKey);
   const eventToSign = {
     ...event,
@@ -90,18 +143,18 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
   };
 }
 
-/**
- * Verify a signature
- */
-export function verifySignature(event: SignedNostrEvent): boolean {
+function verifySignature(event: SignedNostrEvent): boolean {
   try {
-    const hash = getEventHash({
+    // Create a NostrEvent object from the SignedNostrEvent
+    const eventData: NostrEvent = {
       kind: event.kind,
       created_at: event.created_at,
       tags: event.tags,
       content: event.content,
       pubkey: event.pubkey
-    });
+    };
+    
+    const hash = getEventHash(eventData);
     
     if (hash !== event.id) {
       return false;
@@ -117,10 +170,7 @@ export function verifySignature(event: SignedNostrEvent): boolean {
   }
 }
 
-/**
- * Validate a key pair
- */
-export function validateKeyPair(publicKey: string, privateKey: string): ValidationResult {
+function validateKeyPair(publicKey: string, privateKey: string): ValidationResult {
   try {
     const derivedPublicKey = getPublicKey(privateKey);
     if (derivedPublicKey !== publicKey) {
@@ -138,10 +188,7 @@ export function validateKeyPair(publicKey: string, privateKey: string): Validati
   }
 }
 
-/**
- * Encrypt a message using NIP-04
- */
-export async function encrypt(
+async function encrypt(
   message: string,
   recipientPubKey: string,
   senderPrivKey: string
@@ -173,10 +220,7 @@ export async function encrypt(
   return `${ctb64}?iv=${ivb64}`;
 }
 
-/**
- * Decrypt a message using NIP-04
- */
-export async function decrypt(
+async function decrypt(
   encryptedMessage: string,
   senderPubKey: string,
   recipientPrivKey: string
@@ -206,3 +250,40 @@ export async function decrypt(
   const textDecoder = new TextDecoder();
   return textDecoder.decode(new Uint8Array(decrypted));
 }
+
+// Export all functions
+export {
+  // Core functions
+  generatePrivateKey,
+  getPublicKey,
+  generateKeyPair,
+  validateKeyPair,
+  createEvent,
+  signEvent,
+  verifySignature,
+  encrypt,
+  decrypt,
+  
+  // Integration functions
+  formatEventForRelay,
+  formatSubscriptionForRelay,
+  formatCloseForRelay,
+  formatAuthForRelay,
+  parseNostrMessage,
+  createMetadataEvent,
+  createTextNoteEvent,
+  createDirectMessageEvent,
+  createChannelMessageEvent,
+  extractReferencedEvents,
+  extractMentionedPubkeys,
+  createKindFilter,
+  createAuthorFilter,
+  createReplyFilter,
+  
+  // Validation functions
+  validateEvent,
+  validateSignedEvent,
+  validateFilter,
+  isNostrEvent,
+  isSignedNostrEvent
+};

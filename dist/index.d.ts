@@ -1,39 +1,24 @@
-import type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult } from './types';
-export type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult };
-/**
- * Generate a private key for use with NOSTR
- */
-export declare function generatePrivateKey(): string;
-/**
- * Get a public key from a private key
- */
-export declare function getPublicKey(privateKey: string): string;
-/**
- * Generate a new key pair
- * @param seedPhrase Optional seed phrase to generate deterministic key pair
- */
-export declare function generateKeyPair(seedPhrase?: string): KeyPair;
-/**
- * Get the hash of a NOSTR event
- */
-export declare function getEventHash(event: NostrEvent): string;
-/**
- * Sign a NOSTR event
- */
-export declare function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent>;
-/**
- * Verify a signature
- */
-export declare function verifySignature(event: SignedNostrEvent): boolean;
-/**
- * Validate a key pair
- */
-export declare function validateKeyPair(publicKey: string, privateKey: string): ValidationResult;
-/**
- * Encrypt a message using NIP-04
- */
-export declare function encrypt(message: string, recipientPubKey: string, senderPrivKey: string): Promise<string>;
-/**
- * Decrypt a message using NIP-04
- */
-export declare function decrypt(encryptedMessage: string, senderPubKey: string, recipientPrivKey: string): Promise<string>;
+import type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult, NostrFilter, NostrSubscription, NostrMessage, NostrResponse, NostrError } from './types';
+import { NostrEventKind, NostrMessageType } from './types';
+import { NOSTR_KIND, NOSTR_TAG } from './constants';
+import { validateEvent, validateSignedEvent, validateFilter } from './validation';
+import { isNostrEvent, isSignedNostrEvent } from './types/guards';
+import { formatEventForRelay, parseNostrMessage, createMetadataEvent, extractReferencedEvents, formatSubscriptionForRelay, formatCloseForRelay, formatAuthForRelay, createTextNoteEvent, createDirectMessageEvent, createChannelMessageEvent, extractMentionedPubkeys, createKindFilter, createAuthorFilter, createReplyFilter } from './integration';
+export type { KeyPair, NostrEvent, SignedNostrEvent, ValidationResult, EncryptionResult, NostrFilter, NostrSubscription, NostrMessage, NostrResponse, NostrError };
+export { NostrMessageType, NostrEventKind, NOSTR_KIND, NOSTR_TAG };
+declare function generatePrivateKey(): string;
+declare function getPublicKey(privateKey: string): string;
+declare function generateKeyPair(seedPhrase?: string): KeyPair;
+declare function createEvent(params: {
+    kind: NostrEventKind;
+    content: string;
+    tags?: string[][];
+    created_at?: number;
+    pubkey?: string;
+}): NostrEvent;
+declare function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent>;
+declare function verifySignature(event: SignedNostrEvent): boolean;
+declare function validateKeyPair(publicKey: string, privateKey: string): ValidationResult;
+declare function encrypt(message: string, recipientPubKey: string, senderPrivKey: string): Promise<string>;
+declare function decrypt(encryptedMessage: string, senderPubKey: string, recipientPrivKey: string): Promise<string>;
+export { generatePrivateKey, getPublicKey, generateKeyPair, validateKeyPair, createEvent, signEvent, verifySignature, encrypt, decrypt, formatEventForRelay, formatSubscriptionForRelay, formatCloseForRelay, formatAuthForRelay, parseNostrMessage, createMetadataEvent, createTextNoteEvent, createDirectMessageEvent, createChannelMessageEvent, extractReferencedEvents, extractMentionedPubkeys, createKindFilter, createAuthorFilter, createReplyFilter, validateEvent, validateSignedEvent, validateFilter, isNostrEvent, isSignedNostrEvent };
