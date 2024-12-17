@@ -38,13 +38,13 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 ## Installation
 
 ```bash
-npm install @humanjavaenterprises/nostr-crypto-utils
+npm install nostr-crypto-utils
 ```
 
 ## Quick Start
 
 ```typescript
-import { generateKeyPair, signEvent, verifyEvent } from '@humanjavaenterprises/nostr-crypto-utils';
+import { generateKeyPair, signEvent, verifyEvent } from 'nostr-crypto-utils';
 
 // Generate a new keypair
 const keyPair = await generateKeyPair();
