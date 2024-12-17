@@ -6,6 +6,14 @@ import {
   signEvent,
   validateSignedEvent
 } from '../index';
+import type { NostrEvent } from '../types/base';
+
+interface WebSocketEventMap {
+  close: CloseEvent;
+  error: Event;
+  message: MessageEvent<string | ArrayBufferLike | Blob | ArrayBufferView>;
+  open: Event;
+}
 
 // Mock WebSocket class for testing
 class MockWebSocket {
@@ -19,21 +27,21 @@ class MockWebSocket {
   readonly CLOSING = MockWebSocket.CLOSING;
   readonly CLOSED = MockWebSocket.CLOSED;
 
-  private listeners = {};
-  public readyState = MockWebSocket.OPEN;
-  public binaryType = 'blob';
-  public bufferedAmount = 0;
-  public extensions = '';
-  public protocol = '';
-  public url;
+  private listeners: { [K in keyof WebSocketEventMap]?: ((event: WebSocketEventMap[K]) => void)[] } = {};
+  public readyState: number = MockWebSocket.OPEN;
+  public binaryType: BinaryType = 'blob';
+  public bufferedAmount: number = 0;
+  public extensions: string = '';
+  public protocol: string = '';
+  public url: string;
 
   // Event handlers
-  public onclose = null;
-  public onerror = null;
-  public onmessage = null;
-  public onopen = null;
+  public onclose: ((ev: CloseEvent) => void) | null = null;
+  public onerror: ((ev: Event) => void) | null = null;
+  public onmessage: ((ev: MessageEvent<string | ArrayBufferLike | Blob | ArrayBufferView>) => void) | null = null;
+  public onopen: ((ev: Event) => void) | null = null;
 
-  constructor(url: string | URL): void {
+  constructor(url: string | URL) {
     this.url = url.toString();
   }
 
@@ -46,28 +54,50 @@ class MockWebSocket {
 
   send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
     const event = new MessageEvent('message', { data });
-    this.listeners['message']?.forEach(listener => listener(event));
+    const messageListeners = this.listeners.message;
+    if (messageListeners) {
+      messageListeners.forEach(listener => listener(event));
+    }
     if (this.onmessage) {
       this.onmessage(event);
     }
   }
 
-  addEventListener(type: string, listener: (event: Event) => void): void {
+  addEventListener<K extends keyof WebSocketEventMap>(
+    type: K,
+    listener: (event: WebSocketEventMap[K]) => void
+  ): void {
     if (!this.listeners[type]) {
       this.listeners[type] = [];
     }
-    this.listeners[type].push(listener);
+    this.listeners[type]?.push(listener);
   }
 
-  removeEventListener(type: string, listener: (event: Event) => void): void {
-    if (!this.listeners[type]) return;
-    this.listeners[type] = this.listeners[type].filter(l => l !== listener);
+  removeEventListener<K extends keyof WebSocketEventMap>(
+    type: K,
+    listener: (event: WebSocketEventMap[K]) => void
+  ): void {
+    const typeListeners = this.listeners[type];
+    if (!typeListeners) return;
+    const index = typeListeners.indexOf(listener);
+    if (index !== -1) {
+      typeListeners.splice(index, 1);
+    }
   }
 
-  dispatchEvent(event: Event): boolean {
-    const listeners = this.listeners[event.type];
-    if (listeners) {
-      listeners.forEach(listener => listener(event));
+  dispatchEvent(event: MessageEvent<string | ArrayBufferLike | Blob | ArrayBufferView> | CloseEvent | Event): boolean {
+    const type = event.type as keyof WebSocketEventMap;
+    const typeListeners = this.listeners[type];
+    if (typeListeners) {
+      typeListeners.forEach(listener => {
+        if (type === 'message' && event instanceof MessageEvent) {
+          (listener as (event: MessageEvent<string | ArrayBufferLike | Blob | ArrayBufferView>) => void)(event);
+        } else if (type === 'close' && event instanceof CloseEvent) {
+          (listener as (event: CloseEvent) => void)(event);
+        } else if (['error', 'open'].includes(type)) {
+          (listener as (event: Event) => void)(event);
+        }
+      });
       return true;
     }
     return false;
@@ -75,11 +105,11 @@ class MockWebSocket {
 }
 
 // Mock the global WebSocket to use MockWebSocket
-global.WebSocket = MockWebSocket;
+global.WebSocket = MockWebSocket as unknown as typeof WebSocket;
 
 describe('Transport Layer', () => {
-  let keyPair;
-  let mockRelay;
+  let keyPair: { privateKey: string; publicKey: string };
+  let mockRelay: MockWebSocket;
 
   beforeEach(async () => {
     keyPair = await generateKeyPair();
@@ -111,7 +141,7 @@ describe('Transport Layer', () => {
   it('should handle event publication flow', async () => {
     // Create and sign an event
     const timestamp = Math.floor(Date.now() / 1000);
-    const event = {
+    const event: NostrEvent = {
       kind: 1,
       content: 'Test message',
       tags: [],
