@@ -1,38 +1,82 @@
-import { parseNostrMessage, NostrEventKind, createEvent, signEvent, generateKeyPair, validateSignedEvent, formatEventForRelay } from '../index';
-// Mock WebSocket for testing
+import { describe, it, expect, beforeEach } from 'vitest';
+import { generateKeyPair, formatEventForRelay, parseNostrMessage, signEvent, validateSignedEvent } from '../index';
+// Mock WebSocket class for testing
 class MockWebSocket {
     constructor(url) {
-        this.url = url;
+        this.CONNECTING = MockWebSocket.CONNECTING;
+        this.OPEN = MockWebSocket.OPEN;
+        this.CLOSING = MockWebSocket.CLOSING;
+        this.CLOSED = MockWebSocket.CLOSED;
         this.listeners = {};
-        this.readyState = 1;
+        this.readyState = MockWebSocket.OPEN;
+        this.binaryType = 'blob';
+        this.bufferedAmount = 0;
+        this.extensions = '';
+        this.protocol = '';
+        // Event handlers
+        this.onclose = null;
+        this.onerror = null;
+        this.onmessage = null;
+        this.onopen = null;
+        this.url = url.toString();
+    }
+    close(code, reason) {
+        this.readyState = MockWebSocket.CLOSED;
+        if (this.onclose) {
+            this.onclose(new CloseEvent('close', { code, reason }));
+        }
     }
     send(data) {
-        // Simulate relay behavior
-        const message = JSON.parse(data);
-        if (message[0] === 'REQ') {
-            // Simulate EOSE after subscription
-            this.emit('message', JSON.stringify(['EOSE', message[1]]));
+        const event = new MessageEvent('message', { data });
+        const messageListeners = this.listeners.message;
+        if (messageListeners) {
+            messageListeners.forEach(listener => listener(event));
+        }
+        if (this.onmessage) {
+            this.onmessage(event);
         }
     }
-    addEventListener(event, callback) {
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
+    addEventListener(type, listener) {
+        if (!this.listeners[type]) {
+            this.listeners[type] = [];
         }
-        this.listeners[event].push(callback);
+        this.listeners[type]?.push(listener);
     }
-    emit(event, data) {
-        if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => {
-                callback({ data });
+    removeEventListener(type, listener) {
+        const typeListeners = this.listeners[type];
+        if (!typeListeners)
+            return;
+        const index = typeListeners.indexOf(listener);
+        if (index !== -1) {
+            typeListeners.splice(index, 1);
+        }
+    }
+    dispatchEvent(event) {
+        const type = event.type;
+        const typeListeners = this.listeners[type];
+        if (typeListeners) {
+            typeListeners.forEach(listener => {
+                if (type === 'message' && event instanceof MessageEvent) {
+                    listener(event);
+                }
+                else if (type === 'close' && event instanceof CloseEvent) {
+                    listener(event);
+                }
+                else if (['error', 'open'].includes(type)) {
+                    listener(event);
+                }
             });
+            return true;
         }
-    }
-    close() {
-        this.readyState = 3;
-        this.emit('close', null);
+        return false;
     }
 }
-import { describe, it, expect } from 'vitest';
+MockWebSocket.CONNECTING = 0;
+MockWebSocket.OPEN = 1;
+MockWebSocket.CLOSING = 2;
+MockWebSocket.CLOSED = 3;
+// Mock the global WebSocket to use MockWebSocket
+global.WebSocket = MockWebSocket;
 describe('Transport Layer', () => {
     let keyPair;
     let mockRelay;
@@ -47,6 +91,10 @@ describe('Transport Layer', () => {
         const subMessage = JSON.stringify(['REQ', subId, filter]);
         // Listen for EOSE
         mockRelay.addEventListener('message', event => {
+            // Ensure data is a string before parsing
+            if (typeof event.data !== 'string') {
+                throw new Error('Expected string data from WebSocket');
+            }
             const message = JSON.parse(event.data);
             if (message[0] === 'EOSE' && message[1] === subId) {
                 expect(true).toBe(true);
@@ -58,13 +106,13 @@ describe('Transport Layer', () => {
     it('should handle event publication flow', async () => {
         // Create and sign an event
         const timestamp = Math.floor(Date.now() / 1000);
-        const event = createEvent({
-            kind: NostrEventKind.TEXT_NOTE,
+        const event = {
+            kind: 1,
             content: 'Test message',
             tags: [],
             created_at: timestamp,
             pubkey: keyPair.publicKey
-        });
+        };
         // Sign the event
         const signedEvent = await signEvent(event, keyPair.privateKey);
         // Validate event before sending
@@ -100,9 +148,9 @@ describe('Transport Layer', () => {
         }
     });
     it('should handle connection state handling', () => {
-        expect(mockRelay.readyState).toBe(1); // Connected
+        expect(mockRelay.readyState).toBe(MockWebSocket.OPEN); // Connected
         mockRelay.close();
-        expect(mockRelay.readyState).toBe(3); // Closed
+        expect(mockRelay.readyState).toBe(MockWebSocket.CLOSED); // Closed
     });
 });
 describe('Transport Error Handling', () => {

@@ -19,7 +19,23 @@ import { formatEventForRelay, parseNostrMessage, createMetadataEvent, extractRef
  * console.log(privateKey); // 'a1b2c3d4...'
  * ```
  */
-export declare function generatePrivateKey(): string;
+export declare function generatePrivateKey(): Promise<string>;
+/**
+ * @category Key Management
+ * @description Generates a new key pair for use in Nostr
+ * @param {string} [seedPhrase] - Optional seed phrase for deterministic key generation
+ * @returns {Promise<KeyPair>} Generated key pair
+ * @example
+ * ```typescript
+ * const keyPair = await generateKeyPair();
+ * console.log(keyPair.privateKey); // 'a1b2c3d4...'
+ * console.log(keyPair.publicKey); // '02abc123...'
+ * ```
+ */
+export declare function generateKeyPair(seed?: string): Promise<{
+    privateKey: string;
+    publicKey: string;
+}>;
 /**
  * @category Key Management
  * @description Derives a public key from a private key
@@ -34,19 +50,6 @@ export declare function generatePrivateKey(): string;
  */
 export declare function getPublicKey(privateKey: string): string;
 /**
- * @category Key Management
- * @description Generates a new key pair for use in Nostr
- * @param {string} [seedPhrase] - Optional seed phrase for deterministic key generation
- * @returns {KeyPair} Generated key pair
- * @example
- * ```typescript
- * const keyPair = generateKeyPair();
- * console.log(keyPair.privateKey); // 'a1b2c3d4...'
- * console.log(keyPair.publicKey); // '02abc123...'
- * ```
- */
-export declare function generateKeyPair(seedPhrase?: string): KeyPair;
-/**
  * @category Event Operations
  * @description Calculates the hash of a Nostr event (NIP-01)
  * @param {NostrEvent} event - Event to hash
@@ -60,7 +63,7 @@ export declare function generateKeyPair(seedPhrase?: string): KeyPair;
  * const hash = getEventHash(event);
  * ```
  */
-export declare function getEventHash(event: NostrEvent): string;
+export declare function getEventHash(event: NostrEvent): Promise<string>;
 /**
  * @category Event Operations
  * @description Serializes a Nostr event for signing/hashing (NIP-01)
@@ -99,7 +102,7 @@ export declare function createEvent(params: {
  * @description Signs a Nostr event with a private key (NIP-01)
  * @param {NostrEvent} event - Event to sign
  * @param {string} privateKey - Private key in hex format
- * @returns {Promise<SignedNostrEvent>} Signed event
+ * @returns {SignedNostrEvent} Signed event
  * @throws {Error} If signing fails
  * @example
  * ```typescript
@@ -107,10 +110,10 @@ export declare function createEvent(params: {
  *   kind: NostrEventKind.TEXT_NOTE,
  *   content: 'Hello Nostr!'
  * });
- * const signedEvent = await signEvent(event, privateKey);
+ * const signedEvent = signEvent(event, privateKey);
  * ```
  */
-export declare function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent>;
+export declare function signEvent(event: NostrEvent, privateKey: string): SignedNostrEvent;
 /**
  * @category Event Operations
  * @description Verifies the signature of a signed Nostr event (NIP-01)

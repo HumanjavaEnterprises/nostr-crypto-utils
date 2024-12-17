@@ -3,11 +3,11 @@ import { NostrFilter, NostrSubscription, NostrResponse, NostrError } from './pro
 /**
  * Type guard for NostrEvent
  */
-export declare function isNostrEvent(event: any): event is NostrEvent;
+export declare function isNostrEvent(obj: unknown): obj is NostrEvent;
 /**
  * Type guard for SignedNostrEvent
  */
-export declare function isSignedNostrEvent(event: any): event is SignedNostrEvent;
+export declare function isSignedNostrEvent(obj: unknown): obj is SignedNostrEvent;
 /**
  * Type guard for NostrFilter
  */

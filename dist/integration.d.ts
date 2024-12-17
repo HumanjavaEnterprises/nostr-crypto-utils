@@ -1,5 +1,5 @@
 import { NostrEvent, SignedNostrEvent } from './types/base';
-import { NostrFilter, NostrSubscription, NostrResponse } from './types/protocol';
+import type { NostrFilter, NostrSubscription, NostrResponse } from './types/protocol';
 /**
  * Formats an event for relay transmission according to NIP-01
  * @category Message Handling

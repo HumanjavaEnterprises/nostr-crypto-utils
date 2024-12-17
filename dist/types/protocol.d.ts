@@ -80,6 +80,7 @@ export interface NostrFilter {
     until?: number;
     /** Maximum number of events to return */
     limit?: number;
+    [key: `#${string}`]: string[] | undefined;
 }
 /**
  * Subscription request to a relay (NIP-01)

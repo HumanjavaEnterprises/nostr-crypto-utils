@@ -1,5 +1,5 @@
 import { NostrMessageType } from './types/protocol';
-import { NOSTR_KIND, NOSTR_TAG } from './constants';
+import { NOSTR_TAG } from './constants';
 /**
  * Formats an event for relay transmission according to NIP-01
  * @category Message Handling
@@ -79,7 +79,8 @@ export function parseNostrMessage(message) {
     if (typeof type !== 'string') {
         throw new Error('Invalid relay message: type must be a string');
     }
-    switch (type) {
+    const messageType = type;
+    switch (messageType) {
         case 'EVENT':
             if (payload.length !== 1 || typeof payload[0] !== 'object') {
                 throw new Error('Invalid EVENT message format');
@@ -103,7 +104,7 @@ export function parseNostrMessage(message) {
             }
             return { type: NostrMessageType.EOSE, payload: payload[0] };
         case 'AUTH':
-            if (payload.length !== 1 || typeof payload[0] !== 'string') {
+            if (payload.length !== 1 || typeof payload[0] !== 'object') {
                 throw new Error('Invalid AUTH message format');
             }
             return { type: NostrMessageType.AUTH, payload: payload[0] };
@@ -128,7 +129,7 @@ export function parseNostrMessage(message) {
  */
 export function createMetadataEvent(metadata) {
     return {
-        kind: NOSTR_KIND.METADATA,
+        kind: 0,
         content: JSON.stringify(metadata),
         created_at: Math.floor(Date.now() / 1000),
         tags: []
@@ -165,7 +166,7 @@ export function createTextNoteEvent(content, replyTo, mentions) {
         });
     }
     return {
-        kind: NOSTR_KIND.TEXT_NOTE,
+        kind: 1,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags
@@ -188,7 +189,7 @@ export function createTextNoteEvent(content, replyTo, mentions) {
  */
 export function createDirectMessageEvent(recipientPubkey, content) {
     return {
-        kind: NOSTR_KIND.ENCRYPTED_DIRECT_MESSAGE,
+        kind: 4,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags: [[NOSTR_TAG.PUBKEY, recipientPubkey]]
@@ -226,7 +227,7 @@ export function createChannelMessageEvent(channelId, content, replyTo) {
         tags.push([NOSTR_TAG.EVENT, replyTo, '', 'reply']);
     }
     return {
-        kind: NOSTR_KIND.CHANNEL_MESSAGE,
+        kind: 42,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags
@@ -317,7 +318,7 @@ export function createAuthorFilter(pubkey, kinds, limit) {
 export function createReplyFilter(eventId, limit) {
     return {
         '#e': [eventId],
-        kinds: [NOSTR_KIND.TEXT_NOTE, NOSTR_KIND.CHANNEL_MESSAGE],
+        kinds: [1, 42],
         limit
     };
 }

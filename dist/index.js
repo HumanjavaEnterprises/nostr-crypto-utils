@@ -7,7 +7,7 @@ import { schnorr } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import * as secp256k1 from '@noble/secp256k1';
-import { generatePrivateKey as generateNostrPrivateKey, getPublicKey as getNostrPublicKey } from 'nostr-tools';
+import { generatePrivateKey as generateNostrPrivateKey } from 'nostr-tools';
 import { webcrypto } from 'node:crypto';
 import pino from 'pino';
 const logger = pino({
@@ -24,12 +24,23 @@ import { NOSTR_KIND, NOSTR_TAG } from './constants';
 import { validateEvent, validateSignedEvent, validateFilter } from './validation';
 import { isNostrEvent, isSignedNostrEvent } from './types/guards';
 import { formatEventForRelay, parseNostrMessage, createMetadataEvent, extractReferencedEvents, formatSubscriptionForRelay, formatCloseForRelay, formatAuthForRelay, createTextNoteEvent, createDirectMessageEvent, createChannelMessageEvent, extractMentionedPubkeys, createKindFilter, createAuthorFilter, createReplyFilter } from './integration';
-// Use Node.js crypto API
-const crypto = webcrypto;
-// Configure webcrypto for Node.js environment
+// Configure crypto for Node.js and test environments
+let customCrypto;
+if (typeof window !== 'undefined' && window.crypto) {
+    // Browser environment
+    customCrypto = window.crypto;
+}
+else if (typeof globalThis !== 'undefined' && globalThis.crypto) {
+    // Node.js environment with crypto
+    customCrypto = globalThis.crypto;
+}
+else {
+    // Fallback to Node.js webcrypto
+    customCrypto = webcrypto;
+}
+// Ensure crypto is available globally
 if (typeof globalThis.crypto === 'undefined') {
-    // @ts-ignore
-    globalThis.crypto = webcrypto;
+    globalThis.crypto = customCrypto;
 }
 /**
  * @category Key Management
@@ -41,12 +52,45 @@ if (typeof globalThis.crypto === 'undefined') {
  * console.log(privateKey); // 'a1b2c3d4...'
  * ```
  */
-export function generatePrivateKey() {
+export async function generatePrivateKey() {
     logger.debug('Generating new private key');
-    const privateKeyBytes = generateNostrPrivateKey();
-    const privateKey = bytesToHex(privateKeyBytes);
+    const privateKey = generateNostrPrivateKey();
     logger.debug({ privateKey }, 'Generated new private key');
     return privateKey;
+}
+/**
+ * @category Key Management
+ * @description Generates a new key pair for use in Nostr
+ * @param {string} [seedPhrase] - Optional seed phrase for deterministic key generation
+ * @returns {Promise<KeyPair>} Generated key pair
+ * @example
+ * ```typescript
+ * const keyPair = await generateKeyPair();
+ * console.log(keyPair.privateKey); // 'a1b2c3d4...'
+ * console.log(keyPair.publicKey); // '02abc123...'
+ * ```
+ */
+export async function generateKeyPair(seed) {
+    let privateKeyBytes;
+    const subtle = customCrypto.subtle;
+    if (seed) {
+        // Generate deterministic private key from seed
+        const encoder = new TextEncoder();
+        const seedHash = await subtle.digest('SHA-256', encoder.encode(seed));
+        privateKeyBytes = new Uint8Array(seedHash);
+    }
+    else {
+        // Generate random private key
+        privateKeyBytes = crypto.getRandomValues(new Uint8Array(32));
+    }
+    // Convert to hex format
+    const privateKeyHex = bytesToHex(privateKeyBytes);
+    const publicKeyHex = getPublicKey(privateKeyHex);
+    logger.debug({ publicKey: publicKeyHex }, 'Generated key pair');
+    return {
+        privateKey: privateKeyHex,
+        publicKey: publicKeyHex,
+    };
 }
 /**
  * @category Key Management
@@ -61,46 +105,24 @@ export function generatePrivateKey() {
  * ```
  */
 export function getPublicKey(privateKey) {
-    logger.debug('Deriving public key from private key');
     try {
-        const privKeyBytes = hexToBytes(privateKey);
-        const pubKeyBytes = getNostrPublicKey(privKeyBytes);
-        const publicKey = bytesToHex(pubKeyBytes);
-        logger.debug({ publicKey }, 'Successfully derived public key');
-        return publicKey;
+        // Normalize private key to 32 bytes
+        let privateKeyBytes;
+        if (privateKey.length === 64) {
+            privateKeyBytes = hexToBytes(privateKey);
+        }
+        else if (privateKey.length === 32) {
+            privateKeyBytes = new Uint8Array(privateKey.split('').map(c => c.charCodeAt(0)));
+        }
+        else {
+            throw new Error('Invalid private key length');
+        }
+        const publicKeyBytes = schnorr.getPublicKey(privateKeyBytes);
+        return bytesToHex(publicKeyBytes);
     }
     catch (error) {
-        logger.error({ error }, 'Failed to derive public key');
-        throw error;
+        throw new Error(`Failed to derive public key: ${error instanceof Error ? error.message : 'unknown error'}`);
     }
-}
-/**
- * @category Key Management
- * @description Generates a new key pair for use in Nostr
- * @param {string} [seedPhrase] - Optional seed phrase for deterministic key generation
- * @returns {KeyPair} Generated key pair
- * @example
- * ```typescript
- * const keyPair = generateKeyPair();
- * console.log(keyPair.privateKey); // 'a1b2c3d4...'
- * console.log(keyPair.publicKey); // '02abc123...'
- * ```
- */
-export function generateKeyPair(seedPhrase) {
-    logger.debug('Generating new key pair');
-    if (seedPhrase) {
-        // Use the seed phrase to generate a deterministic private key
-        const seedHash = sha256(new TextEncoder().encode(seedPhrase));
-        const privateKey = bytesToHex(seedHash);
-        const publicKey = getPublicKey(privateKey);
-        logger.debug({ publicKey, privateKey }, 'Generated new key pair with seed phrase');
-        return { privateKey, publicKey };
-    }
-    // Generate a random key pair
-    const privateKey = generatePrivateKey();
-    const publicKey = getPublicKey(privateKey);
-    logger.debug({ publicKey, privateKey }, 'Generated new random key pair');
-    return { privateKey, publicKey };
 }
 /**
  * @category Event Operations
@@ -116,12 +138,14 @@ export function generateKeyPair(seedPhrase) {
  * const hash = getEventHash(event);
  * ```
  */
-export function getEventHash(event) {
+export async function getEventHash(event) {
     logger.debug('Calculating event hash');
     const serialized = serializeEvent(event);
-    const hash = bytesToHex(sha256(new TextEncoder().encode(serialized)));
-    logger.debug({ hash }, 'Calculated event hash');
-    return hash;
+    const subtle = customCrypto.subtle;
+    const hash = await subtle.digest('SHA-256', new TextEncoder().encode(serialized));
+    const hashHex = bytesToHex(new Uint8Array(hash));
+    logger.debug({ hash: hashHex }, 'Calculated event hash');
+    return hashHex;
 }
 /**
  * @category Event Operations
@@ -179,7 +203,7 @@ export function createEvent(params) {
  * @description Signs a Nostr event with a private key (NIP-01)
  * @param {NostrEvent} event - Event to sign
  * @param {string} privateKey - Private key in hex format
- * @returns {Promise<SignedNostrEvent>} Signed event
+ * @returns {SignedNostrEvent} Signed event
  * @throws {Error} If signing fails
  * @example
  * ```typescript
@@ -187,25 +211,48 @@ export function createEvent(params) {
  *   kind: NostrEventKind.TEXT_NOTE,
  *   content: 'Hello Nostr!'
  * });
- * const signedEvent = await signEvent(event, privateKey);
+ * const signedEvent = signEvent(event, privateKey);
  * ```
  */
-export async function signEvent(event, privateKey) {
-    logger.debug('Signing event');
-    const hash = getEventHash(event);
-    const sig = await schnorr.sign(hexToBytes(hash), hexToBytes(privateKey));
-    // Ensure pubkey is set in the signed event
-    const pubkey = event.pubkey || getPublicKey(privateKey);
-    const signedEvent = {
-        ...event,
-        id: hash,
-        sig: bytesToHex(sig),
-        pubkey, // Required in SignedNostrEvent
-        created_at: event.created_at || Math.floor(Date.now() / 1000),
-        tags: event.tags || []
-    };
-    logger.debug({ signedEvent }, 'Signed event');
-    return signedEvent;
+export function signEvent(event, privateKey) {
+    try {
+        // Convert hex private key to bytes
+        if (privateKey.length !== 64) {
+            throw new Error('Invalid private key length - must be 64 hex characters');
+        }
+        const privateKeyBytes = hexToBytes(privateKey);
+        // Derive public key
+        const pubkey = getPublicKey(privateKey);
+        // Prepare event for signing
+        const signedEvent = {
+            ...event,
+            pubkey,
+            created_at: event.created_at ?? Math.floor(Date.now() / 1000),
+            tags: event.tags ?? [],
+            id: '', // Will be set after serialization
+            sig: '' // Will be set after signing
+        };
+        // Calculate event ID
+        const serializedEvent = JSON.stringify([
+            0,
+            signedEvent.pubkey,
+            signedEvent.created_at,
+            signedEvent.kind,
+            signedEvent.tags,
+            signedEvent.content,
+        ]);
+        // Generate event ID using SHA-256
+        signedEvent.id = bytesToHex(sha256(new TextEncoder().encode(serializedEvent)));
+        // Sign the event ID
+        const signature = schnorr.sign(hexToBytes(signedEvent.id), privateKeyBytes);
+        signedEvent.sig = bytesToHex(signature);
+        logger.debug('Event signed successfully');
+        return signedEvent;
+    }
+    catch (error) {
+        logger.error({ error }, 'Failed to sign event');
+        throw new Error(`Failed to sign event: ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
 }
 /**
  * @category Event Operations
@@ -221,15 +268,25 @@ export async function signEvent(event, privateKey) {
  * ```
  */
 export function verifySignature(event) {
-    logger.debug('Verifying event signature');
     try {
-        const hash = getEventHash(event);
-        const isValid = schnorr.verify(hexToBytes(event.sig), hexToBytes(hash), event.pubkey);
-        logger.debug({ isValid }, 'Verified event signature');
-        return isValid;
+        // Verify event ID
+        const serializedEvent = JSON.stringify([
+            0,
+            event.pubkey,
+            event.created_at,
+            event.kind,
+            event.tags,
+            event.content,
+        ]);
+        const expectedId = bytesToHex(sha256(new TextEncoder().encode(serializedEvent)));
+        if (event.id !== expectedId) {
+            return false;
+        }
+        // Verify signature
+        return schnorr.verify(hexToBytes(event.sig), hexToBytes(event.id), hexToBytes(event.pubkey));
     }
-    catch {
-        logger.error('Failed to verify event signature');
+    catch (error) {
+        logger.error({ error }, 'Failed to verify event signature');
         return false;
     }
 }
@@ -252,20 +309,19 @@ export function verifySignature(event) {
 export function validateKeyPair(publicKey, privateKey) {
     logger.debug('Validating key pair');
     try {
-        const derivedPubKey = getPublicKey(privateKey);
-        const isValid = derivedPubKey === publicKey;
-        const result = {
+        const derivedPublicKey = getPublicKey(privateKey);
+        const isValid = derivedPublicKey === publicKey;
+        logger.debug({ isValid }, 'Validated key pair');
+        return {
             isValid,
-            error: isValid ? undefined : 'Public key does not match private key'
+            error: isValid ? undefined : 'Public key does not match private key',
         };
-        logger.debug({ result }, 'Validated key pair');
-        return result;
     }
     catch (error) {
         logger.error({ error }, 'Failed to validate key pair');
         return {
             isValid: false,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: 'Invalid key pair',
         };
     }
 }
@@ -291,9 +347,9 @@ export async function encrypt(message, recipientPubKey, senderPrivKey) {
     const shared = secp256k1.getSharedSecret(senderPrivKey, '02' + recipientPubKey);
     const sharedKey = bytesToHex(shared).substring(2);
     const iv = crypto.getRandomValues(new Uint8Array(16));
-    const key = await crypto.subtle.importKey('raw', hexToBytes(sharedKey), { name: 'AES-CBC', length: 256 }, false, ['encrypt']);
+    const key = await customCrypto.subtle.importKey('raw', hexToBytes(sharedKey), { name: 'AES-CBC', length: 256 }, false, ['encrypt']);
     const encoded = new TextEncoder().encode(message);
-    const ciphertext = await crypto.subtle.encrypt({ name: 'AES-CBC', iv }, key, encoded);
+    const ciphertext = await customCrypto.subtle.encrypt({ name: 'AES-CBC', iv }, key, encoded);
     const combined = new Uint8Array(iv.length + new Uint8Array(ciphertext).length);
     combined.set(iv);
     combined.set(new Uint8Array(ciphertext), iv.length);
@@ -325,8 +381,8 @@ export async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) 
     const encrypted = hexToBytes(encryptedMessage);
     const iv = encrypted.slice(0, 16);
     const ciphertext = encrypted.slice(16);
-    const key = await crypto.subtle.importKey('raw', hexToBytes(sharedKey), { name: 'AES-CBC', length: 256 }, false, ['decrypt']);
-    const decrypted = await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, key, ciphertext);
+    const key = await customCrypto.subtle.importKey('raw', hexToBytes(sharedKey), { name: 'AES-CBC', length: 256 }, false, ['decrypt']);
+    const decrypted = await customCrypto.subtle.decrypt({ name: 'AES-CBC', iv }, key, ciphertext);
     const message = new TextDecoder().decode(decrypted);
     logger.debug({ message }, 'Decrypted message');
     return message;

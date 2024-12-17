@@ -63,7 +63,7 @@ describe('NOSTR Crypto Utils', () => {
                 tags: [],
                 content: 'Hello, World!'
             };
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const signedEvent = await signEvent(event, privateKey);
             expect(await verifySignature(signedEvent)).toBe(true);
         });
@@ -74,7 +74,7 @@ describe('NOSTR Crypto Utils', () => {
                 tags: [],
                 content: 'Hello, World!'
             };
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const signedEvent = await signEvent(event, privateKey);
             // Tamper with the signature
             signedEvent.sig = signedEvent.sig.replace('a', 'b');
@@ -87,7 +87,7 @@ describe('NOSTR Crypto Utils', () => {
                 tags: [],
                 content: 'Hello, World!'
             };
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const signedEvent = await signEvent(event, privateKey);
             // Tamper with the content which affects the hash
             signedEvent.content = 'Modified content';
@@ -100,7 +100,7 @@ describe('NOSTR Crypto Utils', () => {
                 tags: [],
                 content: 'Hello, World!'
             };
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const signedEvent = await signEvent(event, privateKey);
             // Add invalid hex character
             signedEvent.sig = 'XYZ' + signedEvent.sig.slice(3);
@@ -109,22 +109,22 @@ describe('NOSTR Crypto Utils', () => {
     });
     describe('validateKeyPair', () => {
         it('should validate a correct key pair', async () => {
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const publicKey = await getPublicKey(privateKey);
             const result = await validateKeyPair(publicKey, privateKey);
             expect(result.isValid).toBe(true);
             expect(result.error).toBeUndefined();
         });
         it('should reject mismatched key pair', async () => {
-            const privateKey1 = await generateKeyPair().privateKey;
-            const privateKey2 = await generateKeyPair().privateKey;
+            const privateKey1 = await (await generateKeyPair()).privateKey;
+            const privateKey2 = await (await generateKeyPair()).privateKey;
             const publicKey = await getPublicKey(privateKey1);
             const result = await validateKeyPair(publicKey, privateKey2);
             expect(result.isValid).toBe(false);
             expect(result.error).toBe('Public key does not match private key');
         });
         it('should handle invalid private key', async () => {
-            const publicKey = await getPublicKey(await generateKeyPair().privateKey);
+            const publicKey = await getPublicKey(await (await generateKeyPair()).privateKey);
             const result = await validateKeyPair(publicKey, 'invalid-private-key');
             expect(result.isValid).toBe(false);
             expect(result.error).toBe('Invalid key pair');
@@ -138,7 +138,7 @@ describe('NOSTR Crypto Utils', () => {
                 tags: [['p', '1234']],
                 content: 'Hello, World!'
             };
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const signedEvent = await signEvent(event, privateKey);
             expect(signedEvent.sig).toBeTruthy();
             expect(signedEvent.id).toBeTruthy();
@@ -151,7 +151,7 @@ describe('NOSTR Crypto Utils', () => {
                 content: 'Hello, World!',
                 tags: [] // Adding the required tags property
             };
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const signedEvent = await signEvent(event, privateKey);
             expect(signedEvent.sig).toBeTruthy();
             expect(signedEvent.id).toBeTruthy();
@@ -166,7 +166,7 @@ describe('NOSTR Crypto Utils', () => {
                 content: 'Hello, World!',
                 tags: [] // Add empty tags array to satisfy NostrEvent interface
             };
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const signedEvent = await signEvent(event, privateKey);
             expect(signedEvent.tags).toEqual([]);
         });
@@ -177,7 +177,7 @@ describe('NOSTR Crypto Utils', () => {
                 tags: [],
                 created_at: Math.floor(Date.now() / 1000)
             };
-            const privateKey = await generateKeyPair().privateKey;
+            const privateKey = await (await generateKeyPair()).privateKey;
             const signedEvent = await signEvent(event, privateKey);
             expect(signedEvent.created_at).toBeDefined();
             expect(typeof signedEvent.created_at).toBe('number');

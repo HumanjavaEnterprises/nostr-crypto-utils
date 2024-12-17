@@ -1,5 +1,6 @@
 import { formatEventForRelay, formatSubscriptionForRelay, formatCloseForRelay, formatAuthForRelay, parseNostrMessage, createMetadataEvent, createTextNoteEvent, createDirectMessageEvent, createChannelMessageEvent, extractReferencedEvents, extractMentionedPubkeys, createKindFilter, createAuthorFilter, createReplyFilter } from '../integration';
 import { NOSTR_KIND } from '../constants';
+import { describe, it, expect } from 'vitest';
 describe('Integration Utilities', () => {
     const mockSignedEvent = {
         id: '123',

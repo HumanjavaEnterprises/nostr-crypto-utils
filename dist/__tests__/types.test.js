@@ -1,4 +1,5 @@
 import { isNostrEvent, isSignedNostrEvent, isNostrFilter, isNostrSubscription, NostrEventKind } from '../types';
+import { describe, it, expect } from 'vitest';
 describe('Type Guards', () => {
     describe('isNostrEvent', () => {
         it('should validate a valid NostrEvent', () => {
