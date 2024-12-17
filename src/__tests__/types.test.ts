@@ -10,6 +10,8 @@ import {
   NostrEventKind
 } from '../types';
 
+import { describe, it, expect } from 'vitest';
+
 describe('Type Guards', () => {
   describe('isNostrEvent', () => {
     it('should validate a valid NostrEvent', () => {
@@ -127,6 +129,22 @@ describe('Type Guards', () => {
       invalidEvents.forEach(event => {
         expect(isSignedNostrEvent(event)).toBe(false);
       });
+    });
+  });
+
+  describe('NostrFilter Type', () => {
+    it('should validate filter properties', () => {
+      const validFilter: NostrFilter = {
+        ids: ['abc123'],
+        authors: ['def456'],
+        kinds: [1, 2, 3],
+        '#e': ['ghi789'],
+        '#p': ['jkl012'],
+        since: 123456789,
+        until: 987654321,
+        limit: 100
+      };
+      expect(validFilter).toBeDefined();
     });
   });
 

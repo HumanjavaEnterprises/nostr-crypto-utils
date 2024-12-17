@@ -1,6 +1,20 @@
 import { isNostrEvent, isSignedNostrEvent, isNostrFilter, isNostrSubscription } from './types/guards';
 /**
- * Validates a Nostr event against the protocol specification
+ * Validates a Nostr event against the protocol specification (NIP-01)
+ * @category Validation
+ * @param {NostrEvent} event - Event to validate
+ * @returns {ValidationResult} Validation result containing any errors found
+ * @example
+ * ```typescript
+ * const event = createEvent({
+ *   kind: NostrEventKind.TEXT_NOTE,
+ *   content: 'Hello Nostr!'
+ * });
+ * const validation = validateEvent(event);
+ * if (!validation.isValid) {
+ *   console.error('Validation errors:', validation.errors);
+ * }
+ * ```
  */
 export function validateEvent(event) {
     const errors = [];
@@ -38,7 +52,17 @@ export function validateEvent(event) {
     };
 }
 /**
- * Validates a signed Nostr event
+ * Validates a signed Nostr event (NIP-01)
+ * @category Validation
+ * @param {SignedNostrEvent} event - Signed event to validate
+ * @returns {ValidationResult} Validation result containing any errors found
+ * @example
+ * ```typescript
+ * const validation = validateSignedEvent(signedEvent);
+ * if (!validation.isValid) {
+ *   console.error('Invalid signature or event structure:', validation.errors);
+ * }
+ * ```
  */
 export function validateSignedEvent(event) {
     const errors = [];
@@ -68,7 +92,22 @@ export function validateSignedEvent(event) {
     };
 }
 /**
- * Validates a Nostr filter
+ * Validates a Nostr filter against the protocol specification (NIP-01)
+ * @category Validation
+ * @param {NostrFilter} filter - Filter to validate
+ * @returns {ValidationResult} Validation result containing any errors found
+ * @example
+ * ```typescript
+ * const filter = {
+ *   kinds: [1],
+ *   authors: ['pubkey1', 'pubkey2'],
+ *   limit: 10
+ * };
+ * const validation = validateFilter(filter);
+ * if (!validation.isValid) {
+ *   console.error('Invalid filter:', validation.errors);
+ * }
+ * ```
  */
 export function validateFilter(filter) {
     const errors = [];
@@ -107,7 +146,24 @@ export function validateFilter(filter) {
     };
 }
 /**
- * Validates a Nostr subscription
+ * Validates a Nostr subscription request (NIP-01)
+ * @category Validation
+ * @param {NostrSubscription} subscription - Subscription to validate
+ * @returns {ValidationResult} Validation result containing any errors found
+ * @example
+ * ```typescript
+ * const subscription = {
+ *   id: 'sub1',
+ *   filters: [{
+ *     kinds: [1],
+ *     limit: 10
+ *   }]
+ * };
+ * const validation = validateSubscription(subscription);
+ * if (!validation.isValid) {
+ *   console.error('Invalid subscription:', validation.errors);
+ * }
+ * ```
  */
 export function validateSubscription(subscription) {
     const errors = [];

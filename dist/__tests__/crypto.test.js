@@ -1,4 +1,4 @@
-/// <reference types="jest" />
+import { describe, it, expect } from 'vitest';
 import { generateKeyPair, getPublicKey, validateKeyPair, signEvent, verifySignature, encrypt, decrypt } from '../index';
 describe('NOSTR Crypto Utils', () => {
     describe('Key Management', () => {

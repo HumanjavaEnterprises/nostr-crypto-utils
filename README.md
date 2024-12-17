@@ -1,14 +1,17 @@
-# @humanjavaenterprises/nostr-crypto-utils
+# nostr-crypto-utils
 
 A comprehensive TypeScript library providing cryptographic utilities and protocol-compliant message handling for Nostr applications, designed to work seamlessly with [@humanjavaenterprises/nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase).
 
 [![npm version](https://badge.fury.io/js/%40humanjavaenterprises%2Fnostr-crypto-utils.svg)](https://www.npmjs.com/package/@humanjavaenterprises/nostr-crypto-utils)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/main/LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-TypeDoc-blue.svg)](https://humanjavaenterprises.github.io/nostr-crypto-utils/)
 
-⚠️ **Important Security Notice**
+## Security Notice
 
-This library handles cryptographic keys and operations that are critical for securing your Nostr identity and data. All cryptographic operations, including key generation, signing, and encryption, must be handled with appropriate security measures.
+⚠️ **Important**: This library handles cryptographic keys and operations that are critical for securing your Nostr identity and data. All cryptographic operations, including key generation, signing, and encryption, must be handled with appropriate security measures.
+
+If you discover a security vulnerability, please follow our [Security Policy](SECURITY.md) and report it through [GitHub's Security Advisory feature](https://github.com/humanjavaenterprises/nostr-crypto-utils/security/advisories/new).
 
 ## Features
 
@@ -19,117 +22,81 @@ This library handles cryptographic keys and operations that are critical for sec
 - **Encryption**: Secure encryption and decryption for direct messages (NIP-04)
 - **Validation**: Comprehensive validation for events, filters, and subscriptions
 
+## Features and Capabilities
+
+| Feature                    | Status | Description                                           |
+|---------------------------|--------|-------------------------------------------------------|
+| Key Management            | ✅     | Generate, validate, and manage Nostr keypairs         |
+| Event Creation            | ✅     | Create and validate Nostr events                      |
+| Event Signing             | ✅     | Sign events with schnorr signatures                   |
+| Event Verification        | ✅     | Verify event signatures and validate event structure  |
+| Message Encryption        | ✅     | NIP-04 compliant message encryption                   |
+| Message Decryption        | ✅     | NIP-04 compliant message decryption                  |
+| Event Serialization       | ✅     | Protocol-compliant event serialization               |
+| Event Hashing            | ✅     | Generate and verify event IDs                        |
+
 ## Installation
 
 ```bash
 npm install @humanjavaenterprises/nostr-crypto-utils
 ```
 
-## Usage
-
-### Key Management
+## Quick Start
 
 ```typescript
-import { generateKeyPair, getPublicKey } from '@humanjavaenterprises/nostr-crypto-utils';
+import { generateKeyPair, signEvent, verifyEvent } from '@humanjavaenterprises/nostr-crypto-utils';
 
-// Generate a new key pair
+// Generate a new keypair
 const keyPair = await generateKeyPair();
 console.log('Public Key:', keyPair.publicKey);
 console.log('Private Key:', keyPair.privateKey);
 
-// Get public key from private key
-const pubKey = getPublicKey(privateKey);
-```
-
-### Event Operations
-
-```typescript
-import { createEvent, signEvent, validateEvent } from '@humanjavaenterprises/nostr-crypto-utils';
-
 // Create and sign an event
-const event = createEvent({
-  kind: NostrEventKind.TEXT_NOTE,
+const event = await signEvent({
+  kind: 1,
   content: 'Hello Nostr!',
   tags: []
-});
-const signedEvent = await signEvent(event, privateKey);
+}, keyPair.privateKey);
 
-// Validate an event
-const validation = validateEvent(event);
-if (validation.isValid) {
-  console.log('Event is valid');
-} else {
-  console.log('Validation errors:', validation.errors);
-}
+// Verify the event
+const isValidEvent = await verifyEvent(event);
 ```
 
-### Message Handling
+## Documentation
 
-```typescript
-import { 
-  formatEventForRelay, 
-  formatSubscriptionForRelay,
-  parseNostrMessage 
-} from '@humanjavaenterprises/nostr-crypto-utils';
+For detailed API documentation, visit our [TypeDoc Documentation](https://humanjavaenterprises.github.io/nostr-crypto-utils/).
 
-// Format event for relay
-const eventMessage = formatEventForRelay(signedEvent);
+## Support & Community
 
-// Format subscription request
-const subscription = {
-  id: 'sub1',
-  filters: [{ kinds: [1], limit: 10 }]
-};
-const subMessage = formatSubscriptionForRelay(subscription);
+We welcome your feedback and contributions! Here's how you can get involved:
 
-// Parse incoming messages
-const message = ['EVENT', signedEvent];
-const parsed = parseNostrMessage(message);
-```
-
-### Encryption (NIP-04)
-
-```typescript
-import { encrypt, decrypt } from '@humanjavaenterprises/nostr-crypto-utils';
-
-// Encrypt a message
-const encrypted = await encrypt(
-  'Secret message',
-  recipientPublicKey,
-  senderPrivateKey
-);
-
-// Decrypt a message
-const decrypted = await decrypt(
-  encrypted,
-  senderPublicKey,
-  recipientPrivateKey
-);
-```
-
-## Protocol Compliance
-
-This library implements the following Nostr Implementation Possibilities (NIPs):
-
-- NIP-01: Basic protocol flow description
-- NIP-02: Contact List and Petnames
-- NIP-04: Encrypted Direct Message
-- NIP-09: Event Deletion
-- NIP-25: Reactions
-- NIP-28: Public Chat Channels
+- 🐛 [Report bugs](https://github.com/humanjavaenterprises/nostr-crypto-utils/issues/new?labels=bug&template=bug_report.md)
+- 💡 [Request features](https://github.com/humanjavaenterprises/nostr-crypto-utils/issues/new?labels=enhancement&template=feature_request.md)
+- 💬 [Start a discussion](https://github.com/humanjavaenterprises/nostr-crypto-utils/discussions)
+- 📖 [Read documentation](https://humanjavaenterprises.github.io/nostr-crypto-utils/)
+- 🔒 [Report security issues](https://github.com/humanjavaenterprises/nostr-crypto-utils/security/advisories/new)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+We welcome contributions! Please follow these steps:
 
-## Security
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-If you discover a security vulnerability within this library, please send an e-mail to security@humanjavaenterprises.com. All security vulnerabilities will be promptly addressed.
+Before contributing:
+- Read our [Code of Conduct](CODE_OF_CONDUCT.md)
+- Check our [Contributing Guidelines](.github/CONTRIBUTING.md)
+- Review our [Security Policy](SECURITY.md)
+- Search [existing issues](https://github.com/humanjavaenterprises/nostr-crypto-utils/issues) before creating a new one
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/main/LICENSE) file for details.
+[MIT](LICENSE)
 
 ---
-
-Built with ❤️ by [Human Java Enterprises](https://github.com/HumanjavaEnterprises)
+<div align="center">
+Made with ❤️ by <a href="https://github.com/humanjavaenterprises">Humanjava Enterprises</a>
+</div>

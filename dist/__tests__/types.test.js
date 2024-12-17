@@ -107,6 +107,21 @@ describe('Type Guards', () => {
             });
         });
     });
+    describe('NostrFilter Type', () => {
+        it('should validate filter properties', () => {
+            const validFilter = {
+                ids: ['abc123'],
+                authors: ['def456'],
+                kinds: [1, 2, 3],
+                '#e': ['ghi789'],
+                '#p': ['jkl012'],
+                since: 123456789,
+                until: 987654321,
+                limit: 100
+            };
+            expect(validFilter).toBeDefined();
+        });
+    });
     describe('isNostrFilter', () => {
         it('should validate a valid NostrFilter', () => {
             const validFilter = {

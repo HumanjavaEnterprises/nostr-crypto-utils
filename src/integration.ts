@@ -1,47 +1,63 @@
 import { NostrEvent, SignedNostrEvent } from './types/base';
-import { NostrFilter, NostrSubscription, NostrResponse, NostrError, NostrMessageType } from './types/protocol';
-import { validateEvent, validateSignedEvent, validateFilter } from './validation';
-import { NOSTR_KIND, NOSTR_TAG } from './constants';
+import { NostrMessageType } from './types/protocol';
+import type { NostrFilter, NostrSubscription, NostrResponse } from './types/protocol';
+import { NOSTR_TAG } from './constants';
 
 /**
- * Formats an event for relay transmission
- * @param event - The signed Nostr event to format
- * @returns A tuple of ['EVENT', event] ready for relay transmission
+ * Formats an event for relay transmission according to NIP-01
+ * @category Message Handling
+ * @param {SignedNostrEvent} event - The signed Nostr event to format
+ * @returns {[string, SignedNostrEvent]} A tuple of ['EVENT', event] ready for relay transmission
  * @example
  * ```typescript
  * const event = await signEvent(myEvent, privateKey);
  * const formatted = formatEventForRelay(event);
  * // formatted = ['EVENT', event]
  * ```
+ * @see {@link https://github.com/nostr-protocol/nips/blob/master/01.md#from-client-to-relay-sending-events-and-creating-subscriptions}
  */
 export function formatEventForRelay(event: SignedNostrEvent): [string, SignedNostrEvent] {
   return ['EVENT', event];
 }
 
 /**
- * Formats a subscription request for relay transmission
- * @param subscription - The subscription request containing filters
- * @returns A tuple of ['REQ', subscriptionId, ...filters] ready for relay transmission
+ * Formats a subscription request for relay transmission according to NIP-01
+ * @category Message Handling
+ * @param {NostrSubscription} subscription - The subscription request containing filters
+ * @returns {[string, string, ...NostrFilter[]]} A tuple of ['REQ', subscriptionId, ...filters] ready for relay transmission
  * @example
  * ```typescript
  * const sub = { id: 'sub1', filters: [{ kinds: [1], limit: 10 }] };
  * const formatted = formatSubscriptionForRelay(sub);
  * // formatted = ['REQ', 'sub1', { kinds: [1], limit: 10 }]
  * ```
+ * @see {@link https://github.com/nostr-protocol/nips/blob/master/01.md#from-client-to-relay-creating-subscriptions}
  */
 export function formatSubscriptionForRelay(subscription: NostrSubscription): [string, string, ...NostrFilter[]] {
   return ['REQ', subscription.id, ...subscription.filters];
 }
 
 /**
- * Formats a close request for relay transmission
+ * Formats a close request for relay transmission according to NIP-01
+ * @category Message Handling
+ * @param {string} subscriptionId - The ID of the subscription to close
+ * @returns {[string, string]} A tuple of ['CLOSE', subscriptionId] ready for relay transmission
+ * @example
+ * ```typescript
+ * const formatted = formatCloseForRelay('sub1');
+ * // formatted = ['CLOSE', 'sub1']
+ * ```
  */
 export function formatCloseForRelay(subscriptionId: string): [string, string] {
   return ['CLOSE', subscriptionId];
 }
 
 /**
- * Formats an auth request for relay transmission
+ * Formats an auth request for relay transmission according to NIP-42
+ * @category Message Handling
+ * @param {SignedNostrEvent} event - The signed authentication event
+ * @returns {[string, SignedNostrEvent]} A tuple of ['AUTH', event] ready for relay transmission
+ * @see {@link https://github.com/nostr-protocol/nips/blob/master/42.md}
  */
 export function formatAuthForRelay(event: SignedNostrEvent): [string, SignedNostrEvent] {
   return ['AUTH', event];
@@ -49,11 +65,20 @@ export function formatAuthForRelay(event: SignedNostrEvent): [string, SignedNost
 
 /**
  * Parses a Nostr protocol message according to NIP-01
- * @param message - The message to parse, expected to be a JSON array
- * @returns NostrResponse containing the parsed message type and payload
- * @throws {Error} If the message format is invalid
+ * @category Message Handling
+ * @param {unknown} message - The message to parse
+ * @returns {NostrResponse | null} Parsed message or null if invalid
+ * @throws {Error} If message format is invalid
+ * @example
+ * ```typescript
+ * const message = ['EVENT', signedEvent];
+ * const parsed = parseNostrMessage(message);
+ * if (parsed && parsed.type === NostrMessageType.EVENT) {
+ *   console.log('Received event:', parsed.payload);
+ * }
+ * ```
  */
-export function parseNostrMessage(message: unknown): NostrResponse {
+export function parseNostrMessage(message: unknown): NostrResponse | null {
   if (!Array.isArray(message)) {
     throw new Error('Invalid relay message: not an array');
   }
@@ -64,7 +89,9 @@ export function parseNostrMessage(message: unknown): NostrResponse {
     throw new Error('Invalid relay message: type must be a string');
   }
 
-  switch (type) {
+  const messageType = type as keyof typeof NostrMessageType;
+  
+  switch (messageType) {
     case 'EVENT':
       if (payload.length !== 1 || typeof payload[0] !== 'object') {
         throw new Error('Invalid EVENT message format');
@@ -92,7 +119,7 @@ export function parseNostrMessage(message: unknown): NostrResponse {
       return { type: NostrMessageType.EOSE, payload: payload[0] };
 
     case 'AUTH':
-      if (payload.length !== 1 || typeof payload[0] !== 'string') {
+      if (payload.length !== 1 || typeof payload[0] !== 'object') {
         throw new Error('Invalid AUTH message format');
       }
       return { type: NostrMessageType.AUTH, payload: payload[0] };
@@ -103,11 +130,23 @@ export function parseNostrMessage(message: unknown): NostrResponse {
 }
 
 /**
- * Creates a metadata event
+ * Creates a metadata event according to NIP-01
+ * @category Event Creation
+ * @param {Record<string, string>} metadata - User metadata (name, about, picture, etc.)
+ * @returns {NostrEvent} Created metadata event
+ * @example
+ * ```typescript
+ * const event = createMetadataEvent({
+ *   name: 'Alice',
+ *   about: 'Nostr enthusiast',
+ *   picture: 'https://example.com/avatar.jpg'
+ * });
+ * ```
+ * @see {@link https://github.com/nostr-protocol/nips/blob/master/01.md#basic-event-kinds}
  */
 export function createMetadataEvent(metadata: Record<string, string>): NostrEvent {
   return {
-    kind: NOSTR_KIND.METADATA,
+    kind: 0,
     content: JSON.stringify(metadata),
     created_at: Math.floor(Date.now() / 1000),
     tags: []
@@ -115,7 +154,24 @@ export function createMetadataEvent(metadata: Record<string, string>): NostrEven
 }
 
 /**
- * Creates a text note event
+ * Creates a text note event according to NIP-01
+ * @category Event Creation
+ * @param {string} content - The text content of the note
+ * @param {string} [replyTo] - Optional ID of event being replied to
+ * @param {string[]} [mentions] - Optional array of pubkeys to mention
+ * @returns {NostrEvent} Created text note event
+ * @example
+ * ```typescript
+ * // Simple text note
+ * const note = createTextNoteEvent('Hello Nostr!');
+ * 
+ * // Reply with mentions
+ * const reply = createTextNoteEvent(
+ *   'Great post!',
+ *   originalEventId,
+ *   [authorPubkey]
+ * );
+ * ```
  */
 export function createTextNoteEvent(content: string, replyTo?: string, mentions?: string[]): NostrEvent {
   const tags: string[][] = [];
@@ -131,7 +187,7 @@ export function createTextNoteEvent(content: string, replyTo?: string, mentions?
   }
 
   return {
-    kind: NOSTR_KIND.TEXT_NOTE,
+    kind: 1,
     content,
     created_at: Math.floor(Date.now() / 1000),
     tags
@@ -139,11 +195,23 @@ export function createTextNoteEvent(content: string, replyTo?: string, mentions?
 }
 
 /**
- * Creates a direct message event (NIP-04)
+ * Creates a direct message event according to NIP-04
+ * @category Event Creation
+ * @param {string} recipientPubkey - Public key of message recipient
+ * @param {string} content - Message content (will be encrypted)
+ * @returns {NostrEvent} Created direct message event
+ * @example
+ * ```typescript
+ * const dmEvent = createDirectMessageEvent(
+ *   recipientPubkey,
+ *   'Secret message'
+ * );
+ * ```
+ * @see {@link https://github.com/nostr-protocol/nips/blob/master/04.md}
  */
 export function createDirectMessageEvent(recipientPubkey: string, content: string): NostrEvent {
   return {
-    kind: NOSTR_KIND.ENCRYPTED_DIRECT_MESSAGE,
+    kind: 4,
     content,
     created_at: Math.floor(Date.now() / 1000),
     tags: [[NOSTR_TAG.PUBKEY, recipientPubkey]]
@@ -151,7 +219,28 @@ export function createDirectMessageEvent(recipientPubkey: string, content: strin
 }
 
 /**
- * Creates a channel message event
+ * Creates a channel message event according to NIP-28
+ * @category Event Creation
+ * @param {string} channelId - ID of the channel
+ * @param {string} content - Message content
+ * @param {string} [replyTo] - Optional ID of message being replied to
+ * @returns {NostrEvent} Created channel message event
+ * @example
+ * ```typescript
+ * // New channel message
+ * const msg = createChannelMessageEvent(
+ *   channelId,
+ *   'Hello channel!'
+ * );
+ * 
+ * // Reply to message
+ * const reply = createChannelMessageEvent(
+ *   channelId,
+ *   'Good point!',
+ *   originalMessageId
+ * );
+ * ```
+ * @see {@link https://github.com/nostr-protocol/nips/blob/master/28.md}
  */
 export function createChannelMessageEvent(channelId: string, content: string, replyTo?: string): NostrEvent {
   const tags: string[][] = [
@@ -163,7 +252,7 @@ export function createChannelMessageEvent(channelId: string, content: string, re
   }
 
   return {
-    kind: NOSTR_KIND.CHANNEL_MESSAGE,
+    kind: 42,
     content,
     created_at: Math.floor(Date.now() / 1000),
     tags
@@ -171,7 +260,15 @@ export function createChannelMessageEvent(channelId: string, content: string, re
 }
 
 /**
- * Extracts referenced event IDs from tags
+ * Extracts referenced event IDs from an event's tags
+ * @category Event Operations
+ * @param {NostrEvent} event - Event to extract references from
+ * @returns {string[]} Array of referenced event IDs
+ * @example
+ * ```typescript
+ * const refs = extractReferencedEvents(event);
+ * console.log('Referenced events:', refs);
+ * ```
  */
 export function extractReferencedEvents(event: NostrEvent): string[] {
   return event.tags
@@ -180,7 +277,15 @@ export function extractReferencedEvents(event: NostrEvent): string[] {
 }
 
 /**
- * Extracts mentioned pubkeys from tags
+ * Extracts mentioned pubkeys from an event's tags
+ * @category Event Operations
+ * @param {NostrEvent} event - Event to extract mentions from
+ * @returns {string[]} Array of mentioned pubkeys
+ * @example
+ * ```typescript
+ * const mentions = extractMentionedPubkeys(event);
+ * console.log('Mentioned users:', mentions);
+ * ```
  */
 export function extractMentionedPubkeys(event: NostrEvent): string[] {
   return event.tags
@@ -190,6 +295,15 @@ export function extractMentionedPubkeys(event: NostrEvent): string[] {
 
 /**
  * Creates a subscription filter for a specific event kind
+ * @category Filter Creation
+ * @param {number} kind - Event kind to filter for
+ * @param {number} [limit] - Optional maximum number of events to receive
+ * @returns {NostrFilter} Created filter
+ * @example
+ * ```typescript
+ * // Get last 10 text notes
+ * const filter = createKindFilter(1, 10);
+ * ```
  */
 export function createKindFilter(kind: number, limit?: number): NostrFilter {
   return {
@@ -200,6 +314,16 @@ export function createKindFilter(kind: number, limit?: number): NostrFilter {
 
 /**
  * Creates a subscription filter for events by a specific author
+ * @category Filter Creation
+ * @param {string} pubkey - Author's public key
+ * @param {number[]} [kinds] - Optional array of event kinds to filter
+ * @param {number} [limit] - Optional maximum number of events to receive
+ * @returns {NostrFilter} Created filter
+ * @example
+ * ```typescript
+ * // Get user's last 20 text notes
+ * const filter = createAuthorFilter(pubkey, [1], 20);
+ * ```
  */
 export function createAuthorFilter(pubkey: string, kinds?: number[], limit?: number): NostrFilter {
   return {
@@ -211,11 +335,20 @@ export function createAuthorFilter(pubkey: string, kinds?: number[], limit?: num
 
 /**
  * Creates a subscription filter for replies to a specific event
+ * @category Filter Creation
+ * @param {string} eventId - ID of the event to find replies to
+ * @param {number} [limit] - Optional maximum number of replies to receive
+ * @returns {NostrFilter} Created filter
+ * @example
+ * ```typescript
+ * // Get last 50 replies to an event
+ * const filter = createReplyFilter(eventId, 50);
+ * ```
  */
 export function createReplyFilter(eventId: string, limit?: number): NostrFilter {
   return {
     '#e': [eventId],
-    kinds: [NOSTR_KIND.TEXT_NOTE, NOSTR_KIND.CHANNEL_MESSAGE],
+    kinds: [1, 42],
     limit
   };
 }

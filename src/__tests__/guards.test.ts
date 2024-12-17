@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { isNostrEvent, isSignedNostrEvent } from '../types/guards';
 import { NostrEvent } from '../types';
 

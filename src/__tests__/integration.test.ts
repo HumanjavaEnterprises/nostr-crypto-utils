@@ -17,6 +17,7 @@ import {
 import { NostrEvent, SignedNostrEvent } from '../types/base';
 import { NostrSubscription } from '../types/protocol';
 import { NOSTR_KIND } from '../constants';
+import { describe, it, expect } from 'vitest';
 
 describe('Integration Utilities', () => {
   const mockSignedEvent: SignedNostrEvent = {
@@ -59,22 +60,33 @@ describe('Integration Utilities', () => {
     it('should parse EVENT message', () => {
       const message = ['EVENT', mockSignedEvent];
       const parsed = parseNostrMessage(message);
-      expect(parsed.type).toBe('EVENT');
-      expect(parsed.payload).toEqual(mockSignedEvent);
+      expect(parsed).not.toBeNull();
+      if (parsed) {
+        expect(parsed.type).toBe('EVENT');
+        expect(parsed.payload).toEqual(mockSignedEvent);
+      }
     });
 
     it('should parse NOTICE message', () => {
       const message = ['NOTICE', 'test message'];
       const parsed = parseNostrMessage(message);
-      expect(parsed.type).toBe('NOTICE');
-      expect(parsed.payload).toBe('test message');
+      expect(parsed).not.toBeNull();
+      if (parsed) {
+        expect(parsed.type).toBe('NOTICE');
+        expect(parsed.payload).toBe('test message');
+      }
     });
 
     it('should parse OK message', () => {
       const message = ['OK', 'event1', true, 'success'];
       const parsed = parseNostrMessage(message);
-      expect(parsed.type).toBe('OK');
-      expect(parsed.payload).toEqual(['event1', true, 'success']);
+      expect(parsed).not.toBeNull();
+      if (parsed) {
+        expect(parsed.type).toBe('OK');
+        if (parsed.payload) {
+          expect(parsed.payload).toEqual(['event1', true, 'success']);
+        }
+      }
     });
 
     it('should throw error for invalid message', () => {

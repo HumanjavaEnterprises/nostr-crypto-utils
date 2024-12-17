@@ -1,6 +1,10 @@
+import { describe, it, expect } from 'vitest';
 import { validateEvent, validateSignedEvent, validateFilter, validateSubscription } from '../validation';
 import { NostrEvent, SignedNostrEvent } from '../types/base';
 import { NostrFilter, NostrSubscription } from '../types/protocol';
+import { schnorr } from '@noble/curves/secp256k1';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { sha256 } from '@noble/hashes/sha256';
 
 describe('Validation Functions', () => {
   describe('validateEvent', () => {
@@ -49,17 +53,41 @@ describe('Validation Functions', () => {
 
   describe('validateSignedEvent', () => {
     it('should validate a valid signed event', () => {
-      const event: SignedNostrEvent = {
-        id: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-        sig: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      const event: NostrEvent = {
         kind: 1,
         content: 'Hello, Nostr!',
         created_at: Math.floor(Date.now() / 1000),
-        tags: [],
-        pubkey: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+        tags: []
       };
 
-      const result = validateSignedEvent(event);
+      // Generate a key pair for signing
+      const privateKey = 'a167d456c108caa8d69d5f3288bd8c1283686e75e9aa6162b034de4766d7c797';
+      const publicKey = bytesToHex(schnorr.getPublicKey(hexToBytes(privateKey)));
+
+      // Create a signed event
+      const signedEvent: SignedNostrEvent = {
+        ...event,
+        pubkey: publicKey,
+        id: '', // Will be set after serialization
+        sig: '' // Will be set after signing
+      };
+
+      // Calculate event ID
+      const serializedEvent = JSON.stringify([
+        0,
+        signedEvent.pubkey,
+        signedEvent.created_at,
+        signedEvent.kind,
+        signedEvent.tags,
+        signedEvent.content,
+      ]);
+
+      // Set event ID and signature
+      signedEvent.id = bytesToHex(sha256(new TextEncoder().encode(serializedEvent)));
+      const signature = schnorr.sign(hexToBytes(signedEvent.id), hexToBytes(privateKey));
+      signedEvent.sig = bytesToHex(signature);
+
+      const result = validateSignedEvent(signedEvent);
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });

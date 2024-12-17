@@ -16,3 +16,12 @@ export interface ValidationResult {
     isValid: boolean;
     error?: string;
 }
+export interface NostrFilter {
+    ids?: string[];
+    authors?: string[];
+    kinds?: number[];
+    since?: number;
+    until?: number;
+    limit?: number;
+    [key: `#${string}`]: string[] | undefined;
+}
