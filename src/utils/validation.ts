@@ -1,5 +1,5 @@
-import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent } from './types';
-import { isNostrEvent, isNostrFilter, isNostrSubscription, isSignedNostrEvent } from './types/guards';
+import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent } from '../types';
+import { isNostrEvent, isNostrFilter, isNostrSubscription, isSignedNostrEvent } from '../types/guards';
 import { schnorr } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';

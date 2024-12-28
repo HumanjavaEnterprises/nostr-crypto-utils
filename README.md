@@ -64,7 +64,41 @@ const isValidEvent = await verifyEvent(event);
 
 ## Documentation
 
-For detailed API documentation, visit our [TypeDoc Documentation](https://humanjavaenterprises.github.io/nostr-crypto-utils/).
+This project uses JSDoc for documentation. All public APIs are documented with:
+- Detailed descriptions of functionality
+- Parameter and return type information
+- Usage examples
+- Type information (TypeScript)
+
+You can generate the documentation using:
+
+```bash
+npm run docs
+```
+
+The generated documentation will be available in the `docs` directory.
+
+### Contributing Documentation
+
+When contributing to this project, please ensure:
+
+1. All public APIs have comprehensive JSDoc comments
+2. Include usage examples in the documentation
+3. Keep documentation up to date with code changes
+4. Use TypeScript types in JSDoc annotations
+5. Document error cases and validation rules
+
+### Publishing Checklist
+
+Before publishing to npmjs:
+
+1. [ ] All public APIs are documented with JSDoc
+2. [ ] Documentation is generated and up to date
+3. [ ] README includes installation and basic usage
+4. [ ] CHANGELOG is updated
+5. [ ] Tests are passing
+6. [ ] Types are properly exported
+7. [ ] Package.json is properly configured
 
 ## Support & Community
 
