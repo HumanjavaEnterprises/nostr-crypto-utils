@@ -4,58 +4,50 @@
  * @packageDocumentation
  */
 
-// Export all types
-export * from './types';
-
-// Export crypto functions
+// Export core crypto functions
 export {
   generateKeyPair,
   getPublicKey,
-  validateKeyPair
-} from './crypto/keys';
-
-export {
-  createEvent,
+  validateKeyPair,
   signEvent,
-  verifySignature
-} from './crypto/events';
+  verifySignature,
+  createEvent,
+  encryptMessage,
+  decryptMessage
+} from './crypto';
 
-export {
-  encrypt,
-  decrypt
-} from './crypto/encryption';
-
-// Export validation functions
-export {
-  validateEvent,
-  validateSignedEvent,
-  validateFilter,
-  validateSubscription,
-  validateEventId,
-  validateEventSignature
-} from './validation';
+// Export types
+export type {
+  NostrEvent,
+  SignedNostrEvent,
+  NostrFilter,
+  NostrSubscription,
+  KeyPair,
+  PublicKeyDetails,
+  NostrEventKind,
+  ValidationResult
+} from './types';
 
 // Export protocol functions
-export {
-  createEventMessage,
-  parseNostrMessage
-} from './protocol/transport';
-
-// Export utility functions
 export {
   formatEventForRelay,
   formatSubscriptionForRelay,
   formatCloseForRelay,
-  formatAuthForRelay,
-  extractReferencedEvents,
-  extractMentionedPubkeys,
-  createKindFilter,
-  createAuthorFilter,
-  createReplyFilter
-} from './utils';
+  parseMessage
+} from './protocol';
 
-// Export encoding functions
+// Export validation functions
 export {
-  bytesToHex,
-  hexToBytes
-} from './utils/encoding';
+  validateEvent,
+  validateFilter,
+  validateSubscription,
+  validateSignedEvent
+} from './utils/validation';
+
+// Export event creation utilities
+export {
+  createTextNoteEvent,
+  createMetadataEvent,
+  createChannelMessageEvent,
+  createDirectMessageEvent
+} from './utils/events';

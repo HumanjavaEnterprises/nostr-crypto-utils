@@ -1,113 +1,84 @@
 import { describe, expect, it } from 'vitest';
 import { SignedNostrEvent, NostrMessageType } from '../types/base';
-import { generateKeyPair } from '../crypto/keys';
-import { signEvent } from '../crypto/events';
-import { createEvent } from '../crypto/events';
-import { parseNostrMessage, createEventMessage } from '../protocol/transport';
-import { hexToBytes, bytesToHex } from '../utils/encoding';
-
-// Helper function to compare events with Uint8Array properties
-function compareEvents(actual: SignedNostrEvent, expected: SignedNostrEvent): void {
-  expect(actual.id).toEqual(expected.id);
-  expect(actual.sig).toEqual(expected.sig);
-  expect(actual.kind).toEqual(expected.kind);
-  expect(actual.content).toEqual(expected.content);
-  expect(actual.created_at).toEqual(expected.created_at);
-  expect(actual.tags).toEqual(expected.tags);
-  expect(actual.pubkey.hex).toEqual(expected.pubkey.hex);
-  expect(bytesToHex(actual.pubkey.bytes)).toEqual(bytesToHex(expected.pubkey.bytes));
-}
+import { generateKeyPair } from '../crypto';
+import { signEvent } from '../crypto';
+import { createEvent } from '../crypto';
+import { parseMessage, formatEventForRelay } from '../protocol';
 
 describe('Transport Layer', () => {
   it('should parse EVENT message correctly', (): void => {
     const pubkeyHex = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     const event: SignedNostrEvent = {
-      pubkey: {
-        hex: pubkeyHex,
-        bytes: hexToBytes(pubkeyHex)
-      },
+      pubkey: pubkeyHex,
       created_at: 1234567890,
       kind: 1,
       tags: [],
-      content: 'Hello, world!',
-      id: 'test-id',
-      sig: 'test-sig'
+      content: 'Hello, NOSTR!',
+      id: 'eventid',
+      sig: 'signature'
     };
 
     const message = ['EVENT', event];
-    const [messageType, eventData] = parseNostrMessage(JSON.stringify(message));
+    const parsed = parseMessage(JSON.stringify(message));
 
-    expect(messageType).toBe(NostrMessageType.EVENT);
-    compareEvents(eventData as SignedNostrEvent, event);
+    expect(parsed.type).toBe(NostrMessageType.EVENT);
+    expect(parsed.event).toEqual(event);
   });
 
   it('should parse REQ message correctly', (): void => {
-    const subscriptionId = 'test-sub';
-    const filter = { kinds: [1], limit: 10 };
-    const message = ['REQ', subscriptionId, filter];
-    const [messageType, subId, filterData] = parseNostrMessage(JSON.stringify(message));
+    const message = ['REQ', 'subscription_id', { kinds: [1], limit: 10 }];
+    const parsed = parseMessage(JSON.stringify(message));
 
-    expect(messageType).toBe(NostrMessageType.REQ);
-    expect(subId).toBe(subscriptionId);
-    expect(filterData).toEqual(filter);
+    expect(parsed.type).toBe(NostrMessageType.REQ);
+    expect(parsed.subscriptionId).toBe('subscription_id');
+    expect(parsed.filters).toEqual([{ kinds: [1], limit: 10 }]);
   });
 
   it('should parse CLOSE message correctly', (): void => {
-    const subscriptionId = 'test-sub';
-    const message = ['CLOSE', subscriptionId];
-    const [messageType, subId] = parseNostrMessage(JSON.stringify(message));
+    const message = ['CLOSE', 'subscription_id'];
+    const parsed = parseMessage(JSON.stringify(message));
 
-    expect(messageType).toBe(NostrMessageType.CLOSE);
-    expect(subId).toBe(subscriptionId);
+    expect(parsed.type).toBe(NostrMessageType.CLOSE);
+    expect(parsed.subscriptionId).toBe('subscription_id');
   });
 
   it('should parse OK message correctly', (): void => {
-    const eventId = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
-    const success = true;
-    const message = ['OK', eventId, success, ''];
-    const [messageType, id, isSuccess] = parseNostrMessage(JSON.stringify(message));
+    const message = ['OK', 'event_id', true, 'success'];
+    const parsed = parseMessage(JSON.stringify(message));
 
-    expect(messageType).toBe(NostrMessageType.OK);
-    expect(id).toBe(eventId);
-    expect(isSuccess).toBe(success);
+    expect(parsed.type).toBe(NostrMessageType.OK);
+    expect(parsed.eventId).toBe('event_id');
+    expect(parsed.accepted).toBe(true);
+    expect(parsed.message).toBe('success');
   });
 
   it('should parse EOSE message correctly', (): void => {
-    const subscriptionId = 'test-sub';
-    const message = ['EOSE', subscriptionId];
-    const [messageType, subId] = parseNostrMessage(JSON.stringify(message));
+    const message = ['EOSE', 'subscription_id'];
+    const parsed = parseMessage(JSON.stringify(message));
 
-    expect(messageType).toBe(NostrMessageType.EOSE);
-    expect(subId).toBe(subscriptionId);
+    expect(parsed.type).toBe(NostrMessageType.EOSE);
+    expect(parsed.subscriptionId).toBe('subscription_id');
   });
 
-  it('should handle event publication flow', async (): Promise<void> => {
-    // Generate test keypair
+  it('should handle event publication flow', async () => {
     const keyPair = await generateKeyPair();
-
-    // Create test event
     const event = createEvent({
-      pubkey: keyPair.publicKey,
       kind: 1,
-      content: 'Test message',
-      created_at: Math.floor(Date.now() / 1000)
+      content: 'Hello, NOSTR!',
+      pubkey: keyPair.publicKey.hex
     });
 
-    // Sign the event
     const signedEvent = await signEvent(event, keyPair.privateKey);
+    const message = formatEventForRelay(signedEvent);
+    const parsed = parseMessage(JSON.stringify(message));
 
-    // Validate event before sending
-    expect(signedEvent.id).toBeDefined();
-    expect(signedEvent.sig).toBeDefined();
-
-    // Format event message
-    const message = createEventMessage(signedEvent);
-    expect(message[0]).toBe('EVENT');
-    compareEvents(message[1] as SignedNostrEvent, signedEvent);
-
-    // Parse the message back
-    const [messageType, eventData] = parseNostrMessage(JSON.stringify(message));
-    expect(messageType).toBe(NostrMessageType.EVENT);
-    compareEvents(eventData as SignedNostrEvent, signedEvent);
+    expect(parsed.type).toBe(NostrMessageType.EVENT);
+    expect(parsed.event).toBeDefined();
+    if (!parsed.event) {
+      throw new Error('Event should be defined');
+    }
+    expect(parsed.event.pubkey).toBe(keyPair.publicKey.hex);
+    expect(parsed.event.content).toBe('Hello, NOSTR!');
+    expect(parsed.event.kind).toBe(1);
   });
 });

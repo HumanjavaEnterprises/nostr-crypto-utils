@@ -5,7 +5,6 @@
 
 import { NostrEvent, SignedNostrEvent, NostrEventKind, NostrFilter, NostrSubscription, NostrResponse, NostrMessageType, PublicKey } from '../types/base';
 import { NOSTR_TAG } from './constants';
-import { createPublicKey } from '../crypto/keys';
 
 /**
  * Formats an event for relay transmission according to NIP-01
@@ -49,33 +48,59 @@ export function formatAuthForRelay(event: SignedNostrEvent): [string, SignedNost
 
 /**
  * Parses a Nostr message from a relay
- * @param message - Raw message from relay
- * @returns Parsed response
+ * @category Message Handling
+ * @param {string} message - The message to parse
+ * @returns {NostrResponse} Parsed message
  */
 export function parseMessage(message: string): NostrResponse {
   try {
-    const [type, ...payload] = JSON.parse(message);
-    
+    const parsed = JSON.parse(message);
+    if (!Array.isArray(parsed) || parsed.length < 2) {
+      throw new Error('Invalid message format');
+    }
+
+    const [type, ...payload] = parsed;
+
     switch (type) {
       case 'EVENT':
-        return { success: true, messageType: NostrMessageType.EVENT, payload: payload[0] };
-      case 'NOTICE':
-        return { success: true, messageType: NostrMessageType.NOTICE, payload: payload[0] };
+        return {
+          type: NostrMessageType.EVENT,
+          event: payload[0]
+        };
+
+      case 'REQ':
+        return {
+          type: NostrMessageType.REQ,
+          subscriptionId: payload[0],
+          filters: payload.slice(1)
+        };
+
+      case 'CLOSE':
+        return {
+          type: NostrMessageType.CLOSE,
+          subscriptionId: payload[0]
+        };
+
       case 'OK':
-        return { success: true, messageType: NostrMessageType.OK, payload };
+        return {
+          type: NostrMessageType.OK,
+          eventId: payload[0],
+          accepted: payload[1],
+          message: payload[2]
+        };
+
       case 'EOSE':
-        return { success: true, messageType: NostrMessageType.EOSE, payload: payload[0] };
-      case 'AUTH':
-        return { success: true, messageType: NostrMessageType.AUTH, payload: payload[0] };
+        return {
+          type: NostrMessageType.EOSE,
+          subscriptionId: payload[0]
+        };
+
       default:
-        return { success: false, messageType: NostrMessageType.ERROR, message: 'Unknown message type' };
+        throw new Error(`Unknown message type: ${type}`);
     }
-  } catch (error) {
-    return { 
-      success: false, 
-      messageType: NostrMessageType.ERROR,
-      message: 'Failed to parse message: ' + (error instanceof Error ? error.message : String(error))
-    };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to parse message: ${errorMessage}`);
   }
 }
 
@@ -87,12 +112,13 @@ export function parseMessage(message: string): NostrResponse {
  * @returns {NostrEvent} Created metadata event
  */
 export function createMetadataEvent(metadata: Record<string, string>, pubkey: string | PublicKey): NostrEvent {
+  const pubkeyValue = typeof pubkey === 'string' ? pubkey : pubkey.hex;
   return {
     kind: NostrEventKind.SET_METADATA,
     content: JSON.stringify(metadata),
     created_at: Math.floor(Date.now() / 1000),
     tags: [],
-    pubkey: typeof pubkey === 'string' ? createPublicKey(pubkey) : pubkey
+    pubkey: pubkeyValue
   };
 }
 
@@ -111,6 +137,7 @@ export function createTextNoteEvent(
   replyTo?: string,
   mentions?: string[]
 ): NostrEvent {
+  const pubkeyValue = typeof pubkey === 'string' ? pubkey : pubkey.hex;
   const tags: string[][] = [];
   
   if (replyTo) {
@@ -128,7 +155,7 @@ export function createTextNoteEvent(
     content,
     created_at: Math.floor(Date.now() / 1000),
     tags,
-    pubkey: typeof pubkey === 'string' ? createPublicKey(pubkey) : pubkey
+    pubkey: pubkeyValue
   };
 }
 
@@ -145,12 +172,15 @@ export function createDirectMessageEvent(
   content: string,
   senderPubkey: string | PublicKey
 ): NostrEvent {
+  const recipientKey = typeof recipientPubkey === 'string' ? recipientPubkey : recipientPubkey.hex;
+  const senderKey = typeof senderPubkey === 'string' ? senderPubkey : senderPubkey.hex;
+  
   return {
     kind: NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
     content,
     created_at: Math.floor(Date.now() / 1000),
-    tags: [['p', typeof recipientPubkey === 'string' ? recipientPubkey : recipientPubkey.hex]],
-    pubkey: typeof senderPubkey === 'string' ? createPublicKey(senderPubkey) : senderPubkey
+    tags: [['p', recipientKey]],
+    pubkey: senderKey
   };
 }
 
@@ -169,6 +199,7 @@ export function createChannelMessageEvent(
   authorPubkey: string | PublicKey,
   replyTo?: string
 ): NostrEvent {
+  const pubkeyValue = typeof authorPubkey === 'string' ? authorPubkey : authorPubkey.hex;
   const tags = [['e', channelId, '', 'root']];
   if (replyTo) {
     tags.push(['e', replyTo, '', 'reply']);
@@ -178,7 +209,7 @@ export function createChannelMessageEvent(
     content,
     created_at: Math.floor(Date.now() / 1000),
     tags,
-    pubkey: typeof authorPubkey === 'string' ? createPublicKey(authorPubkey) : authorPubkey
+    pubkey: pubkeyValue
   };
 }
 

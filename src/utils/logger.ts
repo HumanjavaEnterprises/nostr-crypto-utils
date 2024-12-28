@@ -8,7 +8,7 @@ import pino from 'pino';
 /**
  * Create a logger instance
  */
-export function createLogger(name: string, _options?: Record<string, unknown>): any {
+export function createLogger(name: string, _options?: unknown): pino.Logger {
   return pino({
     name,
     level: process.env.LOG_LEVEL || 'info',
@@ -35,4 +35,26 @@ export function log(message: string, data?: unknown): void {
 }
 
 // Export a default logger instance
-export const logger = createLogger('default');
+/**
+ * Logger instance for the application
+ */
+export const logger: pino.Logger = pino({
+  name: 'default',
+  level: 'info',
+  formatters: {
+    log: (obj: Record<string, unknown>) => {
+      // Convert error objects to strings for better logging
+      if (obj && typeof obj === 'object' && 'err' in obj) {
+        const newObj = { ...obj };
+        if (newObj.err instanceof Error) {
+          newObj.err = newObj.err.message;
+        }
+        return newObj as Record<string, unknown>;
+      }
+      return obj;
+    }
+  }
+});
+
+// Re-export the Logger type for use in other files
+export type { Logger } from 'pino';

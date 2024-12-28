@@ -7,7 +7,7 @@
 import * as secp256k1 from '@noble/secp256k1';
 import { webcrypto } from 'node:crypto';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
-import { logger } from '../utils';
+import { logger } from '../utils/logger';
 
 // Configure crypto for Node.js and test environments
 interface CryptoImplementation {
@@ -96,7 +96,7 @@ export async function encrypt(
     
     return { content: bytesToHex(combined), iv: bytesToHex(iv) };
   } catch (error) {
-    logger.error('Failed to encrypt message:', error);
+    logger.error({ error }, 'Failed to encrypt message');
     throw error;
   }
 }
@@ -135,7 +135,7 @@ export async function decrypt(
     
     return { content: new TextDecoder().decode(decrypted) };
   } catch (error) {
-    logger.error('Failed to decrypt message:', error);
+    logger.error({ error }, 'Failed to decrypt message');
     throw error;
   }
 }
@@ -153,7 +153,7 @@ export function getSharedSecret(
   try {
     return { sharedSecret: secp256k1.getSharedSecret(privateKey, '02' + publicKey).slice(1) };
   } catch (error) {
-    logger.error('Failed to generate shared secret:', error);
+    logger.error({ error }, 'Failed to generate shared secret');
     throw error;
   }
 }

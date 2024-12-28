@@ -1,12 +1,19 @@
 /**
  * @module types/base
- * @description Base types for Nostr
+ * @description Core type definitions for Nostr protocol
  */
 
 /**
- * Represents a public key
+ * Represents a public key in hex format
+ * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
-export interface PublicKey {
+export type PublicKeyHex = string;
+
+/**
+ * Represents a public key with additional formats
+ * @see https://github.com/nostr-protocol/nips/blob/master/01.md
+ */
+export interface PublicKeyDetails {
   /** Public key in hex format (33 bytes compressed) */
   hex: string;
   /** Public key in bytes format (33 bytes compressed) */
@@ -18,63 +25,58 @@ export interface PublicKey {
 }
 
 /**
+ * Public key can be either a hex string or a detailed object
+ */
+export type PublicKey = PublicKeyHex | PublicKeyDetails;
+
+/**
  * Represents a key pair used for signing and encryption
+ * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface KeyPair {
-  /** Private key in hex format */
   privateKey: string;
-  /** Public key */
-  publicKey: PublicKey;
+  publicKey: PublicKeyDetails;
 }
 
 /**
  * Enum defining all possible Nostr event kinds as specified in various NIPs
+ * @see https://github.com/nostr-protocol/nips
  */
 export enum NostrEventKind {
-  /** NIP-01: Set metadata about the user who created the event */
   SET_METADATA = 0,
-  /** NIP-01: Plain text note */
   TEXT_NOTE = 1,
-  /** NIP-01: Recommend relay to followers */
   RECOMMEND_SERVER = 2,
-  /** NIP-01: List of followed pubkeys and relays */
   CONTACTS = 3,
-  /** NIP-04: Encrypted direct message */
   ENCRYPTED_DIRECT_MESSAGE = 4,
-  /** NIP-09: Event deletion */
   EVENT_DELETION = 5,
-  /** NIP-25: Reactions */
   REACTION = 7,
-  /** NIP-28: Channel creation */
   CHANNEL_CREATE = 40,
-  /** NIP-28: Channel metadata */
   CHANNEL_METADATA = 41,
-  /** NIP-28: Channel message */
   CHANNEL_MESSAGE = 42,
-  /** NIP-28: Hide message in channel */
-  CHANNEL_HIDE = 43,
-  /** NIP-28: Mute user in channel */
-  CHANNEL_MUTE = 44
+  CHANNEL_HIDE_MESSAGE = 43,
+  CHANNEL_MUTE_USER = 44,
+  AUTH = 22242,
+  AUTH_RESPONSE = 22243
 }
 
 /**
  * Basic Nostr event interface
+ * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface NostrEvent {
   kind: NostrEventKind;
   content: string;
   tags: string[][];
   created_at: number;
-  pubkey: PublicKey;
+  pubkey: string;
 }
 
 /**
  * Signed Nostr event interface
+ * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface SignedNostrEvent extends NostrEvent {
-  /** Event ID (hex) */
   id: string;
-  /** Signature (hex) */
   sig: string;
 }
 
@@ -82,40 +84,40 @@ export interface SignedNostrEvent extends NostrEvent {
  * Result of a validation operation
  */
 export interface ValidationResult {
-  /** Whether the validation passed */
   isValid: boolean;
-  /** Error message if validation failed */
   error?: string;
 }
 
 /**
  * Filter for Nostr events
+ * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface NostrFilter {
-  /** Event IDs to match */
+  /** Filter by event IDs */
   ids?: string[];
-  /** Author public keys to match */
-  authors?: string[] | PublicKey[];
-  /** Event kinds to match */
+  /** Filter by author public keys */
+  authors?: string[];
+  /** Filter by event kinds */
   kinds?: NostrEventKind[];
-  /** Events after timestamp */
+  /** Filter by start timestamp */
   since?: number;
-  /** Events before timestamp */
+  /** Filter by end timestamp */
   until?: number;
-  /** Maximum number of events */
+  /** Limit number of results */
   limit?: number;
-  /** Event references to match */
+  /** Filter by event references */
   '#e'?: string[];
-  /** Pubkey references to match */
-  '#p'?: string[] | PublicKey[];
-  /** Tag references to match */
-  '#t'?: string[];
-  /** Search string */
+  /** Filter by pubkey references */
+  '#p'?: string[];
+  /** Filter by arbitrary tag */
+  [key: `#${string}`]: string[] | undefined;
+  /** Full-text search query */
   search?: string;
 }
 
 /**
  * Subscription for Nostr events
+ * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface NostrSubscription {
   id: string;
@@ -123,15 +125,8 @@ export interface NostrSubscription {
 }
 
 /**
- * Nostr message
- */
-export interface NostrMessage {
-  type: NostrMessageType;
-  payload: unknown;
-}
-
-/**
- * Enum defining all possible Nostr message types
+ * Nostr message types for client-relay communication
+ * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export enum NostrMessageType {
   EVENT = 'EVENT',
@@ -141,24 +136,44 @@ export enum NostrMessageType {
   EOSE = 'EOSE',
   OK = 'OK',
   AUTH = 'AUTH',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
+  COUNT = 'COUNT'
 }
 
 /**
- * Nostr response
+ * Nostr message interface
+ */
+export interface NostrMessage {
+  type: NostrMessageType;
+  payload: unknown;
+}
+
+/**
+ * Nostr response interface
  */
 export interface NostrResponse {
-  success: boolean;
+  type: NostrMessageType;
+  event?: SignedNostrEvent;
+  subscriptionId?: string;
+  filters?: NostrFilter[];
+  eventId?: string;
+  accepted?: boolean;
   message?: string;
-  messageType: NostrMessageType;
-  payload?: unknown;
 }
 
 /**
- * Nostr error
+ * Nostr error interface
  */
 export interface NostrError {
   code: string;
   message: string;
   details?: Record<string, unknown>;
+}
+
+/**
+ * Encryption result interface
+ */
+export interface EncryptionResult {
+  ciphertext: string;
+  iv: string;
 }

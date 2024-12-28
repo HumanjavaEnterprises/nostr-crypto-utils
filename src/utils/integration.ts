@@ -1,68 +1,94 @@
-import { NostrEvent, SignedNostrEvent, NostrFilter, NostrEventKind } from '../types/base';
-import { NostrMessage, NostrMessageType } from '../types/messages';
-import { createPublicKey } from '../crypto/keys';
+import { NostrEvent, NostrFilter, NostrEventKind, SignedNostrEvent } from '../types/base';
+import { NostrMessage, NostrMessageTuple, NostrMessageType } from '../types/messages';
+import { logger } from './logger';
 
 /**
  * Format event for relay transmission
  */
-export function formatEventForRelay(event: SignedNostrEvent): NostrMessage {
+export function formatEventForRelay(event: SignedNostrEvent): NostrMessageTuple {
   return ['EVENT', event];
 }
 
 /**
  * Format subscription for relay transmission
  */
-export function formatSubscriptionForRelay(subscription: { id: string; filters: NostrFilter[] }): NostrMessage {
+export function formatSubscriptionForRelay(subscription: { id: string; filters: NostrFilter[] }): NostrMessageTuple {
   return ['REQ', subscription.id, ...subscription.filters];
 }
 
 /**
  * Format close message for relay transmission
  */
-export function formatCloseForRelay(subscriptionId: string): NostrMessage {
+export function formatCloseForRelay(subscriptionId: string): NostrMessageTuple {
   return ['CLOSE', subscriptionId];
 }
 
 /**
  * Format auth message for relay transmission
  */
-export function formatAuthForRelay(event: SignedNostrEvent): NostrMessage {
+export function formatAuthForRelay(event: SignedNostrEvent): NostrMessageTuple {
   return ['AUTH', event];
 }
 
 /**
  * Parse a message from a relay
  */
-export function parseNostrMessage(message: any): { type: NostrMessageType; payload: any } | null {
-  // Validate message format
-  if (!Array.isArray(message)) {
-    throw new Error('Invalid relay message: not an array');
-  }
-  if (message.length === 0) {
-    throw new Error('Invalid relay message: empty array');
-  }
-  if (typeof message[0] !== 'string') {
-    throw new Error('Invalid relay message: first element not a string');
-  }
+export function parseNostrMessage(message: string | unknown[]): NostrMessage {
+  try {
+    // Handle array input
+    if (Array.isArray(message)) {
+      if (!message.length || typeof message[0] !== 'string') {
+        throw new Error('Invalid relay message: first element not a string');
+      }
+      const [type, ...payload] = message;
+      if (!['EVENT', 'NOTICE', 'OK', 'EOSE', 'REQ', 'CLOSE', 'AUTH'].includes(type)) {
+        throw new Error(`Unknown message type: ${type}`);
+      }
+      return {
+        type: type as NostrMessageType,
+        payload: payload.length === 1 ? payload[0] : payload
+      };
+    }
 
-  const messageType = message[0] as NostrMessageType;
-  switch (messageType) {
-    case 'EVENT':
-      return { type: 'EVENT', payload: message[1] };
-    case 'NOTICE':
-      return { type: 'NOTICE', payload: message[1] };
-    case 'OK':
-      return { type: 'OK', payload: message.slice(1) };
-    case 'EOSE':
-      return { type: 'EOSE', payload: message[1] };
-    case 'REQ':
-      return { type: 'REQ', payload: { id: message[1], filters: message.slice(2) } };
-    case 'CLOSE':
-      return { type: 'CLOSE', payload: message[1] };
-    case 'AUTH':
-      return { type: 'AUTH', payload: message[1] };
-    default:
-      throw new Error('Unknown message type: ' + messageType);
+    // Handle string input
+    if (typeof message === 'string') {
+      // Try parsing as JSON first
+      try {
+        const parsed = JSON.parse(message);
+        if (!Array.isArray(parsed) || !parsed.length || typeof parsed[0] !== 'string') {
+          throw new Error('Invalid relay message: first element not a string');
+        }
+        const [type, ...payload] = parsed;
+        if (!['EVENT', 'NOTICE', 'OK', 'EOSE', 'REQ', 'CLOSE', 'AUTH'].includes(type)) {
+          throw new Error(`Unknown message type: ${type}`);
+        }
+        return {
+          type: type as NostrMessageType,
+          payload: payload.length === 1 ? payload[0] : payload
+        };
+      } catch (jsonError) {
+        // If JSON parsing fails, try comma-separated format
+        if (message.includes(',')) {
+          const [type, ...payload] = message.split(',');
+          if (!type) {
+            throw new Error('Invalid relay message: empty command');
+          }
+          if (!['EVENT', 'NOTICE', 'OK', 'EOSE', 'REQ', 'CLOSE', 'AUTH'].includes(type)) {
+            throw new Error(`Unknown message type: ${type}`);
+          }
+          return {
+            type: type as NostrMessageType,
+            payload: payload.length === 1 ? payload[0] : payload
+          };
+        }
+        throw new Error('Invalid relay message: not an array');
+      }
+    }
+
+    throw new Error('Invalid relay message: not a string or array');
+  } catch (error) {
+    logger.error('Failed to parse message:', error);
+    throw error;
   }
 }
 
@@ -75,7 +101,7 @@ export function createMetadataEvent(metadata: Record<string, string>): NostrEven
     content: JSON.stringify(metadata),
     tags: [],
     created_at: Math.floor(Date.now() / 1000),
-    pubkey: createPublicKey('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef') // Placeholder, to be set by caller
+    pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' // Placeholder hex pubkey
   };
 }
 
@@ -102,7 +128,7 @@ export function createTextNoteEvent(content: string, replyTo?: string, mentions?
     content,
     tags,
     created_at: Math.floor(Date.now() / 1000),
-    pubkey: createPublicKey('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef') // Placeholder, to be set by caller
+    pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' // Placeholder hex pubkey
   };
 }
 
@@ -115,7 +141,7 @@ export function createDirectMessageEvent(recipientPubkey: string, content: strin
     content,
     tags: [['p', recipientPubkey]],
     created_at: Math.floor(Date.now() / 1000),
-    pubkey: createPublicKey('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef') // Placeholder, to be set by caller
+    pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' // Placeholder hex pubkey
   };
 }
 
@@ -123,10 +149,7 @@ export function createDirectMessageEvent(recipientPubkey: string, content: strin
  * Create a channel message event
  */
 export function createChannelMessageEvent(channelId: string, content: string, replyTo?: string): NostrEvent {
-  const tags: string[][] = [
-    ['e', channelId, '', 'root']
-  ];
-
+  const tags = [['e', channelId, '', 'root']];
   if (replyTo) {
     tags.push(['e', replyTo, '', 'reply']);
   }
@@ -136,16 +159,23 @@ export function createChannelMessageEvent(channelId: string, content: string, re
     content,
     tags,
     created_at: Math.floor(Date.now() / 1000),
-    pubkey: createPublicKey('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef') // Placeholder, to be set by caller
+    pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' // Placeholder hex pubkey
   };
 }
 
 /**
- * Extract referenced event IDs from an event
+ * Extract referenced events from tags
  */
-export function extractReferencedEvents(event: NostrEvent): string[] {
-  return event.tags
-    .filter(tag => tag[0] === 'e')
+export function extractReferencedEvents(event: unknown): unknown[] {
+  if (typeof event !== 'object' || event === null || !Array.isArray((event as Record<string, unknown>).tags)) {
+    return [];
+  }
+
+  const validEvent = event as Record<string, unknown>;
+  const tags = validEvent.tags as unknown[][];
+
+  return tags
+    .filter(tag => Array.isArray(tag) && tag[0] === 'e' && typeof tag[1] === 'string')
     .map(tag => tag[1]);
 }
 
@@ -196,10 +226,10 @@ export function createReplyFilter(eventId: string, limit?: number): NostrFilter 
 export function createMockTextNote(content?: string): NostrEvent {
   return {
     kind: NostrEventKind.TEXT_NOTE,
+    content: content || 'Mock text note',
+    tags: [],
     created_at: Math.floor(Date.now() / 1000),
-    content: content || 'Test note',
-    pubkey: createPublicKey('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
-    tags: []
+    pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
   };
 }
 
@@ -209,10 +239,10 @@ export function createMockTextNote(content?: string): NostrEvent {
 export function createMockMetadataEvent(metadata?: Record<string, string>): NostrEvent {
   return {
     kind: NostrEventKind.SET_METADATA,
+    content: JSON.stringify(metadata || { name: 'Mock User' }),
+    tags: [],
     created_at: Math.floor(Date.now() / 1000),
-    content: JSON.stringify(metadata || { name: 'Test User' }),
-    pubkey: createPublicKey('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
-    tags: []
+    pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
   };
 }
 
@@ -222,10 +252,10 @@ export function createMockMetadataEvent(metadata?: Record<string, string>): Nost
 export function createMockDirectMessage(content?: string): NostrEvent {
   return {
     kind: NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
+    content: content || 'Mock DM',
+    tags: [['p', '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef']],
     created_at: Math.floor(Date.now() / 1000),
-    content: content || 'Test message',
-    pubkey: createPublicKey('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
-    tags: [['p', 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210']]
+    pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
   };
 }
 
@@ -235,9 +265,9 @@ export function createMockDirectMessage(content?: string): NostrEvent {
 export function createMockChannelMessage(content?: string): NostrEvent {
   return {
     kind: NostrEventKind.CHANNEL_MESSAGE,
+    content: content || 'Mock channel message',
+    tags: [['e', '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', '', 'root']],
     created_at: Math.floor(Date.now() / 1000),
-    content: content || 'Test channel message',
-    pubkey: createPublicKey('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
-    tags: [['e', 'fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210']]
+    pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
   };
 }

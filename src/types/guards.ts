@@ -3,35 +3,54 @@
  * @description Type guard functions for Nostr types
  */
 
-import {
-  NostrEvent,
-  NostrFilter,
-  NostrSubscription,
-  NostrMessageType,
-  SignedNostrEvent,
-  NostrResponse,
-  NostrError,
-} from './base';
+import { NostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, NostrResponse, NostrError } from './base';
 
 /**
  * Type guard for NostrEvent
  */
-export function isNostrEvent(event: any): event is NostrEvent {
+export function isNostrEvent(event: unknown): event is NostrEvent {
   if (typeof event !== 'object' || event === null) {
     return false;
   }
 
-  // Required fields
-  if (typeof event.kind !== 'number') return false;
-  if (!Array.isArray(event.tags)) return false;
-  if (typeof event.content !== 'string') return false;
+  const validEvent = event as Record<string, unknown>;
 
-  // Optional fields
-  if (event.pubkey !== undefined && typeof event.pubkey !== 'string') return false;
-  if (event.created_at !== undefined && typeof event.created_at !== 'number') return false;
+  // Required fields
+  if (typeof validEvent.kind !== 'number' || !Number.isInteger(validEvent.kind) || validEvent.kind < 0) {
+    return false;
+  }
+
+  if (typeof validEvent.content !== 'string') {
+    return false;
+  }
+
+  if (typeof validEvent.created_at !== 'number' || !Number.isInteger(validEvent.created_at)) {
+    return false;
+  }
+
+  // Check pubkey structure
+  if (validEvent.pubkey !== undefined) {
+    if (typeof validEvent.pubkey === 'string') {
+      if (!validEvent.pubkey) {
+        return false;
+      }
+    } else if (typeof validEvent.pubkey === 'object' && validEvent.pubkey !== null) {
+      const pubkey = validEvent.pubkey as Record<string, unknown>;
+      if (typeof pubkey.hex !== 'string' || !pubkey.hex) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  // Check tags array
+  if (!Array.isArray(validEvent.tags)) {
+    return false;
+  }
 
   // Check tag array elements
-  if (!event.tags.every((tag: any) => Array.isArray(tag) && tag.every((item: any) => typeof item === 'string'))) {
+  if (!validEvent.tags.every(tag => Array.isArray(tag) && tag.every(item => typeof item === 'string'))) {
     return false;
   }
 
@@ -41,35 +60,39 @@ export function isNostrEvent(event: any): event is NostrEvent {
 /**
  * Type guard for SignedNostrEvent
  */
-export function isSignedNostrEvent(event: any): event is SignedNostrEvent {
-  // Check basic object validity
-  if (typeof event !== 'object' || event === null) {
+export function isSignedNostrEvent(event: unknown): event is SignedNostrEvent {
+  if (!event || typeof event !== 'object') {
     return false;
   }
 
-  // Check required fields for signed events first
-  if (typeof event.id !== 'string' || event.id.length === 0) return false;
-  if (typeof event.sig !== 'string' || event.sig.length === 0) return false;
-  
-  // Check pubkey - can be either string or PublicKey object
-  if (typeof event.pubkey === 'string') {
-    if (event.pubkey.length === 0) return false;
-  } else if (typeof event.pubkey === 'object' && event.pubkey !== null) {
-    if (typeof event.pubkey.hex !== 'string' || event.pubkey.hex.length === 0) return false;
-    if (!(event.pubkey.bytes instanceof Uint8Array)) return false;
+  const signedEvent = event as Record<string, unknown>;
+
+  // Check required fields from NostrEvent
+  if (!isNostrEvent(event)) {
+    return false;
+  }
+
+  // Check pubkey is present and valid
+  if (typeof signedEvent.pubkey === 'string') {
+    if (!signedEvent.pubkey) {
+      return false;
+    }
+  } else if (typeof signedEvent.pubkey === 'object' && signedEvent.pubkey !== null) {
+    const pubkey = signedEvent.pubkey as Record<string, unknown>;
+    if (typeof pubkey.hex !== 'string' || !pubkey.hex) {
+      return false;
+    }
   } else {
     return false;
   }
 
-  if (typeof event.created_at !== 'number') return false;
+  // Check id field
+  if (typeof signedEvent.id !== 'string' || !signedEvent.id) {
+    return false;
+  }
 
-  // Then check NostrEvent fields
-  if (typeof event.kind !== 'number') return false;
-  if (!Array.isArray(event.tags)) return false;
-  if (typeof event.content !== 'string') return false;
-
-  // Check tag array elements
-  if (!event.tags.every((tag: any) => Array.isArray(tag) && tag.every((item: any) => typeof item === 'string'))) {
+  // Check sig field
+  if (typeof signedEvent.sig !== 'string' || !signedEvent.sig) {
     return false;
   }
 
@@ -79,13 +102,14 @@ export function isSignedNostrEvent(event: any): event is SignedNostrEvent {
 /**
  * Type guard for NostrFilter
  */
-export function isNostrFilter(filter: any): filter is NostrFilter {
+export function isNostrFilter(filter: unknown): filter is NostrFilter {
   if (typeof filter !== 'object' || filter === null) {
     return false;
   }
 
+  const validFilter = filter as Record<string, unknown>;
   const validKeys = ['ids', 'authors', 'kinds', 'since', 'until', 'limit', '#e', '#p', '#t'];
-  const filterKeys = Object.keys(filter);
+  const filterKeys = Object.keys(validFilter);
 
   // Check if all keys in the filter are valid
   if (!filterKeys.every(key => validKeys.includes(key))) {
@@ -93,29 +117,29 @@ export function isNostrFilter(filter: any): filter is NostrFilter {
   }
 
   // Validate array fields
-  if (filter.ids !== undefined && (!Array.isArray(filter.ids) || !filter.ids.every((id: any) => typeof id === 'string'))) {
+  if (validFilter.ids !== undefined && (!Array.isArray(validFilter.ids) || !validFilter.ids.every(id => typeof id === 'string'))) {
     return false;
   }
-  if (filter.authors !== undefined && (!Array.isArray(filter.authors) || !filter.authors.every((author: any) => typeof author === 'string'))) {
+  if (validFilter.authors !== undefined && (!Array.isArray(validFilter.authors) || !validFilter.authors.every(author => typeof author === 'string'))) {
     return false;
   }
-  if (filter.kinds !== undefined && (!Array.isArray(filter.kinds) || !filter.kinds.every((kind: any) => typeof kind === 'number'))) {
+  if (validFilter.kinds !== undefined && (!Array.isArray(validFilter.kinds) || !validFilter.kinds.every(kind => typeof kind === 'number' && Number.isInteger(kind) && kind >= 0))) {
     return false;
   }
-  if (filter['#e'] !== undefined && (!Array.isArray(filter['#e']) || !filter['#e'].every((e: any) => typeof e === 'string'))) {
+  if (validFilter['#e'] !== undefined && (!Array.isArray(validFilter['#e']) || !validFilter['#e'].every(e => typeof e === 'string'))) {
     return false;
   }
-  if (filter['#p'] !== undefined && (!Array.isArray(filter['#p']) || !filter['#p'].every((p: any) => typeof p === 'string'))) {
+  if (validFilter['#p'] !== undefined && (!Array.isArray(validFilter['#p']) || !validFilter['#p'].every(p => typeof p === 'string'))) {
     return false;
   }
-  if (filter['#t'] !== undefined && (!Array.isArray(filter['#t']) || !filter['#t'].every((t: any) => typeof t === 'string'))) {
+  if (validFilter['#t'] !== undefined && (!Array.isArray(validFilter['#t']) || !validFilter['#t'].every(t => typeof t === 'string'))) {
     return false;
   }
 
   // Validate number fields
-  if (filter.since !== undefined && typeof filter.since !== 'number') return false;
-  if (filter.until !== undefined && typeof filter.until !== 'number') return false;
-  if (filter.limit !== undefined && typeof filter.limit !== 'number') return false;
+  if (validFilter.since !== undefined && typeof validFilter.since !== 'number') return false;
+  if (validFilter.until !== undefined && typeof validFilter.until !== 'number') return false;
+  if (validFilter.limit !== undefined && typeof validFilter.limit !== 'number') return false;
 
   return true;
 }
@@ -123,39 +147,69 @@ export function isNostrFilter(filter: any): filter is NostrFilter {
 /**
  * Type guard for NostrSubscription
  */
-export function isNostrSubscription(sub: any): sub is NostrSubscription {
-  return (
-    typeof sub === 'object' &&
-    sub !== null &&
-    typeof sub.id === 'string' &&
-    Array.isArray(sub.filters) &&
-    sub.filters.every((filter: any) => isNostrFilter(filter))
-  );
+export function isNostrSubscription(sub: unknown): sub is NostrSubscription {
+  if (typeof sub !== 'object' || sub === null) {
+    return false;
+  }
+
+  const validSub = sub as Record<string, unknown>;
+
+  if (typeof validSub.id !== 'string') {
+    return false;
+  }
+
+  if (!Array.isArray(validSub.filters)) {
+    return false;
+  }
+
+  if (!validSub.filters.every(filter => isNostrFilter(filter))) {
+    return false;
+  }
+
+  return true;
 }
 
 /**
  * Type guard for NostrResponse
  */
-export function isNostrResponse(response: any): response is NostrResponse {
-  return (
-    typeof response === 'object' &&
-    response !== null &&
-    typeof response.type === 'string' &&
-    Object.values(NostrMessageType).includes(response.type as NostrMessageType) &&
-    (response.subscriptionId === undefined || typeof response.subscriptionId === 'string') &&
-    (response.event === undefined || isSignedNostrEvent(response.event)) &&
-    (response.message === undefined || typeof response.message === 'string')
-  );
+export function isNostrResponse(response: unknown): response is NostrResponse {
+  if (typeof response !== 'object' || response === null) {
+    return false;
+  }
+
+  const validResponse = response as Record<string, unknown>;
+
+  if (typeof validResponse.type !== 'string') {
+    return false;
+  }
+
+  if (validResponse.subscriptionId !== undefined && typeof validResponse.subscriptionId !== 'string') {
+    return false;
+  }
+
+  if (validResponse.event !== undefined && !isSignedNostrEvent(validResponse.event)) {
+    return false;
+  }
+
+  if (validResponse.message !== undefined && typeof validResponse.message !== 'string') {
+    return false;
+  }
+
+  return true;
 }
 
 /**
  * Type guard for NostrError
  */
-export function isNostrError(error: any): error is NostrError {
+export function isNostrError(error: unknown): error is NostrError {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const validError = error as Record<string, unknown>;
+
   return (
-    typeof error === 'object' &&
-    error !== null &&
-    error.type === NostrMessageType.NOTICE &&
-    typeof error.message === 'string'
+    typeof validError.type === 'string' &&
+    typeof validError.message === 'string'
   );
 }

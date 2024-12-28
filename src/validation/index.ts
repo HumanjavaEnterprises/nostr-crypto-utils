@@ -7,9 +7,17 @@
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/curves/abstract/utils';
 import { schnorr } from '@noble/curves/secp256k1';
-import type { NostrEvent, SignedNostrEvent, ValidationResult } from '../types/base';
+import type { NostrEvent, SignedNostrEvent, ValidationResult, PublicKey } from '../types/base';
 import type { NostrFilter, NostrSubscription } from '../types/protocol';
-import { logger } from '../utils';
+import { createPublicKey } from '../crypto/keys';
+import { logger } from '../utils/logger';
+
+/**
+ * Gets the hex string from a PublicKey
+ */
+function getPublicKeyHex(pubkey: PublicKey): string {
+  return typeof pubkey === 'string' ? pubkey : pubkey.hex;
+}
 
 /**
  * Validates a Nostr event ID by checking if it matches the SHA-256 hash of the canonical event serialization.
@@ -28,7 +36,7 @@ export function validateEventId(event: SignedNostrEvent): ValidationResult {
   try {
     const serialized = JSON.stringify([
       0,
-      event.pubkey.hex,  // Use hex representation for pubkey
+      getPublicKeyHex(event.pubkey),
       event.created_at,
       event.kind,
       event.tags,
@@ -40,7 +48,7 @@ export function validateEventId(event: SignedNostrEvent): ValidationResult {
       error: hash === event.id ? undefined : 'Invalid event ID'
     };
   } catch (error) {
-    logger.error('Failed to validate event ID:', error);
+    logger.error({ error }, 'Failed to validate event ID');
     return {
       isValid: false,
       error: 'Failed to validate event ID'
@@ -63,24 +71,27 @@ export function validateEventId(event: SignedNostrEvent): ValidationResult {
  */
 export function validateEventSignature(event: SignedNostrEvent): ValidationResult {
   try {
+    // Convert pubkey to PublicKeyDetails if it's a string
+    const pubkeyObj = typeof event.pubkey === 'string' ? createPublicKey(event.pubkey) : event.pubkey;
+
     // Verify the signature
     const serialized = JSON.stringify([
       0,
-      event.pubkey.hex,  // Use hex representation for pubkey
+      getPublicKeyHex(event.pubkey),
       event.created_at,
       event.kind,
       event.tags,
       event.content
     ]);
     const hash = sha256(new TextEncoder().encode(serialized));
-    const isValid = schnorr.verify(event.sig, hash, event.pubkey.hex);  // Use hex representation for pubkey
+    const isValid = schnorr.verify(event.sig, hash, pubkeyObj.schnorrBytes);
     
     return {
       isValid,
       error: isValid ? undefined : 'Invalid signature'
     };
   } catch (error) {
-    logger.error('Failed to validate event signature:', error);
+    logger.error({ error }, 'Failed to validate event signature');
     return {
       isValid: false,
       error: 'Failed to validate event signature'
@@ -139,8 +150,11 @@ export function validateSignedEvent(event: SignedNostrEvent): ValidationResult {
       return baseValidation;
     }
 
+    // Get pubkey hex
+    const pubkeyHex = getPublicKeyHex(event.pubkey);
+
     // Validate pubkey format
-    if (!event.pubkey || !event.pubkey.hex || typeof event.pubkey.hex !== 'string' || event.pubkey.hex.length !== 64) {
+    if (!pubkeyHex || typeof pubkeyHex !== 'string' || pubkeyHex.length !== 64) {
       return {
         isValid: false,
         error: 'Invalid public key format'
@@ -165,7 +179,7 @@ export function validateSignedEvent(event: SignedNostrEvent): ValidationResult {
 
     return { isValid: true };
   } catch (error) {
-    logger.error('Failed to validate signed event:', error);
+    logger.error({ error }, 'Failed to validate signed event');
     return {
       isValid: false,
       error: 'Failed to validate signed event'
@@ -200,23 +214,31 @@ export function validateEventBase(event: NostrEvent | SignedNostrEvent): Validat
     return { isValid: false, error: 'Event content must be a string' };
   }
 
+  // Validate pubkey format
+  if (!event.pubkey) {
+    return { isValid: false, error: 'Missing public key' };
+  }
+
+  // Get pubkey hex
+  const pubkeyHex = getPublicKeyHex(event.pubkey);
+  if (typeof pubkeyHex !== 'string' || !/^[0-9a-f]{64}$/.test(pubkeyHex)) {
+    return { isValid: false, error: 'Invalid public key format' };
+  }
+
   // Validate tags
   if (!Array.isArray(event.tags)) {
     return { isValid: false, error: 'Event tags must be an array' };
   }
 
-  // Additional validation for signed events
-  if ('id' in event && 'sig' in event) {
-    const signedEvent = event as SignedNostrEvent;
-    
-    // Validate signature format
-    if (!/^[0-9a-f]{128}$/.test(signedEvent.sig)) {
-      return { isValid: false, error: 'Invalid signature format' };
+  for (const tag of event.tags) {
+    if (!Array.isArray(tag)) {
+      return { isValid: false, error: 'Each tag must be an array' };
     }
-
-    // Validate id format
-    if (!/^[0-9a-f]{64}$/.test(signedEvent.id)) {
-      return { isValid: false, error: 'Invalid event ID format' };
+    if (tag.length === 0) {
+      return { isValid: false, error: 'Empty tags are not allowed' };
+    }
+    if (typeof tag[0] !== 'string') {
+      return { isValid: false, error: 'Tag identifier must be a string' };
     }
   }
 
@@ -224,51 +246,111 @@ export function validateEventBase(event: NostrEvent | SignedNostrEvent): Validat
 }
 
 /**
- * Validates a Nostr filter
- * @param filter - The filter to validate
- * @returns Validation result
+ * Validates a Nostr filter by checking its structure and fields.
+ * 
+ * @param {NostrFilter} filter - The filter to validate
+ * @returns {ValidationResult} Object containing validation result and any error message
+ * @example
+ * ```typescript
+ * const result = validateFilter(filter);
+ * if (!result.isValid) {
+ *   console.error(result.error);
+ * }
+ * ```
  */
 export function validateFilter(filter: NostrFilter): ValidationResult {
-  if (!filter || typeof filter !== 'object') {
-    return { isValid: false, error: 'Invalid filter structure' };
-  }
-
-  // Validate kinds if present
-  if (filter.kinds) {
-    if (!Array.isArray(filter.kinds)) {
-      return { isValid: false, error: 'Filter kinds must be an array' };
+  try {
+    // Validate filter structure
+    if (!filter || typeof filter !== 'object') {
+      return { isValid: false, error: 'Invalid filter structure' };
     }
-    
-    for (const kind of filter.kinds) {
-      if (typeof kind !== 'number' || kind < 0 || !Number.isInteger(kind)) {
+
+    // Validate ids array if present
+    if (filter.ids && (!Array.isArray(filter.ids) || !filter.ids.every(id => typeof id === 'string'))) {
+      return { isValid: false, error: 'Filter ids must be an array of strings' };
+    }
+
+    // Validate authors array if present
+    if (filter.authors && (!Array.isArray(filter.authors) || !filter.authors.every(author => typeof author === 'string'))) {
+      return { isValid: false, error: 'Filter authors must be an array of strings' };
+    }
+
+    // Validate kinds array if present
+    if (filter.kinds) {
+      if (!Array.isArray(filter.kinds)) {
+        return { isValid: false, error: 'Filter kinds must be an array of numbers' };
+      }
+      if (!filter.kinds.every(kind => typeof kind === 'number' && Number.isInteger(kind) && kind >= 0)) {
         return { isValid: false, error: 'Filter kinds must be non-negative integers' };
       }
     }
-  }
 
-  return { isValid: true };
+    // Validate timestamps
+    if (filter.since && typeof filter.since !== 'number') {
+      return { isValid: false, error: 'Filter since must be a number' };
+    }
+    if (filter.until && typeof filter.until !== 'number') {
+      return { isValid: false, error: 'Filter until must be a number' };
+    }
+
+    // Validate limit
+    if (filter.limit && typeof filter.limit !== 'number') {
+      return { isValid: false, error: 'Filter limit must be a number' };
+    }
+
+    // Validate search
+    if (filter.search && typeof filter.search !== 'string') {
+      return { isValid: false, error: 'Filter search must be a string' };
+    }
+
+    return { isValid: true };
+  } catch (error) {
+    logger.error({ error }, 'Failed to validate filter');
+    return { isValid: false, error: 'Failed to validate filter' };
+  }
 }
 
 /**
- * Validates a Nostr subscription
- * @param subscription - The subscription to validate
- * @returns Validation result
+ * Validates a Nostr subscription by checking its structure and filters.
+ * 
+ * @param {NostrSubscription} subscription - The subscription to validate
+ * @returns {ValidationResult} Object containing validation result and any error message
+ * @example
+ * ```typescript
+ * const result = validateSubscription(subscription);
+ * if (!result.isValid) {
+ *   console.error(result.error);
+ * }
+ * ```
  */
 export function validateSubscription(subscription: NostrSubscription): ValidationResult {
-  if (!subscription || typeof subscription !== 'object') {
-    return { isValid: false, error: 'Invalid subscription structure' };
-  }
-
-  if (!Array.isArray(subscription.filters) || subscription.filters.length === 0) {
-    return { isValid: false, error: 'Subscription must have at least one filter' };
-  }
-
-  for (const filter of subscription.filters) {
-    const result = validateFilter(filter);
-    if (!result.isValid) {
-      return result;
+  try {
+    // Validate subscription structure
+    if (!subscription || typeof subscription !== 'object') {
+      return { isValid: false, error: 'Invalid subscription structure' };
     }
-  }
 
-  return { isValid: true };
+    // Validate subscription ID
+    if (!subscription.id || typeof subscription.id !== 'string') {
+      return { isValid: false, error: 'Subscription must have a string ID' };
+    }
+
+    // Validate filters array
+    if (!Array.isArray(subscription.filters)) {
+      return { isValid: false, error: 'Subscription filters must be an array' };
+    }
+
+    // Validate each filter
+    for (const filter of subscription.filters) {
+      const filterValidation = validateFilter(filter);
+      if (!filterValidation.isValid) {
+        return filterValidation;
+      }
+    }
+
+    return { isValid: true };
+  } catch (error) {
+    logger.error({ error }, 'Failed to validate subscription');
+    return { isValid: false, error: 'Failed to validate subscription' };
+  }
 }

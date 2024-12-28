@@ -1,6 +1,6 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A lightweight, type-safe TypeScript library for Nostr cryptography, focusing on NIP-01 and NIP-04 with strict validation and minimal dependencies",
   "type": "module",
   "main": "./dist/index.js",

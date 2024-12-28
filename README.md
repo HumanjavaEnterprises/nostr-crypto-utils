@@ -78,6 +78,271 @@ Together, these libraries provide:
 - Comprehensive event handling
 - Minimal bundle size and dependencies
 
+## Delegate Token Creation (NIP-26)
+
+You can use this library to create delegate tokens for use on web servers or other applications. This implements [NIP-26](https://github.com/nostr-protocol/nips/blob/master/26.md) for delegation of signing authority.
+
+### Basic Delegation Example
+
+```typescript
+import { createDelegation, validateDelegation } from '@humanjavaenterprises/nostr-crypto-utils';
+
+// Create a delegation token (delegator's perspective)
+const delegatorKeyPair = await generateKeyPair();
+const delegateePubkey = 'npub1...'; // The public key you're delegating to
+
+const delegation = await createDelegation({
+  delegatorPrivkey: delegatorKeyPair.privateKey,
+  delegateePubkey,
+  conditions: {
+    kind: 1,  // Only allow text notes
+    until: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60  // 30 days
+  }
+});
+
+// Validate a delegation token (delegatee's perspective)
+const isValid = await validateDelegation({
+  token: delegation.token,
+  delegatorPubkey: delegatorKeyPair.publicKey,
+  delegateePubkey,
+  kind: 1
+});
+```
+
+### Web Server Example
+
+Here's how to use delegation tokens in a web server context:
+
+```typescript
+import { createEvent, signEventWithDelegation } from '@humanjavaenterprises/nostr-crypto-utils';
+
+// On your server, store these securely
+const DELEGATE_PRIVKEY = 'nsec1...';  // Your server's private key
+const DELEGATION_TOKEN = 'nostr:delegation:...';  // Token from the delegator
+const DELEGATOR_PUBKEY = 'npub1...';  // Delegator's public key
+
+// Create and sign an event on behalf of the delegator
+const event = await createEvent({
+  kind: 1,
+  content: 'Posted via delegation!',
+  pubkey: DELEGATOR_PUBKEY,  // Original delegator's pubkey
+  created_at: Math.floor(Date.now() / 1000)
+});
+
+const signedEvent = await signEventWithDelegation({
+  event,
+  delegatePrivkey: DELEGATE_PRIVKEY,
+  delegation: {
+    token: DELEGATION_TOKEN,
+    conditions: {
+      kind: 1,
+      until: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
+    }
+  }
+});
+```
+
+### Conditional Delegation
+
+You can create more specific delegations with conditions:
+
+```typescript
+// Create a delegation with multiple conditions
+const delegation = await createDelegation({
+  delegatorPrivkey: delegatorKeyPair.privateKey,
+  delegateePubkey,
+  conditions: {
+    kinds: [1, 6],  // Allow only text notes and reposts
+    until: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,  // 1 week
+    since: Math.floor(Date.now() / 1000),  // Starting from now
+    tags: [
+      ['t', 'nostr'],  // Only allow posts with tag 't' = 'nostr'
+      ['p', delegateePubkey]  // Only allow mentions of the delegatee
+    ]
+  }
+});
+```
+
+### Security Considerations
+
+When working with delegated tokens:
+
+1. **Store Securely**: Always store delegation tokens and private keys securely
+2. **Check Expiration**: Validate the delegation's time constraints before using
+3. **Validate Conditions**: Check all conditions before signing or accepting delegated events
+4. **Limit Scope**: Only delegate the minimum required permissions
+5. **Monitor Usage**: Keep track of how delegated tokens are being used
+
+For more details on delegation, see the [NIP-26 specification](https://github.com/nostr-protocol/nips/blob/master/26.md).
+
+## Type System Improvements
+
+### Enhanced Type System
+
+- **Consolidated Type Definitions**: Improved consistency and safety through unified type definitions
+- **Better Type Inference**: Enhanced type inference for easier development and better code completion
+- **Stricter Type Checks**: Improved type safety with stricter checks for better error prevention
+
+### Improved Type Documentation
+
+- **Better JSDoc Comments**: Improved documentation with clear and concise JSDoc comments
+- **NIP References**: Added references to relevant NIPs for better understanding of the underlying protocol
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### 1. Invalid Delegation Token
+
+```typescript
+// ❌ Common mistake: Using expired delegation
+const delegation = await createDelegation({
+  delegatorPrivkey,
+  delegateePubkey,
+  conditions: {
+    until: Math.floor(Date.now() / 1000) - 3600  // Already expired!
+  }
+});
+
+// ✅ Correct: Ensure future expiration
+const delegation = await createDelegation({
+  delegatorPrivkey,
+  delegateePubkey,
+  conditions: {
+    until: Math.floor(Date.now() / 1000) + (24 * 60 * 60)  // 24 hours from now
+  }
+});
+```
+
+#### 2. Signature Verification Failures
+
+```typescript
+// ❌ Common mistake: Using wrong key format
+const wrongPubkey = 'npub1...';  // Using bech32 format directly
+const event = await signEventWithDelegation({ pubkey: wrongPubkey, ... });
+
+// ✅ Correct: Convert from bech32 to hex format first
+import { nip19 } from 'nostr-tools';
+const { data: pubkeyHex } = nip19.decode(pubkey);
+const event = await signEventWithDelegation({ pubkey: pubkeyHex, ... });
+```
+
+#### 3. Permission Issues
+
+```typescript
+// ❌ Common mistake: Mismatched event kinds
+const delegation = await createDelegation({
+  conditions: { kind: 1 }  // Only allows kind 1
+});
+const event = createEvent({ kind: 4 });  // Trying to create kind 4
+// This will fail!
+
+// ✅ Correct: Match delegation conditions
+const delegation = await createDelegation({
+  conditions: { kinds: [1, 4] }  // Allow both kinds
+});
+const event = createEvent({ kind: 4 });  // Now works!
+```
+
+#### 4. Token Format Issues
+
+```typescript
+// ❌ Common mistake: Invalid token parsing
+const token = 'nostr:delegation:...';
+const parts = token.split(':');  // Naive splitting
+
+// ✅ Correct: Use proper token parsing
+import { parseDelegationToken } from '@humanjavaenterprises/nostr-crypto-utils';
+const { delegator, conditions } = parseDelegationToken(token);
+```
+
+### Debug Mode
+
+Enable debug mode to get detailed logging:
+
+```typescript
+import { setDebugLevel } from '@humanjavaenterprises/nostr-crypto-utils';
+
+// Enable debug logging
+setDebugLevel('debug');
+
+// Or for even more detail
+setDebugLevel('trace');
+```
+
+### Common Error Messages
+
+| Error Message | Likely Cause | Solution |
+|--------------|--------------|----------|
+| "Invalid delegation token" | Token expired or malformed | Check token expiration and format |
+| "Signature verification failed" | Wrong key format or corrupted signature | Verify key formats and conversion |
+| "Condition check failed" | Event doesn't match delegation conditions | Check event kind and other conditions |
+| "Invalid pubkey format" | Using bech32 instead of hex | Convert pubkey to correct format |
+| "Token expired" | Delegation token past expiration | Create new delegation with future expiration |
+
+### Validation Checks
+
+When troubleshooting, verify these common points:
+
+1. **Key Formats**
+   - Private keys should be in hex format
+   - Public keys should be in hex format (not bech32)
+   - Signatures should be 64 bytes in hex format
+
+2. **Time Constraints**
+   - Token expiration should be in the future
+   - Check system clock synchronization
+   - Use UTC timestamps consistently
+
+3. **Permission Scope**
+   - Verify event kinds match delegation conditions
+   - Check any tag restrictions
+   - Confirm time window restrictions
+
+4. **Network Issues**
+   - Verify relay connections
+   - Check for rate limiting
+   - Confirm proper websocket handling
+
+### Testing Tools
+
+```typescript
+// Test delegation validity
+const testDelegation = async (delegation) => {
+  const result = await validateDelegation({
+    token: delegation.token,
+    delegatorPubkey: delegation.delegator,
+    delegateePubkey: delegation.delegatee,
+    kind: 1
+  });
+  
+  console.log('Delegation valid:', result.isValid);
+  if (!result.isValid) {
+    console.error('Validation error:', result.error);
+  }
+  
+  return result;
+};
+
+// Test event signing
+const testEventSigning = async (event, delegation) => {
+  try {
+    const signed = await signEventWithDelegation({
+      event,
+      delegatePrivkey: delegation.privateKey,
+      delegation: delegation.token
+    });
+    console.log('Event signed successfully:', signed.id);
+    return true;
+  } catch (error) {
+    console.error('Signing failed:', error);
+    return false;
+  }
+};
+```
+
+For more help, join our [Discord community](https://discord.gg/nostr) or [open an issue](https://github.com/humanjavaenterprises/nostr-crypto-utils/issues).
+
 ## Installation
 
 ```bash

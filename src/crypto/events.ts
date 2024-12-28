@@ -3,20 +3,20 @@
  * @description Event signing and verification for Nostr
  */
 
+import { NostrEvent, SignedNostrEvent } from '../types';
+import { logger } from '../utils/logger';
 import { schnorr } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
-import type { NostrEvent, SignedNostrEvent, PublicKey } from '../types/base';
 import { NostrEventKind } from '../types/base';
 import { createPublicKey } from './keys';
-import { logger } from '../utils';
 
 interface EventInput {
-  pubkey: PublicKey | string; // Required, can be either PublicKey object or hex string
-  kind?: NostrEventKind;
-  content?: string;
-  tags?: string[][];
-  created_at?: number;
+  pubkey: string; // Required, must be hex string
+  kind?: number; // Optional, defaults to TEXT_NOTE
+  content?: string; // Optional, defaults to empty string
+  tags?: string[][]; // Optional, defaults to empty array
+  created_at?: number; // Optional, defaults to current timestamp
 }
 
 /**
@@ -33,16 +33,16 @@ export function createEvent(params: EventInput): NostrEvent {
     throw new Error('pubkey is required');
   }
 
-  // Convert string pubkey to PublicKey object if needed
-  const pubkeyObj = typeof params.pubkey === 'string' 
-    ? createPublicKey(params.pubkey)
-    : params.pubkey;
+  // Validate pubkey format
+  if (!/^[0-9a-f]{64}$/i.test(params.pubkey)) {
+    throw new Error('Invalid public key format');
+  }
 
   return {
     kind: params.kind || NostrEventKind.TEXT_NOTE,
     created_at: params.created_at,
     content: params.content || '',
-    pubkey: pubkeyObj,
+    pubkey: params.pubkey,
     tags: params.tags || []
   };
 }
@@ -66,7 +66,7 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
     // Create canonical event representation as per NIP-01
     const serialized = JSON.stringify([
       0,
-      event.pubkey.hex,
+      event.pubkey,
       event.created_at,
       event.kind,
       event.tags || [],
@@ -86,8 +86,8 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
       sig: bytesToHex(sig)
     };
   } catch (error) {
-    logger.error('Failed to sign event:', error);
-    throw new Error('Failed to sign event: ' + (error instanceof Error ? error.message : String(error)));
+    logger.error({ error }, 'Failed to sign event');
+    throw error;
   }
 }
 
@@ -99,7 +99,7 @@ export async function verifySignature(event: SignedNostrEvent): Promise<boolean>
     // Create canonical event representation as per NIP-01
     const serialized = JSON.stringify([
       0,
-      event.pubkey.hex,
+      event.pubkey,
       event.created_at,
       event.kind,
       event.tags || [],
@@ -112,22 +112,24 @@ export async function verifySignature(event: SignedNostrEvent): Promise<boolean>
     // Verify event ID matches hash
     const calculatedId = bytesToHex(eventHash);
     if (calculatedId !== event.id) {
-      logger.error('Event ID mismatch', { calculated: calculatedId, actual: event.id });
+      logger.error({ calculated: calculatedId, actual: event.id }, 'Event ID mismatch');
       return false;
     }
 
-    // Convert signature and use schnorr public key
+    // Convert signature and pubkey
     const sigBytes = hexToBytes(event.sig);
+    const pubkeyObj = createPublicKey(event.pubkey);
+    const pubkeyBytes = pubkeyObj.schnorrBytes;
 
     // Verify signature using schnorr (sig, message, pubKey)
     try {
-      return schnorr.verify(sigBytes, eventHash, event.pubkey.schnorrBytes);
+      return schnorr.verify(sigBytes, eventHash, pubkeyBytes);
     } catch (error) {
-      logger.error('Schnorr verification error:', error);
+      logger.error({ error }, 'Schnorr verification error');
       return false;
     }
   } catch (error) {
-    logger.error('Failed to verify signature:', error);
+    logger.error({ error }, 'Failed to verify signature');
     return false;
   }
 }

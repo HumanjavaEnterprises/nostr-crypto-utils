@@ -6,8 +6,8 @@
 import { secp256k1, schnorr } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
-import { KeyPair, ValidationResult, PublicKey } from '../types/base';
-import { logger } from '../utils';
+import { KeyPair, PublicKeyDetails, ValidationResult, PublicKey } from '../types';
+import { logger } from '../utils/logger';
 
 /**
  * Gets the compressed public key (33 bytes with prefix)
@@ -24,9 +24,9 @@ function getSchnorrPublicKey(privateKeyBytes: Uint8Array): Uint8Array {
 }
 
 /**
- * Creates a PublicKey object from a hex string
+ * Creates a PublicKeyDetails object from a hex string
  */
-export function createPublicKey(hex: string): PublicKey {
+export function createPublicKey(hex: string): PublicKeyDetails {
   const bytes = hexToBytes(hex);
   // For schnorr, we need to remove the first byte (compression prefix)
   const schnorrBytes = bytes.length === 33 ? bytes.slice(1) : bytes;
@@ -77,7 +77,7 @@ export async function generateKeyPair(seedPhrase?: string): Promise<KeyPair> {
       }
     };
   } catch (error) {
-    logger.error('Failed to generate key pair:', error);
+    logger.error({ error }, 'Failed to generate key pair');
     throw error;
   }
 }
@@ -85,7 +85,7 @@ export async function generateKeyPair(seedPhrase?: string): Promise<KeyPair> {
 /**
  * Gets the public key from a private key
  */
-export function getPublicKey(privateKey: string): PublicKey {
+export function getPublicKey(privateKey: string): PublicKeyDetails {
   try {
     const privateKeyBytes = hexToBytes(privateKey);
     
@@ -102,7 +102,7 @@ export function getPublicKey(privateKey: string): PublicKey {
       schnorrBytes: schnorrPubKey
     };
   } catch (error) {
-    logger.error('Failed to derive public key:', error);
+    logger.error({ error }, 'Failed to derive public key');
     throw error;
   }
 }
@@ -126,10 +126,11 @@ export async function validateKeyPair(publicKey: PublicKey, privateKey: string):
     // Derive public key from private key
     const derivedPublicKey = getPublicKey(privateKey);
     
+    // Get hex string from PublicKey if it's a string
+    const pubkeyHex = typeof publicKey === 'string' ? publicKey : publicKey.hex;
+    
     // Compare derived public key with provided public key
-    const publicKeysMatch = 
-      derivedPublicKey.hex === publicKey.hex &&
-      derivedPublicKey.schnorrHex === publicKey.schnorrHex;
+    const publicKeysMatch = derivedPublicKey.hex === pubkeyHex;
 
     if (!publicKeysMatch) {
       return {
@@ -142,7 +143,7 @@ export async function validateKeyPair(publicKey: PublicKey, privateKey: string):
       isValid: true
     };
   } catch (error) {
-    logger.error('Failed to validate key pair:', error);
+    logger.error({ error }, 'Failed to validate key pair');
     return {
       isValid: false,
       error: 'Failed to validate key pair: ' + (error instanceof Error ? error.message : String(error))

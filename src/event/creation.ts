@@ -5,7 +5,7 @@
 
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
-import { logger } from '../utils';
+import { logger } from '../utils/logger';
 import type { NostrEvent, NostrEventKind } from '../types';
 
 /**
@@ -64,7 +64,7 @@ export async function getEventHash(event: NostrEvent): Promise<string> {
     const hash = await sha256(new TextEncoder().encode(serialized));
     return bytesToHex(hash);
   } catch (error) {
-    logger.error('Failed to get event hash:', error);
+    logger.error({ error }, 'Failed to get event hash');
     throw error;
   }
 }

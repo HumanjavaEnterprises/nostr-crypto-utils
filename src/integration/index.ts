@@ -2,7 +2,7 @@
  * Integration module for testing full Nostr protocol flows
  */
 
-import { NostrEvent, SignedNostrEvent } from '../types/base';
+import { NostrEvent, SignedNostrEvent, NostrEventKind } from '../types/base';
 import { generateKeyPair } from '../crypto/keys';
 import { signEvent } from '../crypto/events';
 import { verifySignature } from '../crypto/events';
@@ -13,11 +13,11 @@ import { verifySignature } from '../crypto/events';
 export async function createTestEvent(): Promise<SignedNostrEvent> {
     const keyPair = await generateKeyPair();
     const event: NostrEvent = {
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         content: 'Test message',
         tags: [],
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: keyPair.publicKey
+        pubkey: keyPair.publicKey.hex
     };
     
     return signEvent(event, keyPair.privateKey);

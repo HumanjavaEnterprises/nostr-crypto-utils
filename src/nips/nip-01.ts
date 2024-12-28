@@ -6,8 +6,8 @@
 
 import { schnorr } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex } from '@noble/curves/abstract/utils';
-import { logger } from '../utils';
+import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { logger } from '../utils/logger';
 import type { NostrEvent, SignedNostrEvent } from '../types';
 
 /**
@@ -66,7 +66,7 @@ export async function getEventHash(event: NostrEvent): Promise<string> {
     const hash = sha256(new TextEncoder().encode(serialized));
     return bytesToHex(hash);
   } catch (error) {
-    logger.error('Failed to get event hash:', error);
+    logger.error({ error }, 'Failed to get event hash');
     throw error;
   }
 }
@@ -83,7 +83,7 @@ export async function signEvent(
 ): Promise<SignedNostrEvent> {
   try {
     const hash = await getEventHash(event);
-    const sig = schnorr.sign(hash, privateKey);
+    const sig = schnorr.sign(hexToBytes(hash), privateKey);
     
     return {
       ...event,
@@ -91,7 +91,7 @@ export async function signEvent(
       sig: bytesToHex(sig),
     };
   } catch (error) {
-    logger.error('Failed to sign event:', error);
+    logger.error({ error }, 'Failed to sign event');
     throw error;
   }
 }
@@ -103,11 +103,33 @@ export async function signEvent(
  */
 export function verifySignature(event: SignedNostrEvent): boolean {
   try {
-    return schnorr.verify(event.sig, event.id, event.pubkey);
+    // Verify event ID
+    const expectedId = calculateEventId(event);
+    if (event.id !== expectedId) {
+      return false;
+    }
+
+    // Verify signature
+    return schnorr.verify(
+      hexToBytes(event.sig),
+      hexToBytes(event.id),
+      hexToBytes(event.pubkey)
+    );
   } catch (error) {
-    logger.error('Failed to verify signature:', error);
+    logger.error({ error }, 'Failed to verify signature');
     return false;
   }
+}
+
+/**
+ * Calculates the event ID according to NIP-01
+ * @param event - Event to calculate ID for
+ * @returns Event ID in hex format
+ */
+export function calculateEventId(event: NostrEvent): string {
+  const serialized = serializeEvent(event);
+  const hash = sha256(new TextEncoder().encode(serialized));
+  return bytesToHex(hash);
 }
 
 /**
@@ -132,7 +154,7 @@ export function validateEvent(event: NostrEvent): boolean {
     
     return true;
   } catch (error) {
-    logger.error('Failed to validate event:', error);
+    logger.error({ error }, 'Failed to validate event');
     return false;
   }
 }

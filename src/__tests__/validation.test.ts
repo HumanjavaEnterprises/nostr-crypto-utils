@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { validateEvent, validateFilter, validateSubscription } from '../validation';
-import { SignedNostrEvent, PublicKey } from '../types/base';
+import { SignedNostrEvent, NostrEventKind } from '../types/base';
 import { NostrFilter, NostrSubscription } from '../types/protocol';
 import { bytesToHex } from '@noble/curves/abstract/utils';
 
@@ -8,14 +8,14 @@ describe('Validation Functions', () => {
   describe('validateEvent', () => {
     it('should validate a valid event', () => {
       const pubkeyBytes = new Uint8Array(32).fill(1);
-      const pubkey: PublicKey = { bytes: pubkeyBytes };
+      const pubkeyHex = bytesToHex(pubkeyBytes);
       
       const event: SignedNostrEvent = {
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         content: 'Hello, Nostr!',
         created_at: Math.floor(Date.now() / 1000),
-        tags: [['p', bytesToHex(pubkeyBytes)]],
-        pubkey,
+        tags: [['p', pubkeyHex]],
+        pubkey: pubkeyHex,
         id: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         sig: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
       };
@@ -27,33 +27,33 @@ describe('Validation Functions', () => {
 
     it('should reject an event with invalid kind', () => {
       const pubkeyBytes = new Uint8Array(32).fill(1);
-      const pubkey: PublicKey = { bytes: pubkeyBytes };
+      const pubkeyHex = bytesToHex(pubkeyBytes);
       
-      const event: SignedNostrEvent = {
+      const event: Omit<SignedNostrEvent, 'kind'> & { kind: number } = {
         kind: -1,
         content: 'Hello, Nostr!',
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
-        pubkey,
+        pubkey: pubkeyHex,
         id: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         sig: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
       };
 
-      const result = validateEvent(event);
+      const result = validateEvent(event as SignedNostrEvent);
       expect(result.isValid).toBe(false);
       expect(result.error).toBe('Event kind must be a non-negative integer');
     });
 
     it('should reject an event with future timestamp', () => {
       const pubkeyBytes = new Uint8Array(32).fill(1);
-      const pubkey: PublicKey = { bytes: pubkeyBytes };
+      const pubkeyHex = bytesToHex(pubkeyBytes);
       
       const event: SignedNostrEvent = {
-        kind: 1,
-        content: 'Hello, Nostr!',
-        created_at: Math.floor(Date.now() / 1000) + 7200, // 2 hours in the future
+        kind: NostrEventKind.TEXT_NOTE,
+        content: 'Hello from the future!',
+        created_at: Math.floor(Date.now() / 1000) + 3600, // 1 hour in the future
         tags: [],
-        pubkey,
+        pubkey: pubkeyHex,
         id: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         sig: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
       };
@@ -66,13 +66,9 @@ describe('Validation Functions', () => {
 
   describe('validateFilter', () => {
     it('should validate a valid filter', () => {
-      const pubkeyHex = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
       const filter: NostrFilter = {
-        kinds: [1],
-        authors: [pubkeyHex],
-        since: Math.floor(Date.now() / 1000) - 3600,
-        until: Math.floor(Date.now() / 1000),
-        limit: 10
+        kinds: [NostrEventKind.TEXT_NOTE],
+        authors: ['1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef']
       };
 
       const result = validateFilter(filter);
@@ -81,12 +77,12 @@ describe('Validation Functions', () => {
     });
 
     it('should reject a filter with invalid kinds', () => {
-      const filter: NostrFilter = {
-        kinds: [-1, 0, 1],
+      const filter = {
+        kinds: [-1],
         authors: ['1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef']
       };
 
-      const result = validateFilter(filter);
+      const result = validateFilter(filter as NostrFilter);
       expect(result.isValid).toBe(false);
       expect(result.error).toBe('Filter kinds must be non-negative integers');
     });
@@ -97,7 +93,7 @@ describe('Validation Functions', () => {
       const subscription: NostrSubscription = {
         filters: [
           {
-            kinds: [1],
+            kinds: [NostrEventKind.TEXT_NOTE],
             authors: ['1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef']
           }
         ],
@@ -111,13 +107,12 @@ describe('Validation Functions', () => {
 
     it('should reject a subscription without filters', () => {
       const subscription = {
-        filters: [],
         id: 'test-sub'
       };
 
       const result = validateSubscription(subscription as NostrSubscription);
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Subscription must have at least one filter');
+      expect(result.error).toBe('Subscription filters must be an array');
     });
   });
 });

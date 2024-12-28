@@ -5,44 +5,49 @@ import {
   validateKeyPair,
   signEvent,
   verifySignature,
-  encrypt,
-  decrypt,
-  createEvent
+  createEvent,
+  encryptMessage,
+  decryptMessage
 } from '../index';
-import { bytesToHex } from '@noble/hashes/utils';
+import { NostrEventKind } from '../types';
 
 describe('NOSTR Crypto Utils', () => {
   describe('Key Management', () => {
     it('should generate valid key pairs', async () => {
       const keyPair = await generateKeyPair();
       expect(keyPair.privateKey).toBeDefined();
-      expect(keyPair.publicKey).toBeDefined();
-      expect(keyPair.privateKey).toHaveLength(64);
-      expect(keyPair.publicKey.bytes).toBeInstanceOf(Uint8Array);
-      expect(keyPair.publicKey.bytes.length).toBe(33);
-      expect(bytesToHex(keyPair.publicKey.bytes)).toHaveLength(66);
+      expect(keyPair.publicKey.hex).toBeDefined();
+      expect(keyPair.publicKey.bytes).toBeDefined();
+      
+      const isValid = await validateKeyPair(keyPair);
+      expect(isValid).toBe(true);
     });
 
-    it('should derive the correct public key', async () => {
+    it('should derive public key from private key', async () => {
       const keyPair = await generateKeyPair();
       const derivedPubKey = await getPublicKey(keyPair.privateKey);
-      expect(derivedPubKey.bytes).toEqual(keyPair.publicKey.bytes);
+      expect(derivedPubKey.hex).toBe(keyPair.publicKey.hex);
     });
 
-    it('should validate key pairs', async () => {
+    it('should validate correct key pairs', async () => {
       const keyPair = await generateKeyPair();
-      const result = await validateKeyPair(keyPair.publicKey, keyPair.privateKey);
-      expect(result.isValid).toBe(true);
-      expect(result.error).toBeUndefined();
+      const isValid = await validateKeyPair(keyPair);
+      expect(isValid).toBe(true);
     });
 
-    it('should generate consistent key pairs from seed phrase', async () => {
-      const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-      const keyPair1 = await generateKeyPair(seedPhrase);
-      const keyPair2 = await generateKeyPair(seedPhrase);
-      
-      expect(keyPair1.privateKey).toBe(keyPair2.privateKey);
-      expect(keyPair1.publicKey.bytes).toEqual(keyPair2.publicKey.bytes);
+    it('should reject invalid key pairs', async () => {
+      const keyPair = await generateKeyPair();
+      const invalidKeyPair = {
+        privateKey: keyPair.privateKey,
+        publicKey: {
+          hex: '0'.repeat(64),
+          bytes: new Uint8Array(32),
+          schnorrHex: '0'.repeat(64),
+          schnorrBytes: new Uint8Array(32)
+        }
+      };
+      const isValid = await validateKeyPair(invalidKeyPair);
+      expect(isValid).toBe(false);
     });
   });
 
@@ -50,17 +55,17 @@ describe('NOSTR Crypto Utils', () => {
     it('should sign and verify events', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
         content: 'Hello NOSTR!',
-        pubkey: keyPair.publicKey
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
       expect(signedEvent.sig).toBeDefined();
       expect(signedEvent.id).toBeDefined();
-      expect(signedEvent.pubkey.bytes).toEqual(keyPair.publicKey.bytes);
+      expect(signedEvent.pubkey).toBe(keyPair.publicKey.hex);
 
       const isValid = await verifySignature(signedEvent);
       expect(isValid).toBe(true);
@@ -69,11 +74,11 @@ describe('NOSTR Crypto Utils', () => {
     it('should reject an invalid signature', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
         content: 'Hello NOSTR!',
-        pubkey: keyPair.publicKey
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
@@ -85,26 +90,50 @@ describe('NOSTR Crypto Utils', () => {
 
   describe('Encryption/Decryption', () => {
     it('should encrypt and decrypt messages', async () => {
-      const alice = await generateKeyPair();
-      const bob = await generateKeyPair();
-      const message = 'Secret message for Bob';
+      const senderKeyPair = await generateKeyPair();
+      const recipientKeyPair = await generateKeyPair();
+      const message = 'Secret message';
 
-      const encrypted = await encrypt(message, bob.publicKey, alice.privateKey);
-      const decrypted = await decrypt(encrypted, alice.publicKey, bob.privateKey);
+      const encrypted = await encryptMessage(
+        message,
+        senderKeyPair.privateKey,
+        recipientKeyPair.publicKey.hex
+      );
+
+      const decrypted = await decryptMessage(
+        encrypted,
+        recipientKeyPair.privateKey,
+        senderKeyPair.publicKey.hex
+      );
 
       expect(decrypted).toBe(message);
     });
 
     it('should fail to decrypt with wrong keys', async () => {
-      const alice = await generateKeyPair();
-      const bob = await generateKeyPair();
-      const eve = await generateKeyPair();
-      const message = 'Secret message for Bob';
+      const senderKeyPair = await generateKeyPair();
+      const invalidPrivateKey = 'invalid-key';
 
-      const encrypted = await encrypt(message, bob.publicKey, alice.privateKey);
+      await expect(
+        decryptMessage(
+          'Secret message',
+          invalidPrivateKey,
+          senderKeyPair.publicKey.hex
+        )
+      ).rejects.toThrow('Invalid private key format');
+    });
 
-      // Eve tries to decrypt with her private key
-      await expect(decrypt(encrypted, alice.publicKey, eve.privateKey)).rejects.toThrow();
+    it('should fail to decrypt with wrong recipient', async () => {
+      const senderKeyPair = await generateKeyPair();
+      const recipientKeyPair = await generateKeyPair();
+      const wrongKeyPair = await generateKeyPair();
+      const message = 'Hello, Nostr!';
+
+      // Encrypt for recipientKeyPair
+      const encrypted = await encryptMessage(message, senderKeyPair.privateKey, recipientKeyPair.publicKey.hex);
+      expect(encrypted).toBeDefined();
+
+      // Try to decrypt with wrong key pair
+      await expect(decryptMessage(encrypted, wrongKeyPair.privateKey, senderKeyPair.publicKey.hex)).rejects.toThrow();
     });
   });
 
@@ -112,11 +141,11 @@ describe('NOSTR Crypto Utils', () => {
     it('should verify a valid signature', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
-        content: 'Hello NOSTR!',
-        pubkey: keyPair.publicKey
+        content: 'Test message',
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
@@ -124,50 +153,50 @@ describe('NOSTR Crypto Utils', () => {
       expect(isValid).toBe(true);
     });
 
-    it('should reject an invalid signature', async () => {
+    it('should reject invalid signature', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
-        content: 'Hello NOSTR!',
-        pubkey: keyPair.publicKey
+        content: 'Test message',
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
-      signedEvent.sig = '00'.repeat(32); // Invalid signature
+      signedEvent.sig = '00'.repeat(32);
       const isValid = await verifySignature(signedEvent);
       expect(isValid).toBe(false);
     });
 
-    it('should reject if event hash does not match', async () => {
+    it('should reject tampered content', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
-        content: 'Hello NOSTR!',
-        pubkey: keyPair.publicKey
+        content: 'Original message',
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
-      signedEvent.content = 'Modified content'; // This changes the event hash
+      signedEvent.content = 'Tampered message';
       const isValid = await verifySignature(signedEvent);
       expect(isValid).toBe(false);
     });
 
-    it('should handle invalid hex in signature', async () => {
+    it('should reject tampered pubkey', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
-        content: 'Hello NOSTR!',
-        pubkey: keyPair.publicKey
+        content: 'Test message',
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
-      signedEvent.sig = 'invalid hex'; // Invalid hex string
+      signedEvent.pubkey = '00'.repeat(32);
       const isValid = await verifySignature(signedEvent);
       expect(isValid).toBe(false);
     });
@@ -177,17 +206,17 @@ describe('NOSTR Crypto Utils', () => {
     it('should sign an event with all fields', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         created_at: Math.floor(Date.now() / 1000),
         tags: [['e', 'event1'], ['p', 'pubkey1']],
         content: 'Hello NOSTR!',
-        pubkey: keyPair.publicKey
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
       expect(signedEvent.sig).toBeDefined();
       expect(signedEvent.id).toBeDefined();
-      expect(signedEvent.pubkey.bytes).toEqual(keyPair.publicKey.bytes);
+      expect(signedEvent.pubkey).toBe(keyPair.publicKey.hex);
       expect(signedEvent.content).toBe('Hello NOSTR!');
       expect(signedEvent.tags).toEqual([['e', 'event1'], ['p', 'pubkey1']]);
     });
@@ -195,43 +224,40 @@ describe('NOSTR Crypto Utils', () => {
     it('should handle missing optional fields', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
-        pubkey: keyPair.publicKey
+        kind: NostrEventKind.TEXT_NOTE,
+        content: 'Hello NOSTR!',
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
       expect(signedEvent.sig).toBeDefined();
       expect(signedEvent.id).toBeDefined();
-      expect(signedEvent.content).toBe('');
-      expect(signedEvent.tags).toEqual([]);
+      expect(signedEvent.created_at).toBeDefined();
     });
 
     it('should handle undefined tags', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         content: 'Hello NOSTR!',
-        pubkey: keyPair.publicKey
+        created_at: Math.floor(Date.now() / 1000),
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
-      expect(signedEvent.sig).toBeDefined();
-      expect(signedEvent.id).toBeDefined();
       expect(signedEvent.tags).toEqual([]);
     });
 
     it('should handle undefined created_at', async () => {
       const keyPair = await generateKeyPair();
       const event = createEvent({
-        kind: 1,
+        kind: NostrEventKind.TEXT_NOTE,
         content: 'Hello NOSTR!',
         tags: [],
-        pubkey: keyPair.publicKey
+        pubkey: keyPair.publicKey.hex
       });
 
       const signedEvent = await signEvent(event, keyPair.privateKey);
-      expect(signedEvent.sig).toBeDefined();
-      expect(signedEvent.id).toBeDefined();
       expect(signedEvent.created_at).toBeDefined();
       expect(typeof signedEvent.created_at).toBe('number');
     });

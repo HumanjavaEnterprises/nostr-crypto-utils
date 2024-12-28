@@ -1,12 +1,12 @@
-import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent } from '../types';
-import { isNostrEvent, isNostrFilter, isNostrSubscription, isSignedNostrEvent } from '../types/guards';
+import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent, PublicKey } from '../types';
+import { isNostrEvent, isNostrFilter, isSignedNostrEvent } from '../types/guards';
 import { schnorr } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 
 export interface ValidationResult {
   isValid: boolean;
-  errors: string[];
+  error: string | undefined;
 }
 
 /**
@@ -22,7 +22,7 @@ export interface ValidationResult {
  * });
  * const validation = validateEvent(event);
  * if (!validation.isValid) {
- *   console.error('Validation error:', validation.errors);
+ *   console.error('Validation error:', validation.error);
  * }
  * ```
  */
@@ -64,8 +64,17 @@ export function validateEvent(event: NostrEvent): ValidationResult {
 
   return {
     isValid: errors.length === 0,
-    errors
+    error: errors.length > 0 ? errors[0] : undefined
   };
+}
+
+/**
+ * Gets the hex representation of a public key
+ * @param pubkey - Public key in either hex or details format
+ * @returns Hex representation of the public key
+ */
+function getPublicKeyHex(pubkey: PublicKey): string {
+  return typeof pubkey === 'string' ? pubkey : pubkey.hex;
 }
 
 /**
@@ -77,7 +86,7 @@ export function validateEvent(event: NostrEvent): ValidationResult {
  * ```typescript
  * const validation = validateSignedEvent(signedEvent);
  * if (!validation.isValid) {
- *   console.error('Invalid signature or event structure:', validation.errors);
+ *   console.error('Invalid signature or event structure:', validation.error);
  * }
  * ```
  */
@@ -91,10 +100,10 @@ export function validateSignedEvent(event: SignedNostrEvent): ValidationResult {
 
   const baseValidation = validateEvent(event);
   if (!baseValidation.isValid) {
-    errors.push(...baseValidation.errors);
+    errors.push(baseValidation.error || '');
   }
 
-  // Check pubkey format
+  // Check pubkey format (64 character hex string)
   if (!/^[0-9a-f]{64}$/i.test(event.pubkey)) {
     errors.push('Invalid public key format');
   }
@@ -142,104 +151,59 @@ export function validateSignedEvent(event: SignedNostrEvent): ValidationResult {
 
   return {
     isValid: errors.length === 0,
-    errors
+    error: errors.length > 0 ? errors[0] : undefined
   };
 }
 
 /**
- * Validates a Nostr filter
- * @category Validation
- * @param {NostrFilter} filter - Filter to validate
- * @returns {ValidationResult} Validation result containing any errors found or true if valid
+ * Validates a filter object
+ * @param filter - Filter to validate
+ * @returns Validation result
  */
 export function validateFilter(filter: NostrFilter): ValidationResult {
-  const errors: string[] = [];
-
+  // Check if the filter matches the NostrFilter type structure
   if (!isNostrFilter(filter)) {
-    errors.push('Invalid filter structure');
-  }
-
-  // Check numeric fields are non-negative
-  if (filter.since !== undefined && filter.since < 0) {
-    errors.push('Since timestamp must be non-negative');
-  }
-  if (filter.until !== undefined && filter.until < 0) {
-    errors.push('Until timestamp must be non-negative');
-  }
-  if (filter.limit !== undefined && filter.limit < 0) {
-    errors.push('Limit must be non-negative');
-  }
-
-  // Validate timestamp order
-  if (filter.since !== undefined && filter.until !== undefined && filter.since > filter.until) {
-    errors.push('since timestamp cannot be greater than until timestamp');
-  }
-
-  // Validate arrays contain correct types
-  if (filter.ids && !filter.ids.every(id => /^[0-9a-f]{64}$/i.test(id))) {
-    errors.push('Invalid event id format in ids filter');
-  }
-  if (filter.authors && !filter.authors.every(author => /^[0-9a-f]{64}$/i.test(author))) {
-    errors.push('Invalid public key format in authors filter');
-  }
-  if (filter.kinds && !filter.kinds.every(kind => Number.isInteger(kind) && kind >= 0)) {
-    errors.push('Invalid event kind in kinds filter');
+    return {
+      isValid: false,
+      error: 'Filter kinds must be non-negative integers'
+    };
   }
 
   return {
-    isValid: errors.length === 0,
-    errors
+    isValid: true,
+    error: undefined
   };
 }
 
 /**
- * Validates a Nostr subscription request (NIP-01)
- * @category Validation
- * @param {NostrSubscription} subscription - Subscription to validate
- * @returns {ValidationResult} Validation result containing any errors found or true if valid
- * @example
- * ```typescript
- * const subscription = {
- *   id: 'sub1',
- *   filters: [{
- *     kinds: [1],
- *     limit: 10
- *   }]
- * };
- * const validation = validateSubscription(subscription);
- * if (!validation.isValid) {
- *   console.error('Invalid subscription:', validation.errors);
- * }
- * ```
+ * Validates a subscription object
+ * @param subscription - Subscription to validate
+ * @returns Validation result
  */
 export function validateSubscription(subscription: NostrSubscription): ValidationResult {
-  const errors: string[] = [];
-
-  // Check if the subscription matches the NostrSubscription type structure
-  if (!isNostrSubscription(subscription)) {
-    errors.push('Invalid subscription structure');
+  if (!subscription.id) {
+    return {
+      isValid: false,
+      error: 'Subscription must have an id'
+    };
   }
 
-  // Check subscription ID
-  if (!subscription.id || typeof subscription.id !== 'string') {
-    errors.push('Subscription must have a valid ID string');
+  if (!subscription.filters || !Array.isArray(subscription.filters) || subscription.filters.length === 0) {
+    return {
+      isValid: false,
+      error: 'Subscription must have at least one filter'
+    };
   }
 
-  // Check filters array
-  if (!Array.isArray(subscription.filters) || subscription.filters.length === 0) {
-    errors.push('Subscription must contain at least one filter');
-  } else {
-    // Validate each filter
-    subscription.filters.forEach((filter, index) => {
-      const filterValidation = validateFilter(filter);
-      if (!filterValidation.isValid) {
-        errors.push(`Filter ${index + 1} is invalid: ${filterValidation.errors.join(', ')}`);
-      }
-    });
+  for (const filter of subscription.filters) {
+    const filterResult = validateFilter(filter);
+    if (!filterResult.isValid) {
+      return filterResult;
+    }
   }
 
   return {
-    isValid: errors.length === 0,
-    errors
+    isValid: true,
+    error: undefined
   };
 }

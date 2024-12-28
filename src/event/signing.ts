@@ -4,8 +4,8 @@
  */
 
 import { schnorr } from '@noble/curves/secp256k1';
-import { bytesToHex } from '@noble/curves/abstract/utils';
-import { logger } from '../utils';
+import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { logger } from '../utils/logger';
 import { getEventHash } from './creation';
 import type { NostrEvent, SignedNostrEvent } from '../types';
 
@@ -29,7 +29,7 @@ export async function signEvent(
       sig: bytesToHex(sig),
     };
   } catch (error) {
-    logger.error('Failed to sign event:', error);
+    logger.error({ error }, 'Failed to sign event');
     throw error;
   }
 }
@@ -41,9 +41,13 @@ export async function signEvent(
  */
 export function verifySignature(event: SignedNostrEvent): boolean {
   try {
-    return schnorr.verify(event.sig, event.id, event.pubkey);
+    return schnorr.verify(
+      hexToBytes(event.sig),
+      hexToBytes(event.id),
+      hexToBytes(event.pubkey)
+    );
   } catch (error) {
-    logger.error('Failed to verify signature:', error);
+    logger.error({ error }, 'Failed to verify signature');
     return false;
   }
 }

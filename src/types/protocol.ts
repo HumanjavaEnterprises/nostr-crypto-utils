@@ -13,22 +13,7 @@ export type { NostrFilter, PublicKey };
  * @enum {string}
  * @see {@link https://github.com/nostr-protocol/nips/blob/master/01.md}
  */
-export enum NostrMessageType {
-  /** Client sending an event to a relay */
-  EVENT = 'EVENT',
-  /** Client requesting events from a relay */
-  REQ = 'REQ',
-  /** Client closing a subscription */
-  CLOSE = 'CLOSE',
-  /** Relay sending a notice/message to a client */
-  NOTICE = 'NOTICE',
-  /** Relay acknowledging an event */
-  OK = 'OK',
-  /** Relay indicating end of stored events */
-  EOSE = 'EOSE',
-  /** Authentication request/response */
-  AUTH = 'AUTH'
-}
+export type NostrMessageType = 'EVENT' | 'REQ' | 'CLOSE' | 'NOTICE' | 'EOSE' | 'OK' | 'AUTH';
 
 /**
  * Subscription request to a relay (NIP-01)
@@ -72,7 +57,7 @@ export interface NostrResponse {
   /**
    * Payload data for AUTH messages
    */
-  payload?: any;
+  payload?: unknown;
 }
 
 /**
@@ -84,7 +69,7 @@ export interface NostrError {
   /**
    * Error code for programmatic handling
    */
-  type: NostrMessageType.NOTICE;
+  type: NostrMessageType;
   /**
    * Human-readable error message
    */
