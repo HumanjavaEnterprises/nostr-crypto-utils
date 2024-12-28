@@ -1,4 +1,5 @@
 import { NostrMessageType, NostrEvent, SignedNostrEvent } from '../types/base';
+import { hexToBytes } from '../utils/encoding';
 
 /**
  * Creates a properly formatted Nostr EVENT message
@@ -23,6 +24,11 @@ export function parseNostrMessage(message: string): [NostrMessageType, ...unknow
     const [messageType, ...rest] = parsed;
     if (typeof messageType !== 'string') {
         throw new Error('Invalid message type');
+    }
+
+    // Handle Uint8Array reconstruction for events
+    if (messageType === NostrMessageType.EVENT && rest[0]?.pubkey?.hex) {
+        rest[0].pubkey.bytes = hexToBytes(rest[0].pubkey.hex);
     }
     
     return [messageType as NostrMessageType, ...rest];

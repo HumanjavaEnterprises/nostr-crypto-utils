@@ -7,10 +7,14 @@
  * Represents a public key
  */
 export interface PublicKey {
-  /** Public key in hex format */
+  /** Public key in hex format (33 bytes compressed) */
   hex: string;
-  /** Public key as bytes */
+  /** Public key in bytes format (33 bytes compressed) */
   bytes: Uint8Array;
+  /** Schnorr public key in hex format (32 bytes x-coordinate) */
+  schnorrHex: string;
+  /** Schnorr public key in bytes format (32 bytes x-coordinate) */
+  schnorrBytes: Uint8Array;
 }
 
 /**
@@ -88,14 +92,26 @@ export interface ValidationResult {
  * Filter for Nostr events
  */
 export interface NostrFilter {
+  /** Event IDs to match */
   ids?: string[];
-  authors?: string[];  // For compatibility, keep as string[]
+  /** Author public keys to match */
+  authors?: string[] | PublicKey[];
+  /** Event kinds to match */
   kinds?: NostrEventKind[];
+  /** Events after timestamp */
   since?: number;
+  /** Events before timestamp */
   until?: number;
+  /** Maximum number of events */
   limit?: number;
+  /** Event references to match */
+  '#e'?: string[];
+  /** Pubkey references to match */
+  '#p'?: string[] | PublicKey[];
+  /** Tag references to match */
+  '#t'?: string[];
+  /** Search string */
   search?: string;
-  [key: string]: any;
 }
 
 /**

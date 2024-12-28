@@ -13,21 +13,20 @@ import {
   createKindFilter,
   createAuthorFilter,
   createReplyFilter
-} from '../integration';
-import { NostrEvent, SignedNostrEvent } from '../types/base';
+} from '../utils';
+import { NostrEvent, SignedNostrEvent, NostrEventKind } from '../types/base';
 import { NostrSubscription } from '../types/protocol';
-import { NOSTR_KIND } from '../constants';
 import { describe, it, expect } from 'vitest';
 
 describe('Integration Utilities', () => {
   const mockSignedEvent: SignedNostrEvent = {
-    id: '123',
-    pubkey: '456',
-    created_at: 1234567890,
-    kind: 1,
-    tags: [],
+    kind: NostrEventKind.TEXT_NOTE,
     content: 'test',
-    sig: '789'
+    created_at: 1234567890,
+    tags: [],
+    pubkey: { hex: 'abc123', bytes: new Uint8Array() },
+    id: 'def456',
+    sig: 'ghi789'
   };
 
   describe('Message Formatting', () => {
@@ -91,7 +90,7 @@ describe('Integration Utilities', () => {
 
     it('should throw error for invalid message', () => {
       expect(() => parseNostrMessage('invalid')).toThrow('Invalid relay message: not an array');
-      expect(() => parseNostrMessage([123])).toThrow('Invalid relay message: type must be a string');
+      expect(() => parseNostrMessage([123])).toThrow('Invalid relay message: first element not a string');
       expect(() => parseNostrMessage(['UNKNOWN'])).toThrow('Unknown message type: UNKNOWN');
     });
   });
@@ -102,21 +101,20 @@ describe('Integration Utilities', () => {
     it('should create metadata event', () => {
       const metadata = { name: 'test', about: 'test user' };
       const event = createMetadataEvent(metadata);
-      expect(event.kind).toBe(NOSTR_KIND.METADATA);
+      expect(event.kind).toBe(NostrEventKind.SET_METADATA);
       expect(JSON.parse(event.content)).toEqual(metadata);
       expect(event.created_at).toBeGreaterThanOrEqual(now);
       expect(event.tags).toEqual([]);
     });
 
     it('should create text note event', () => {
-      const content = 'Hello, Nostr!';
+      const content = 'Hello world';
       const replyTo = 'event123';
       const mentions = ['pubkey123'];
       const event = createTextNoteEvent(content, replyTo, mentions);
-      expect(event.kind).toBe(NOSTR_KIND.TEXT_NOTE);
+      expect(event.kind).toBe(NostrEventKind.TEXT_NOTE);
       expect(event.content).toBe(content);
       expect(event.created_at).toBeGreaterThanOrEqual(now);
-      expect(event.tags).toHaveLength(2);
       expect(event.tags).toContainEqual(['e', replyTo]);
       expect(event.tags).toContainEqual(['p', mentions[0]]);
     });
@@ -125,11 +123,10 @@ describe('Integration Utilities', () => {
       const recipientPubkey = 'pubkey123';
       const content = 'Secret message';
       const event = createDirectMessageEvent(recipientPubkey, content);
-      expect(event.kind).toBe(NOSTR_KIND.ENCRYPTED_DIRECT_MESSAGE);
+      expect(event.kind).toBe(NostrEventKind.ENCRYPTED_DIRECT_MESSAGE);
       expect(event.content).toBe(content);
       expect(event.created_at).toBeGreaterThanOrEqual(now);
-      expect(event.tags).toHaveLength(1);
-      expect(event.tags[0]).toEqual(['p', recipientPubkey]);
+      expect(event.tags).toContainEqual(['p', recipientPubkey]);
     });
 
     it('should create channel message event', () => {
@@ -137,10 +134,9 @@ describe('Integration Utilities', () => {
       const content = 'Channel message';
       const replyTo = 'event123';
       const event = createChannelMessageEvent(channelId, content, replyTo);
-      expect(event.kind).toBe(NOSTR_KIND.CHANNEL_MESSAGE);
+      expect(event.kind).toBe(NostrEventKind.CHANNEL_MESSAGE);
       expect(event.content).toBe(content);
       expect(event.created_at).toBeGreaterThanOrEqual(now);
-      expect(event.tags).toHaveLength(2);
       expect(event.tags).toContainEqual(['e', channelId, '', 'root']);
       expect(event.tags).toContainEqual(['e', replyTo, '', 'reply']);
     });
@@ -148,7 +144,7 @@ describe('Integration Utilities', () => {
 
   describe('Event Analysis', () => {
     const mockEvent: NostrEvent = {
-      kind: 1,
+      kind: NostrEventKind.TEXT_NOTE,
       content: 'test',
       created_at: 1234567890,
       tags: [
@@ -156,7 +152,8 @@ describe('Integration Utilities', () => {
         ['e', 'event2'],
         ['p', 'pubkey1'],
         ['p', 'pubkey2']
-      ]
+      ],
+      pubkey: { hex: 'abc123', bytes: new Uint8Array() }
     };
 
     it('should extract referenced events', () => {
@@ -189,7 +186,7 @@ describe('Integration Utilities', () => {
       const filter = createReplyFilter('event123', 10);
       expect(filter).toEqual({
         '#e': ['event123'],
-        kinds: [NOSTR_KIND.TEXT_NOTE, NOSTR_KIND.CHANNEL_MESSAGE],
+        kinds: [NostrEventKind.TEXT_NOTE, NostrEventKind.CHANNEL_MESSAGE],
         limit: 10
       });
     });

@@ -3,7 +3,10 @@
  * @description Nostr protocol types
  */
 
-import type { SignedNostrEvent as NostrEvent } from './base';
+import type { SignedNostrEvent as NostrEvent, NostrFilter, NostrEventKind, PublicKey } from './base';
+
+// Re-export types from base that are used in this module
+export type { NostrFilter, PublicKey };
 
 /**
  * Standard Nostr message types as defined in NIP-01
@@ -25,63 +28,6 @@ export enum NostrMessageType {
   EOSE = 'EOSE',
   /** Authentication request/response */
   AUTH = 'AUTH'
-}
-
-/**
- * Event kinds as defined in NIP-01
- * @enum {number}
- * @see {@link https://github.com/nostr-protocol/nips/blob/master/01.md#event-kinds}
- */
-export enum NostrEventKind {
-  TEXT_NOTE = 1,
-  CONTACTS = 3,
-  ENCRYPTED_DIRECT_MESSAGE = 4,
-  EVENT_DELETION = 5
-}
-
-/**
- * Filter for querying events from relays (NIP-01)
- * Used to request specific events based on various criteria
- * @interface NostrFilter
- * @see {@link https://github.com/nostr-protocol/nips/blob/master/01.md#communication-between-clients-and-relays}
- */
-export interface NostrFilter {
-  /**
-   * List of event IDs to match
-   */
-  ids?: string[];
-  /**
-   * List of pubkeys to match as event authors
-   */
-  authors?: PublicKey[];
-  /**
-   * List of event kinds to match
-   */
-  kinds?: NostrEventKind[];
-  /**
-   * Events created after this timestamp
-   */
-  since?: number;
-  /**
-   * Events created before this timestamp
-   */
-  until?: number;
-  /**
-   * Maximum number of events to return
-   */
-  limit?: number;
-  /**
-   * List of event tags to match
-   */
-  '#e'?: string[];
-  /**
-   * List of pubkeys to match as event p tags
-   */
-  '#p'?: PublicKey[];
-  /**
-   * List of event tags to match
-   */
-  '#t'?: string[];
 }
 
 /**
@@ -143,12 +89,4 @@ export interface NostrError {
    * Human-readable error message
    */
   message: string;
-}
-
-/**
- * Public key representation
- */
-export type PublicKey = {
-  bytes: Uint8Array;
-  hex: string;
 }

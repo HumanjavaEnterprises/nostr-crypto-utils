@@ -20,7 +20,8 @@ describe('NOSTR Crypto Utils', () => {
       expect(keyPair.publicKey).toBeDefined();
       expect(keyPair.privateKey).toHaveLength(64);
       expect(keyPair.publicKey.bytes).toBeInstanceOf(Uint8Array);
-      expect(bytesToHex(keyPair.publicKey.bytes)).toHaveLength(64);
+      expect(keyPair.publicKey.bytes.length).toBe(33);
+      expect(bytesToHex(keyPair.publicKey.bytes)).toHaveLength(66);
     });
 
     it('should derive the correct public key', async () => {

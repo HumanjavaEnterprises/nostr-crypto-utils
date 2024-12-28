@@ -5,6 +5,7 @@
 
 import { NostrEvent, SignedNostrEvent, NostrEventKind, NostrFilter, NostrSubscription, NostrResponse, NostrMessageType, PublicKey } from '../types/base';
 import { NOSTR_TAG } from './constants';
+import { createPublicKey } from '../crypto/keys';
 
 /**
  * Formats an event for relay transmission according to NIP-01
@@ -91,7 +92,7 @@ export function createMetadataEvent(metadata: Record<string, string>, pubkey: st
     content: JSON.stringify(metadata),
     created_at: Math.floor(Date.now() / 1000),
     tags: [],
-    pubkey: typeof pubkey === 'string' ? { hex: pubkey, bytes: new Uint8Array(0) } : pubkey
+    pubkey: typeof pubkey === 'string' ? createPublicKey(pubkey) : pubkey
   };
 }
 
@@ -127,7 +128,7 @@ export function createTextNoteEvent(
     content,
     created_at: Math.floor(Date.now() / 1000),
     tags,
-    pubkey: typeof pubkey === 'string' ? { hex: pubkey, bytes: new Uint8Array(0) } : pubkey
+    pubkey: typeof pubkey === 'string' ? createPublicKey(pubkey) : pubkey
   };
 }
 
@@ -149,7 +150,7 @@ export function createDirectMessageEvent(
     content,
     created_at: Math.floor(Date.now() / 1000),
     tags: [['p', typeof recipientPubkey === 'string' ? recipientPubkey : recipientPubkey.hex]],
-    pubkey: typeof senderPubkey === 'string' ? { hex: senderPubkey, bytes: new Uint8Array(0) } : senderPubkey
+    pubkey: typeof senderPubkey === 'string' ? createPublicKey(senderPubkey) : senderPubkey
   };
 }
 
@@ -177,7 +178,7 @@ export function createChannelMessageEvent(
     content,
     created_at: Math.floor(Date.now() / 1000),
     tags,
-    pubkey: typeof authorPubkey === 'string' ? { hex: authorPubkey, bytes: new Uint8Array(0) } : authorPubkey
+    pubkey: typeof authorPubkey === 'string' ? createPublicKey(authorPubkey) : authorPubkey
   };
 }
 
