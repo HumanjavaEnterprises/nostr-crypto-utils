@@ -19,5 +19,23 @@
     "Validation",
     "Types",
     "*"
-  ]
+  ],
+  "searchInComments": true,
+  "visibilityFilters": {
+    "protected": false,
+    "private": false,
+    "inherited": true,
+    "external": false
+  },
+  "navigationLinks": {
+    "GitHub": "https://github.com/humanjavaenterprises/nostr-crypto-utils",
+    "NPM": "https://www.npmjs.com/package/nostr-crypto-utils"
+  },
+  "sidebarLinks": {
+    "API Reference": "https://humanjavaenterprises.github.io/nostr-crypto-utils/"
+  },
+  "validation": {
+    "invalidLink": true,
+    "notDocumented": true
+  }
 }
