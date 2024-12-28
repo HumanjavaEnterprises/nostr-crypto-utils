@@ -1,6 +1,6 @@
 # nostr-crypto-utils
 
-A comprehensive TypeScript library providing cryptographic utilities and protocol-compliant message handling for Nostr applications, designed to work seamlessly with [@humanjavaenterprises/nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase).
+A lightweight, type-safe TypeScript library for Nostr cryptography, designed to complement [@humanjavaenterprises/nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase). Together, they provide a robust, security-focused alternative to larger Nostr client libraries.
 
 [![npm version](https://badge.fury.io/js/%40humanjavaenterprises%2Fnostr-crypto-utils.svg)](https://www.npmjs.com/package/@humanjavaenterprises/nostr-crypto-utils)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
@@ -15,6 +15,15 @@ A comprehensive TypeScript library providing cryptographic utilities and protoco
 ⚠️ **Important**: This library handles cryptographic keys and operations that are critical for securing your Nostr identity and data. All cryptographic operations, including key generation, signing, and encryption, must be handled with appropriate security measures.
 
 If you discover a security vulnerability, please follow our [Security Policy](SECURITY.md) and report it through [GitHub's Security Advisory feature](https://github.com/humanjavaenterprises/nostr-crypto-utils/security/advisories/new).
+
+## Why Choose nostr-crypto-utils?
+
+- **Lightweight**: Only 208.7KB unpacked, focusing on essential cryptographic operations
+- **Type-First**: Built from the ground up with TypeScript for maximum type safety
+- **Minimal Dependencies**: Reduced attack surface and easier auditing
+- **Modular Design**: Perfect for projects that need cryptographic operations without full client functionality
+- **Complementary**: Works seamlessly with nostr-nsec-seedphrase for complete key management
+- **Security Focused**: Strict validation and comprehensive test coverage
 
 ## Features
 
@@ -40,6 +49,34 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 | Type Safety              | ✅     | Full TypeScript support with strict typing           |
 | Browser Support          | ✅     | Works in modern browsers with Web Crypto API         |
 | Node.js Support         | ✅     | Full support for Node.js environments               |
+
+## Integration with nostr-nsec-seedphrase
+
+This library is designed to work seamlessly with [@humanjavaenterprises/nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase) to provide a complete solution for Nostr key management and cryptographic operations:
+
+```typescript
+import { generateSeedPhrase } from '@humanjavaenterprises/nostr-nsec-seedphrase';
+import { createTextNoteEvent, signEvent } from '@humanjavaenterprises/nostr-crypto-utils';
+
+// Generate keys using nostr-nsec-seedphrase
+const seedPhrase = generateSeedPhrase();
+const keyPair = seedPhraseToKeyPair(seedPhrase);
+
+// Use nostr-crypto-utils for event creation and signing
+const event = createTextNoteEvent({
+  content: 'Hello Nostr!',
+  pubkey: keyPair.publicKey,
+  created_at: Math.floor(Date.now() / 1000)
+});
+
+const signedEvent = signEvent(event, keyPair.privateKey);
+```
+
+Together, these libraries provide:
+- Secure key generation and recovery through seed phrases
+- Type-safe cryptographic operations
+- Comprehensive event handling
+- Minimal bundle size and dependencies
 
 ## Installation
 

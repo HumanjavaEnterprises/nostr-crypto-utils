@@ -1,7 +1,7 @@
 {
   "name": "nostr-crypto-utils",
   "version": "0.3.0",
-  "description": "A comprehensive TypeScript library providing cryptographic utilities and protocol-compliant message handling for Nostr applications",
+  "description": "A lightweight, type-safe TypeScript library for Nostr cryptography, focusing on NIP-01 and NIP-04 with strict validation and minimal dependencies",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -45,7 +45,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/HumanjavaEnterprises/nostr-crypto-utils.git"
+    "url": "git+https://github.com/HumanjavaEnterprises/nostr-crypto-utils.git"
   },
   "bugs": {
     "url": "https://github.com/HumanjavaEnterprises/nostr-crypto-utils/issues"
