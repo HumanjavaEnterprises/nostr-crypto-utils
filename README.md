@@ -100,6 +100,31 @@ Before publishing to npmjs:
 6. [ ] Types are properly exported
 7. [ ] Package.json is properly configured
 
+## Version History
+
+### v0.3.0 (2024-12-27)
+- ✨ Added schnorr signature support for event signing and verification
+- 🔒 Improved public key handling with both compressed and schnorr formats
+- 🐛 Fixed signature verification issues
+- 🏗️ Enhanced TypeScript type safety
+- 📝 Improved documentation and examples
+- ✅ Added comprehensive test coverage
+
+### v0.2.0 (2024-12-26)
+- 🎉 Initial public release
+- ✨ Added support for NIP-01 and NIP-04
+- 🔑 Implemented key pair generation and management
+- 📝 Added comprehensive documentation
+- 🧪 Added test suite
+- 🏗️ Set up TypeScript configuration
+- 📦 Configured package for npm distribution
+
+### v0.1.0 (2024-12-25)
+- 🎉 Initial development version
+- 🏗️ Basic project structure
+- 📝 Initial documentation
+- 🔧 Development environment setup
+
 ## Support & Community
 
 We welcome your feedback and contributions! Here's how you can get involved:
