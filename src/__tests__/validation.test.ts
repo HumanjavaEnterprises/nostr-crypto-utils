@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { validateEvent, validateSignedEvent, validateFilter, validateSubscription } from '../validation';
-import { NostrEvent, SignedNostrEvent, PublicKey } from '../types/base';
+import { validateEvent, validateFilter, validateSubscription } from '../validation';
+import { SignedNostrEvent, PublicKey } from '../types/base';
 import { NostrFilter, NostrSubscription } from '../types/protocol';
-import { schnorr } from '@noble/curves/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
-import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '@noble/curves/abstract/utils';
 
 describe('Validation Functions', () => {
   describe('validateEvent', () => {

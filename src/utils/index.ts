@@ -27,4 +27,4 @@ export {
 
 // Export logger
 import { createLogger } from './logger';
-export const logger = createLogger();
+export const logger = createLogger('default');

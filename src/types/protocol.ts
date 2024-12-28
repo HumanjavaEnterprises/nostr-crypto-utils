@@ -3,7 +3,7 @@
  * @description Nostr protocol types
  */
 
-import type { SignedNostrEvent as NostrEvent, NostrFilter, NostrEventKind, PublicKey } from './base';
+import type { SignedNostrEvent as NostrEvent, NostrFilter, PublicKey } from './base';
 
 // Re-export types from base that are used in this module
 export type { NostrFilter, PublicKey };

@@ -153,17 +153,13 @@ export async function validateKeyPair(publicKey: PublicKey, privateKey: string):
 /**
  * Validates a Nostr public key
  */
-export function validatePublicKey(publicKey: PublicKey): boolean {
+export function validatePublicKey(publicKey: string): boolean {
   try {
-    // Convert hex to bytes (already in compressed format)
-    const publicKeyBytes = hexToBytes(publicKey.hex);
-    
-    // Check if the public key is a valid secp256k1 point
-    const point = secp256k1.getPublicKey(publicKeyBytes, true);
-    // If we get here without throwing, the point is valid
+    const bytes = hexToBytes(publicKey);
+    if (bytes.length !== 32) return false;
+    secp256k1.ProjectivePoint.fromHex(publicKey); // Just check if valid
     return true;
-  } catch (error) {
-    logger.error('Failed to validate public key:', error);
+  } catch {
     return false;
   }
 }

@@ -9,7 +9,6 @@ import {
   decrypt,
   createEvent
 } from '../index';
-import type { NostrEvent, PublicKey } from '../types/index';
 import { bytesToHex } from '@noble/hashes/utils';
 
 describe('NOSTR Crypto Utils', () => {

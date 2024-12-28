@@ -3,8 +3,6 @@ import {
   generateKeyPair,
   createEvent,
   signEvent,
-  encrypt,
-  decrypt,
   NostrEventKind,
   formatSubscriptionForRelay,
   formatEventForRelay,
@@ -43,7 +41,10 @@ describe('NIP-01: Basic Protocol Flow', () => {
 
   it('Client-Relay Message Format', async () => {
     // Test REQ message format
-    const reqMessage = formatSubscriptionForRelay('test_sub', [{ kinds: [1], limit: 10 }]);
+    const reqMessage = formatSubscriptionForRelay({
+      id: 'test_sub',
+      filters: [{ kinds: [1], limit: 10 }]
+    });
     expect(reqMessage[0]).toBe('REQ');
     expect(reqMessage[1]).toBe('test_sub');
     expect(reqMessage[2]).toEqual({ kinds: [1], limit: 10 });

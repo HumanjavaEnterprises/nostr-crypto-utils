@@ -1,6 +1,6 @@
 /**
  * @module nips/nip-04
- * @description Implementation of NIP-04: Encrypted Direct Message
+ * @description Implementation of NIP-04 (Encrypted Direct Messages)
  * @see https://github.com/nostr-protocol/nips/blob/master/04.md
  */
 
@@ -10,12 +10,54 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { logger } from '../utils';
 
 // Configure crypto for Node.js and test environments
-let customCrypto: any;
+interface CryptoImplementation {
+  getRandomValues<T extends ArrayBufferView>(array: T): T;
+  subtle: {
+    importKey(
+      format: 'raw' | 'pkcs8' | 'spki' | 'jwk',
+      keyData: BufferSource | JsonWebKey,
+      algorithm: AlgorithmIdentifier | RsaHashedImportParams | EcKeyImportParams | HmacImportParams | AesKeyAlgorithm,
+      extractable: boolean,
+      keyUsages: KeyUsage[]
+    ): Promise<CryptoKey>;
+    encrypt(
+      algorithm: AlgorithmIdentifier | RsaOaepParams | AesCtrParams | AesCbcParams | AesGcmParams,
+      key: CryptoKey,
+      data: BufferSource
+    ): Promise<ArrayBuffer>;
+    decrypt(
+      algorithm: AlgorithmIdentifier | RsaOaepParams | AesCtrParams | AesCbcParams | AesGcmParams,
+      key: CryptoKey,
+      data: BufferSource
+    ): Promise<ArrayBuffer>;
+  };
+}
+
+declare global {
+  interface Window {
+    crypto: CryptoImplementation;
+  }
+}
+
+let customCrypto: CryptoImplementation;
 
 if (typeof window !== 'undefined' && window.crypto) {
   customCrypto = window.crypto;
 } else {
-  customCrypto = webcrypto;
+  customCrypto = webcrypto as unknown as CryptoImplementation;
+}
+
+interface EncryptedMessage {
+  content: string;
+  iv: string;
+}
+
+interface DecryptedMessage {
+  content: string;
+}
+
+interface SharedSecret {
+  sharedSecret: Uint8Array;
 }
 
 /**
@@ -29,7 +71,7 @@ export async function encrypt(
   message: string,
   recipientPubKey: string,
   senderPrivKey: string
-): Promise<string> {
+): Promise<EncryptedMessage> {
   try {
     const sharedSecret = secp256k1.getSharedSecret(senderPrivKey, '02' + recipientPubKey);
     const sharedKey = await customCrypto.subtle.importKey(
@@ -52,7 +94,7 @@ export async function encrypt(
     combined.set(iv);
     combined.set(encryptedArray, iv.length);
     
-    return bytesToHex(combined);
+    return { content: bytesToHex(combined), iv: bytesToHex(iv) };
   } catch (error) {
     logger.error('Failed to encrypt message:', error);
     throw error;
@@ -67,10 +109,10 @@ export async function encrypt(
  * @returns Decrypted message
  */
 export async function decrypt(
-  encryptedMessage: string,
+  encryptedMessage: EncryptedMessage,
   senderPubKey: string,
   recipientPrivKey: string
-): Promise<string> {
+): Promise<DecryptedMessage> {
   try {
     const sharedSecret = secp256k1.getSharedSecret(recipientPrivKey, '02' + senderPubKey);
     const sharedKey = await customCrypto.subtle.importKey(
@@ -81,8 +123,8 @@ export async function decrypt(
       ['decrypt']
     );
     
-    const encrypted = hexToBytes(encryptedMessage);
-    const iv = encrypted.slice(0, 16);
+    const encrypted = hexToBytes(encryptedMessage.content);
+    const iv = hexToBytes(encryptedMessage.iv);
     const ciphertext = encrypted.slice(16);
     
     const decrypted = await customCrypto.subtle.decrypt(
@@ -91,7 +133,7 @@ export async function decrypt(
       ciphertext
     );
     
-    return new TextDecoder().decode(decrypted);
+    return { content: new TextDecoder().decode(decrypted) };
   } catch (error) {
     logger.error('Failed to decrypt message:', error);
     throw error;
@@ -107,9 +149,9 @@ export async function decrypt(
 export function getSharedSecret(
   privateKey: string,
   publicKey: string
-): Uint8Array {
+): SharedSecret {
   try {
-    return secp256k1.getSharedSecret(privateKey, '02' + publicKey).slice(1);
+    return { sharedSecret: secp256k1.getSharedSecret(privateKey, '02' + publicKey).slice(1) };
   } catch (error) {
     logger.error('Failed to generate shared secret:', error);
     throw error;

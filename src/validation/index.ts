@@ -7,9 +7,9 @@
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/curves/abstract/utils';
 import { schnorr } from '@noble/curves/secp256k1';
-import { NostrEvent, SignedNostrEvent, ValidationResult, NostrFilter, NostrSubscription, NostrEventKind } from '../types/base';
+import type { NostrEvent, SignedNostrEvent, ValidationResult } from '../types/base';
+import type { NostrFilter, NostrSubscription } from '../types/protocol';
 import { logger } from '../utils';
-import { validatePublicKey } from '../crypto/keys';
 
 /**
  * Validates a Nostr event ID by checking if it matches the SHA-256 hash of the canonical event serialization.

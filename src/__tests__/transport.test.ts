@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { NostrMessageType } from '../types/base';
-import { NostrEvent, SignedNostrEvent } from '../types/base';
+import { SignedNostrEvent, NostrMessageType } from '../types/base';
 import { generateKeyPair } from '../crypto/keys';
 import { signEvent } from '../crypto/events';
 import { createEvent } from '../crypto/events';
-import { NostrMessage } from '../transport';
 import { parseNostrMessage, createEventMessage } from '../protocol/transport';
 import { hexToBytes, bytesToHex } from '../utils/encoding';
 
 // Helper function to compare events with Uint8Array properties
-function compareEvents(actual: SignedNostrEvent, expected: SignedNostrEvent) {
+function compareEvents(actual: SignedNostrEvent, expected: SignedNostrEvent): void {
   expect(actual.id).toEqual(expected.id);
   expect(actual.sig).toEqual(expected.sig);
   expect(actual.kind).toEqual(expected.kind);
@@ -21,7 +19,7 @@ function compareEvents(actual: SignedNostrEvent, expected: SignedNostrEvent) {
 }
 
 describe('Transport Layer', () => {
-  it('should parse EVENT message correctly', () => {
+  it('should parse EVENT message correctly', (): void => {
     const pubkeyHex = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     const event: SignedNostrEvent = {
       pubkey: {
@@ -43,7 +41,7 @@ describe('Transport Layer', () => {
     compareEvents(eventData as SignedNostrEvent, event);
   });
 
-  it('should parse REQ message correctly', () => {
+  it('should parse REQ message correctly', (): void => {
     const subscriptionId = 'test-sub';
     const filter = { kinds: [1], limit: 10 };
     const message = ['REQ', subscriptionId, filter];
@@ -54,7 +52,7 @@ describe('Transport Layer', () => {
     expect(filterData).toEqual(filter);
   });
 
-  it('should parse CLOSE message correctly', () => {
+  it('should parse CLOSE message correctly', (): void => {
     const subscriptionId = 'test-sub';
     const message = ['CLOSE', subscriptionId];
     const [messageType, subId] = parseNostrMessage(JSON.stringify(message));
@@ -63,7 +61,7 @@ describe('Transport Layer', () => {
     expect(subId).toBe(subscriptionId);
   });
 
-  it('should parse OK message correctly', () => {
+  it('should parse OK message correctly', (): void => {
     const eventId = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
     const success = true;
     const message = ['OK', eventId, success, ''];
@@ -74,7 +72,7 @@ describe('Transport Layer', () => {
     expect(isSuccess).toBe(success);
   });
 
-  it('should parse EOSE message correctly', () => {
+  it('should parse EOSE message correctly', (): void => {
     const subscriptionId = 'test-sub';
     const message = ['EOSE', subscriptionId];
     const [messageType, subId] = parseNostrMessage(JSON.stringify(message));
@@ -83,7 +81,7 @@ describe('Transport Layer', () => {
     expect(subId).toBe(subscriptionId);
   });
 
-  it('should handle event publication flow', async () => {
+  it('should handle event publication flow', async (): Promise<void> => {
     // Generate test keypair
     const keyPair = await generateKeyPair();
 

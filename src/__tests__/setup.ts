@@ -3,7 +3,7 @@
  * @description Test setup and configuration
  */
 
-import { expect, afterEach, beforeEach } from 'vitest';
+import { afterEach, beforeEach } from 'vitest';
 import { webcrypto } from 'node:crypto';
 
 // Configure crypto for test environment

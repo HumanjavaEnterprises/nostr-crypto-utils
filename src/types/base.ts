@@ -126,8 +126,8 @@ export interface NostrSubscription {
  * Nostr message
  */
 export interface NostrMessage {
-  type: string;
-  payload: any;
+  type: NostrMessageType;
+  payload: unknown;
 }
 
 /**
@@ -151,7 +151,7 @@ export interface NostrResponse {
   success: boolean;
   message?: string;
   messageType: NostrMessageType;
-  payload?: any;
+  payload?: unknown;
 }
 
 /**
@@ -160,5 +160,5 @@ export interface NostrResponse {
 export interface NostrError {
   code: string;
   message: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }

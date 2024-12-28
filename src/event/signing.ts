@@ -4,8 +4,7 @@
  */
 
 import { schnorr } from '@noble/curves/secp256k1';
-import * as secp256k1 from '@noble/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { bytesToHex } from '@noble/curves/abstract/utils';
 import { logger } from '../utils';
 import { getEventHash } from './creation';
 import type { NostrEvent, SignedNostrEvent } from '../types';

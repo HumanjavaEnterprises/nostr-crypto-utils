@@ -3,9 +3,15 @@
  * @description Type guard functions for Nostr types
  */
 
-import type { NostrEvent, PublicKey } from './base';
-import type { SignedNostrEvent } from './base';
-import { NostrFilter, NostrSubscription, NostrResponse, NostrError, NostrMessageType } from './protocol';
+import {
+  NostrEvent,
+  NostrFilter,
+  NostrSubscription,
+  NostrMessageType,
+  SignedNostrEvent,
+  NostrResponse,
+  NostrError,
+} from './base';
 
 /**
  * Type guard for NostrEvent

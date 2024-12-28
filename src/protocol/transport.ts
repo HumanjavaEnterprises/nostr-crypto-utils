@@ -1,4 +1,5 @@
-import { NostrMessageType, NostrEvent, SignedNostrEvent } from '../types/base';
+import type { SignedNostrEvent } from '../types/base';
+import { NostrMessageType } from '../types/base';
 import { hexToBytes } from '../utils/encoding';
 
 /**

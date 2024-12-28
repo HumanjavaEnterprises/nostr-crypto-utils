@@ -3,69 +3,44 @@
  * @description Functions for handling Nostr protocol messages and transport layer operations
  */
 
-import { NostrEvent, NostrFilter, NostrMessageType, NostrResponse } from '../types/base';
+import { NostrEvent, NostrFilter, NostrMessageType } from '../types/base';
 
 export interface NostrMessage {
   messageType: NostrMessageType;
   success: boolean;
   message?: string;
-  payload?: any;
+  payload?: unknown;
 }
 
 /**
  * Parses a Nostr message from a relay
  */
-export function parseNostrMessage(message: any[]): NostrMessage {
-  try {
-    if (!Array.isArray(message) || message.length < 2) {
-      return { success: false, message: 'Invalid message format', messageType: NostrMessageType.ERROR };
-    }
+export function parseNostrMessage(message: unknown): { type: NostrMessageType; payload: unknown } | null {
+  // Validate message format
+  if (!Array.isArray(message)) {
+    throw new Error('Invalid relay message: not an array');
+  }
+  if (message.length === 0) {
+    throw new Error('Invalid relay message: empty array');
+  }
+  if (typeof message[0] !== 'string') {
+    throw new Error('Invalid relay message: first element not a string');
+  }
 
-    const [type, ...payload] = message;
-
-    switch (type) {
-      case 'EVENT':
-        if (!payload[0] || typeof payload[0] !== 'object') {
-          return { success: false, message: 'Invalid EVENT message format', messageType: NostrMessageType.ERROR };
-        }
-        return { 
-          success: true, 
-          messageType: NostrMessageType.EVENT, 
-          payload: payload[0]
-        };
-
-      case 'NOTICE':
-        if (!payload[0] || typeof payload[0] !== 'string') {
-          return { success: false, message: 'Invalid NOTICE message format', messageType: NostrMessageType.ERROR };
-        }
-        return {
-          success: true,
-          messageType: NostrMessageType.NOTICE,
-          payload: payload[0]
-        };
-
-      case 'EOSE':
-        return {
-          success: true,
-          messageType: NostrMessageType.EOSE,
-          payload: payload[0]
-        };
-
-      case 'OK':
-        if (payload.length < 2 || typeof payload[0] !== 'string' || typeof payload[1] !== 'boolean') {
-          return { success: false, message: 'Invalid OK message format', messageType: NostrMessageType.ERROR };
-        }
-        return {
-          success: true,
-          messageType: NostrMessageType.OK,
-          payload: { eventId: payload[0], success: payload[1], message: payload[2] }
-        };
-
-      default:
-        return { success: false, message: `Unknown message type: ${type}`, messageType: NostrMessageType.ERROR };
-    }
-  } catch (error) {
-    return { success: false, message: `Error parsing message: ${error}`, messageType: NostrMessageType.ERROR };
+  const messageType = message[0] as NostrMessageType;
+  switch (messageType) {
+    case NostrMessageType.EVENT:
+      return { type: NostrMessageType.EVENT, payload: message[1] };
+    case NostrMessageType.REQ:
+      return { type: NostrMessageType.REQ, payload: { id: message[1], filter: message[2] } };
+    case NostrMessageType.CLOSE:
+      return { type: NostrMessageType.CLOSE, payload: message[1] };
+    case NostrMessageType.EOSE:
+      return { type: NostrMessageType.EOSE, payload: message[1] };
+    case NostrMessageType.OK:
+      return { type: NostrMessageType.OK, payload: { id: message[1], success: message[2], message: message[3] } };
+    default:
+      throw new Error(`Unknown message type: ${messageType}`);
   }
 }
 

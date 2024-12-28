@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { generateKeyPair, signEvent } from '../../crypto';
-import { isNostrEvent, isSignedNostrEvent } from '../../types/guards';
+import { isSignedNostrEvent } from '../../types/guards';
 import type { NostrEvent } from '../../types/base';
 
 describe('Nostr Crypto Utils Integration', () => {

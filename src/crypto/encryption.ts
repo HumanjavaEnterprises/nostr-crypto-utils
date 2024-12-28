@@ -3,8 +3,7 @@
  * @description Functions for encrypting and decrypting messages using NIP-04
  */
 
-import { schnorr } from '@noble/curves/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
 import { randomBytes } from '@noble/hashes/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import * as secp256k1 from '@noble/secp256k1';
