@@ -30,11 +30,13 @@ export interface PublicKeyDetails {
 export type PublicKey = PublicKeyHex | PublicKeyDetails;
 
 /**
- * Represents a key pair used for signing and encryption
+ * Key pair used for signing and encryption
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface KeyPair {
+  /** Private key in hex format */
   privateKey: string;
+  /** Public key details */
   publicKey: PublicKeyDetails;
 }
 
@@ -43,19 +45,33 @@ export interface KeyPair {
  * @see https://github.com/nostr-protocol/nips
  */
 export enum NostrEventKind {
+  /** NIP-01: Set metadata about the user */
   SET_METADATA = 0,
+  /** NIP-01: Plain text note */
   TEXT_NOTE = 1,
+  /** NIP-01: Recommend relay to followers */
   RECOMMEND_SERVER = 2,
+  /** NIP-02: Contact list and relay list metadata */
   CONTACTS = 3,
+  /** NIP-04: Encrypted direct message */
   ENCRYPTED_DIRECT_MESSAGE = 4,
+  /** NIP-09: Event deletion */
   EVENT_DELETION = 5,
+  /** NIP-25: Reactions to events */
   REACTION = 7,
+  /** NIP-28: Channel creation */
   CHANNEL_CREATE = 40,
+  /** NIP-28: Channel metadata */
   CHANNEL_METADATA = 41,
+  /** NIP-28: Channel message */
   CHANNEL_MESSAGE = 42,
+  /** NIP-28: Hide message in channel */
   CHANNEL_HIDE_MESSAGE = 43,
+  /** NIP-28: Mute user in channel */
   CHANNEL_MUTE_USER = 44,
+  /** NIP-42: Authentication */
   AUTH = 22242,
+  /** NIP-42: Authentication response */
   AUTH_RESPONSE = 22243
 }
 
@@ -64,19 +80,26 @@ export enum NostrEventKind {
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface NostrEvent {
+  /** Event kind as defined in NIPs */
   kind: NostrEventKind;
+  /** Content of the event */
   content: string;
+  /** Array of tags associated with the event */
   tags: string[][];
+  /** Unix timestamp in seconds */
   created_at: number;
+  /** Public key of the event creator in hex format */
   pubkey: string;
 }
 
 /**
- * Signed Nostr event interface
+ * Signed Nostr event interface, extends NostrEvent with signature
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface SignedNostrEvent extends NostrEvent {
+  /** Event ID (32-bytes sha256 of the serialized event data) */
   id: string;
+  /** Schnorr signature of the event ID */
   sig: string;
 }
 
@@ -84,7 +107,9 @@ export interface SignedNostrEvent extends NostrEvent {
  * Result of a validation operation
  */
 export interface ValidationResult {
+  /** Whether the validation passed */
   isValid: boolean;
+  /** Error message if validation failed */
   error?: string;
 }
 
@@ -120,7 +145,9 @@ export interface NostrFilter {
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface NostrSubscription {
+  /** Unique subscription identifier */
   id: string;
+  /** Array of filters to apply to the subscription */
   filters: NostrFilter[];
 }
 
@@ -144,7 +171,9 @@ export enum NostrMessageType {
  * Nostr message interface
  */
 export interface NostrMessage {
+  /** Type of the message */
   type: NostrMessageType;
+  /** Payload of the message */
   payload: unknown;
 }
 
@@ -152,12 +181,19 @@ export interface NostrMessage {
  * Nostr response interface
  */
 export interface NostrResponse {
+  /** Type of the response */
   type: NostrMessageType;
+  /** Event data if applicable */
   event?: SignedNostrEvent;
+  /** Subscription ID if applicable */
   subscriptionId?: string;
+  /** Filters if applicable */
   filters?: NostrFilter[];
+  /** Event ID if applicable */
   eventId?: string;
+  /** Whether the request was accepted */
   accepted?: boolean;
+  /** Message if applicable */
   message?: string;
 }
 
@@ -165,8 +201,11 @@ export interface NostrResponse {
  * Nostr error interface
  */
 export interface NostrError {
+  /** Error code */
   code: string;
+  /** Error message */
   message: string;
+  /** Additional error details */
   details?: Record<string, unknown>;
 }
 
@@ -174,6 +213,8 @@ export interface NostrError {
  * Encryption result interface
  */
 export interface EncryptionResult {
+  /** Encrypted ciphertext */
   ciphertext: string;
+  /** Initialization vector */
   iv: string;
 }

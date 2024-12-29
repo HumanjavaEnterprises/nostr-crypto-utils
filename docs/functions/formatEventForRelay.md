@@ -1,12 +1,12 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / formatEventForRelay
+[nostr-crypto-utils](../README.md) / formatEventForRelay
 
 # Function: formatEventForRelay()
 
-> **formatEventForRelay**(`event`): [`string`, `SignedNostrEvent`]
+> **formatEventForRelay**(`event`): [`string`, [`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)]
 
 Formats an event for relay transmission according to NIP-01
 
@@ -14,28 +14,16 @@ Formats an event for relay transmission according to NIP-01
 
 ### event
 
-`SignedNostrEvent`
+[`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)
 
 The signed Nostr event to format
 
 ## Returns
 
-[`string`, `SignedNostrEvent`]
+[`string`, [`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)]
 
 A tuple of ['EVENT', event] ready for relay transmission
 
-## Example
-
-```typescript
-const event = await signEvent(myEvent, privateKey);
-const formatted = formatEventForRelay(event);
-// formatted = ['EVENT', event]
-```
-
-## See
-
-[https://github.com/nostr-protocol/nips/blob/master/01.md#from-client-to-relay-sending-events-and-creating-subscriptions](https://github.com/nostr-protocol/nips/blob/master/01.md#from-client-to-relay-sending-events-and-creating-subscriptions)
-
 ## Defined in
 
-[integration.ts:19](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/0f31137ec103ea3e26d2a80b02d4d406d5a6e0d6/src/integration.ts#L19)
+[protocol/index.ts:15](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/protocol/index.ts#L15)

@@ -1,22 +1,16 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / createChannelMessageEvent
+[nostr-crypto-utils](../README.md) / createChannelMessageEvent
 
 # Function: createChannelMessageEvent()
 
-> **createChannelMessageEvent**(`channelId`, `content`, `authorPubkey`, `replyTo`?): `NostrEvent`
+> **createChannelMessageEvent**(`content`, `channelId`, `pubkey`): [`NostrEvent`](../interfaces/NostrEvent.md)
 
-Creates a channel message event according to NIP-28
+Creates a channel message event
 
 ## Parameters
-
-### channelId
-
-`string`
-
-ID of the channel
 
 ### content
 
@@ -24,47 +18,24 @@ ID of the channel
 
 Message content
 
-### authorPubkey
+### channelId
 
 `string`
 
-Public key of the message author
+Channel ID
 
-### replyTo?
+### pubkey
 
 `string`
 
-Optional ID of message being replied to
+Public key
 
 ## Returns
 
-`NostrEvent`
+[`NostrEvent`](../interfaces/NostrEvent.md)
 
-Created channel message event
-
-## Example
-
-```typescript
-// New channel message
-const msg = createChannelMessageEvent(
-  channelId,
-  'Hello channel!',
-  myPubkey
-);
-
-// Reply to message
-const reply = createChannelMessageEvent(
-  channelId,
-  'Good point!',
-  myPubkey,
-  originalMessageId
-);
-```
-
-## See
-
-[https://github.com/nostr-protocol/nips/blob/master/28.md](https://github.com/nostr-protocol/nips/blob/master/28.md)
+Created event
 
 ## Defined in
 
-[integration.ts:265](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/0f31137ec103ea3e26d2a80b02d4d406d5a6e0d6/src/integration.ts#L265)
+[utils/events.ts:44](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/utils/events.ts#L44)

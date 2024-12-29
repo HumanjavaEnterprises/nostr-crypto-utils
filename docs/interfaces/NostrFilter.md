@@ -1,24 +1,56 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / NostrFilter
+[nostr-crypto-utils](../README.md) / NostrFilter
 
 # Interface: NostrFilter
 
+Filter for Nostr events
+
+## See
+
+https://github.com/nostr-protocol/nips/blob/master/01.md
+
 ## Indexable
 
- \[`key`: `string`\]: `any`
+ \[`key`: \`#$\{string\}\`\]: `undefined` \| `string`[]
 
 ## Properties
+
+### #e?
+
+> `optional` **#e**: `string`[]
+
+Filter by event references
+
+#### Defined in
+
+[types/base.ts:134](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L134)
+
+***
+
+### #p?
+
+> `optional` **#p**: `string`[]
+
+Filter by pubkey references
+
+#### Defined in
+
+[types/base.ts:136](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L136)
+
+***
 
 ### authors?
 
 > `optional` **authors**: `string`[]
 
+Filter by author public keys
+
 #### Defined in
 
-types.ts:36
+[types/base.ts:124](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L124)
 
 ***
 
@@ -26,19 +58,23 @@ types.ts:36
 
 > `optional` **ids**: `string`[]
 
+Filter by event IDs
+
 #### Defined in
 
-types.ts:35
+[types/base.ts:122](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L122)
 
 ***
 
 ### kinds?
 
-> `optional` **kinds**: `number`[]
+> `optional` **kinds**: [`NostrEventKind`](../enumerations/NostrEventKind.md)[]
+
+Filter by event kinds
 
 #### Defined in
 
-types.ts:37
+[types/base.ts:126](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L126)
 
 ***
 
@@ -46,9 +82,11 @@ types.ts:37
 
 > `optional` **limit**: `number`
 
+Limit number of results
+
 #### Defined in
 
-types.ts:40
+[types/base.ts:132](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L132)
 
 ***
 
@@ -56,9 +94,11 @@ types.ts:40
 
 > `optional` **search**: `string`
 
+Full-text search query
+
 #### Defined in
 
-types.ts:41
+[types/base.ts:140](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L140)
 
 ***
 
@@ -66,9 +106,11 @@ types.ts:41
 
 > `optional` **since**: `number`
 
+Filter by start timestamp
+
 #### Defined in
 
-types.ts:38
+[types/base.ts:128](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L128)
 
 ***
 
@@ -76,6 +118,8 @@ types.ts:38
 
 > `optional` **until**: `number`
 
+Filter by end timestamp
+
 #### Defined in
 
-types.ts:39
+[types/base.ts:130](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L130)

@@ -1,6 +1,6 @@
 /**
  * @module nostr-crypto-utils
- * @description A comprehensive TypeScript library providing cryptographic utilities and protocol-compliant message handling for Nostr applications
+ * A comprehensive TypeScript library providing cryptographic utilities and protocol-compliant message handling for Nostr applications
  * @packageDocumentation
  */
 

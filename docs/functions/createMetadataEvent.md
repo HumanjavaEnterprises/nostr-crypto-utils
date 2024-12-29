@@ -1,14 +1,14 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / createMetadataEvent
+[nostr-crypto-utils](../README.md) / createMetadataEvent
 
 # Function: createMetadataEvent()
 
-> **createMetadataEvent**(`metadata`, `pubkey`): `NostrEvent`
+> **createMetadataEvent**(`metadata`, `pubkey`): [`NostrEvent`](../interfaces/NostrEvent.md)
 
-Creates a metadata event according to NIP-01
+Creates a metadata event
 
 ## Parameters
 
@@ -16,34 +16,20 @@ Creates a metadata event according to NIP-01
 
 `Record`\<`string`, `string`\>
 
-User metadata (name, about, picture, etc.)
+User metadata
 
 ### pubkey
 
 `string`
 
-Public key of the user
+Public key
 
 ## Returns
 
-`NostrEvent`
+[`NostrEvent`](../interfaces/NostrEvent.md)
 
-Created metadata event
-
-## Example
-
-```typescript
-const event = createMetadataEvent({
-  name: 'Alice',
-  about: 'Nostr enthusiast',
-  picture: 'https://example.com/avatar.jpg'
-}, myPubkey);
-```
-
-## See
-
-[https://github.com/nostr-protocol/nips/blob/master/01.md#basic-event-kinds](https://github.com/nostr-protocol/nips/blob/master/01.md#basic-event-kinds)
+Created event
 
 ## Defined in
 
-[integration.ts:148](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/0f31137ec103ea3e26d2a80b02d4d406d5a6e0d6/src/integration.ts#L148)
+[utils/events.ts:29](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/utils/events.ts#L29)

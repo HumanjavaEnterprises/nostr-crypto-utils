@@ -1,22 +1,14 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / generateKeyPair
+[nostr-crypto-utils](../README.md) / generateKeyPair
 
 # Function: generateKeyPair()
 
-> **generateKeyPair**(`seed`?): `Promise`\<[`KeyPair`](../interfaces/KeyPair.md)\>
+> **generateKeyPair**(): `Promise`\<[`KeyPair`](../interfaces/KeyPair.md)\>
 
-Generates a new key pair for use in Nostr
-
-## Parameters
-
-### seed?
-
-`string`
-
-Optional seed phrase for deterministic key generation
+Generates a new key pair
 
 ## Returns
 
@@ -26,4 +18,4 @@ Generated key pair
 
 ## Defined in
 
-crypto/keys.ts:26
+[crypto/index.ts:89](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L89)

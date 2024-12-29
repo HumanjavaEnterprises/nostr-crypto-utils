@@ -1,55 +1,41 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / createDirectMessageEvent
+[nostr-crypto-utils](../README.md) / createDirectMessageEvent
 
 # Function: createDirectMessageEvent()
 
-> **createDirectMessageEvent**(`recipientPubkey`, `content`, `senderPubkey`): `NostrEvent`
+> **createDirectMessageEvent**(`content`, `recipientPubKey`, `pubkey`): [`NostrEvent`](../interfaces/NostrEvent.md)
 
-Creates a direct message event according to NIP-04
+Creates a direct message event
 
 ## Parameters
-
-### recipientPubkey
-
-`string`
-
-Public key of message recipient
 
 ### content
 
 `string`
 
-Message content (will be encrypted)
+Message content
 
-### senderPubkey
+### recipientPubKey
 
 `string`
 
-Public key of the sender
+Recipient's public key
+
+### pubkey
+
+`string`
+
+Sender's public key
 
 ## Returns
 
-`NostrEvent`
+[`NostrEvent`](../interfaces/NostrEvent.md)
 
-Created direct message event
-
-## Example
-
-```typescript
-const dm = createDirectMessageEvent(
-  recipientPubkey,
-  'Secret message',
-  myPubkey
-);
-```
-
-## See
-
-[https://github.com/nostr-protocol/nips/blob/master/04.md](https://github.com/nostr-protocol/nips/blob/master/04.md)
+Created event
 
 ## Defined in
 
-[integration.ts:224](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/0f31137ec103ea3e26d2a80b02d4d406d5a6e0d6/src/integration.ts#L224)
+[utils/events.ts:64](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/utils/events.ts#L64)

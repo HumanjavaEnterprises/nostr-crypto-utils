@@ -1,14 +1,14 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / getPublicKey
+[nostr-crypto-utils](../README.md) / getPublicKey
 
 # Function: getPublicKey()
 
-> **getPublicKey**(`privateKey`): `string`
+> **getPublicKey**(`privateKey`): `Promise`\<[`PublicKeyDetails`](../interfaces/PublicKeyDetails.md)\>
 
-Derives a public key from a private key
+Gets the public key from a private key
 
 ## Parameters
 
@@ -20,10 +20,10 @@ Private key in hex format
 
 ## Returns
 
-`string`
+`Promise`\<[`PublicKeyDetails`](../interfaces/PublicKeyDetails.md)\>
 
-Public key in hex format
+Public key details
 
 ## Defined in
 
-crypto/keys.ts:37
+[crypto/index.ts:105](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L105)

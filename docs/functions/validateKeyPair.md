@@ -1,35 +1,29 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / validateKeyPair
+[nostr-crypto-utils](../README.md) / validateKeyPair
 
 # Function: validateKeyPair()
 
-> **validateKeyPair**(`publicKey`, `privateKey`): [`ValidationResult`](../interfaces/ValidationResult.md)
+> **validateKeyPair**(`keyPair`): `Promise`\<`boolean`\>
 
-Validates a Nostr key pair
+Validates a key pair
 
 ## Parameters
 
-### publicKey
+### keyPair
 
-`string`
+[`KeyPair`](../interfaces/KeyPair.md)
 
-Public key in hex format
-
-### privateKey
-
-`string`
-
-Private key in hex format
+Key pair to validate
 
 ## Returns
 
-[`ValidationResult`](../interfaces/ValidationResult.md)
+`Promise`\<`boolean`\>
 
-Validation result
+True if valid
 
 ## Defined in
 
-crypto/keys.ts:48
+[crypto/index.ts:127](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L127)

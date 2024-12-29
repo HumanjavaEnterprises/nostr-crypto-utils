@@ -1,14 +1,14 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / verifySignature
+[nostr-crypto-utils](../README.md) / verifySignature
 
 # Function: verifySignature()
 
-> **verifySignature**(`event`): `boolean`
+> **verifySignature**(`event`): `Promise`\<`boolean`\>
 
-Verifies the signature of a signed Nostr event (NIP-01)
+Verifies an event signature
 
 ## Parameters
 
@@ -16,14 +16,14 @@ Verifies the signature of a signed Nostr event (NIP-01)
 
 [`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)
 
-Event to verify
+Signed event to verify
 
 ## Returns
 
-`boolean`
+`Promise`\<`boolean`\>
 
 True if signature is valid
 
 ## Defined in
 
-event/signing.ts:43
+[crypto/index.ts:197](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L197)

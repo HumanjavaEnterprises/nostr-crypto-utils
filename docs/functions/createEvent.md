@@ -1,40 +1,22 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / createEvent
+[nostr-crypto-utils](../README.md) / createEvent
 
 # Function: createEvent()
 
-> **createEvent**(`params`): [`NostrEvent`](../interfaces/NostrEvent.md)
+> **createEvent**(`event`): [`NostrEvent`](../interfaces/NostrEvent.md)
 
-Creates a new Nostr event with the specified parameters
+Creates a new event
 
 ## Parameters
 
-### params
+### event
 
-Event parameters
+`Partial`\<[`NostrEvent`](../interfaces/NostrEvent.md)\>
 
-#### content
-
-`string`
-
-#### created_at
-
-`number`
-
-#### kind
-
-[`NostrEventKind`](../enumerations/NostrEventKind.md)
-
-#### pubkey
-
-`string`
-
-#### tags
-
-`string`[][]
+Event data
 
 ## Returns
 
@@ -44,4 +26,4 @@ Created event
 
 ## Defined in
 
-event/creation.ts:16
+[crypto/index.ts:142](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L142)

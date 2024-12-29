@@ -36,6 +36,45 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 - **Cross-Platform**: Works in both Node.js and browser environments
 - **Zero Dependencies**: Minimal external dependencies for better security
 
+## Supported NIPs
+
+This library implements the following Nostr Implementation Possibilities (NIPs):
+
+| NIP | Title | Description | Status |
+|-----|-------|-------------|---------|
+| [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) | Basic Protocol Flow Description | Core protocol functionality including event creation, signing, and verification | ✅ Complete |
+| [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md) | Encrypted Direct Messages | Secure, end-to-end encrypted direct messaging between users | ✅ Complete |
+| [NIP-19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32-encoded Entities | Human-readable encoding for keys, events, and other entities | ✅ Complete |
+| [NIP-26](https://github.com/nostr-protocol/nips/blob/master/26.md) | Delegated Event Signing | Create and verify delegated event signing capabilities | ✅ Complete |
+
+### NIP-01 Features
+- Event creation and serialization
+- Event signing and verification
+- Event ID calculation
+- Basic protocol validation
+
+### NIP-04 Features
+- End-to-end encrypted direct messages
+- Secure key exchange
+- Message encryption/decryption
+
+### NIP-19 Features
+- Bech32 encoding/decoding for:
+  - Public keys (`npub`)
+  - Private keys (`nsec`)
+  - Note IDs (`note`)
+  - Profile references (`nprofile`)
+  - Event references (`nevent`)
+
+### NIP-26 Features
+- Create delegation tokens
+- Sign events with delegation
+- Validate delegated events
+- Conditional delegations with:
+  - Time constraints
+  - Event kind restrictions
+  - Tag restrictions
+
 ## Features and Capabilities
 
 | Feature                    | Status | Description                                           |
@@ -188,75 +227,7 @@ For more details on delegation, see the [NIP-26 specification](https://github.co
 - **Better JSDoc Comments**: Improved documentation with clear and concise JSDoc comments
 - **NIP References**: Added references to relevant NIPs for better understanding of the underlying protocol
 
-## Troubleshooting
-
-### Common Issues and Solutions
-
-#### 1. Invalid Delegation Token
-
-```typescript
-// ❌ Common mistake: Using expired delegation
-const delegation = await createDelegation({
-  delegatorPrivkey,
-  delegateePubkey,
-  conditions: {
-    until: Math.floor(Date.now() / 1000) - 3600  // Already expired!
-  }
-});
-
-// ✅ Correct: Ensure future expiration
-const delegation = await createDelegation({
-  delegatorPrivkey,
-  delegateePubkey,
-  conditions: {
-    until: Math.floor(Date.now() / 1000) + (24 * 60 * 60)  // 24 hours from now
-  }
-});
-```
-
-#### 2. Signature Verification Failures
-
-```typescript
-// ❌ Common mistake: Using wrong key format
-const wrongPubkey = 'npub1...';  // Using bech32 format directly
-const event = await signEventWithDelegation({ pubkey: wrongPubkey, ... });
-
-// ✅ Correct: Convert from bech32 to hex format first
-import { nip19 } from 'nostr-tools';
-const { data: pubkeyHex } = nip19.decode(pubkey);
-const event = await signEventWithDelegation({ pubkey: pubkeyHex, ... });
-```
-
-#### 3. Permission Issues
-
-```typescript
-// ❌ Common mistake: Mismatched event kinds
-const delegation = await createDelegation({
-  conditions: { kind: 1 }  // Only allows kind 1
-});
-const event = createEvent({ kind: 4 });  // Trying to create kind 4
-// This will fail!
-
-// ✅ Correct: Match delegation conditions
-const delegation = await createDelegation({
-  conditions: { kinds: [1, 4] }  // Allow both kinds
-});
-const event = createEvent({ kind: 4 });  // Now works!
-```
-
-#### 4. Token Format Issues
-
-```typescript
-// ❌ Common mistake: Invalid token parsing
-const token = 'nostr:delegation:...';
-const parts = token.split(':');  // Naive splitting
-
-// ✅ Correct: Use proper token parsing
-import { parseDelegationToken } from '@humanjavaenterprises/nostr-crypto-utils';
-const { delegator, conditions } = parseDelegationToken(token);
-```
-
-### Debug Mode
+## Debug Mode
 
 Enable debug mode to get detailed logging:
 
@@ -284,25 +255,25 @@ setDebugLevel('trace');
 
 When troubleshooting, verify these common points:
 
-1. **Key Formats**
-   - Private keys should be in hex format
-   - Public keys should be in hex format (not bech32)
-   - Signatures should be 64 bytes in hex format
+#### Key Formats
+- Private keys should be in hex format
+- Public keys should be in hex format (not bech32)
+- Signatures should be 64 bytes in hex format
 
-2. **Time Constraints**
-   - Token expiration should be in the future
-   - Check system clock synchronization
-   - Use UTC timestamps consistently
+#### Time Constraints
+- Token expiration should be in the future
+- Check system clock synchronization
+- Use UTC timestamps consistently
 
-3. **Permission Scope**
-   - Verify event kinds match delegation conditions
-   - Check any tag restrictions
-   - Confirm time window restrictions
+#### Permission Scope
+- Verify event kinds match delegation conditions
+- Check any tag restrictions
+- Confirm time window restrictions
 
-4. **Network Issues**
-   - Verify relay connections
-   - Check for rate limiting
-   - Confirm proper websocket handling
+#### Network Issues
+- Verify relay connections
+- Check for rate limiting
+- Confirm proper websocket handling
 
 ### Testing Tools
 

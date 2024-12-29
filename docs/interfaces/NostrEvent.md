@@ -1,10 +1,16 @@
-[**nostr-crypto-utils v0.3.0**](../README.md)
+[**nostr-crypto-utils v0.4.1**](../README.md)
 
 ***
 
-[nostr-crypto-utils](../globals.md) / NostrEvent
+[nostr-crypto-utils](../README.md) / NostrEvent
 
 # Interface: NostrEvent
+
+Basic Nostr event interface
+
+## See
+
+https://github.com/nostr-protocol/nips/blob/master/01.md
 
 ## Extended by
 
@@ -16,9 +22,11 @@
 
 > **content**: `string`
 
+Content of the event
+
 #### Defined in
 
-types.ts:13
+[types/base.ts:86](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L86)
 
 ***
 
@@ -26,9 +34,11 @@ types.ts:13
 
 > **created\_at**: `number`
 
+Unix timestamp in seconds
+
 #### Defined in
 
-types.ts:15
+[types/base.ts:90](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L90)
 
 ***
 
@@ -36,9 +46,11 @@ types.ts:15
 
 > **kind**: [`NostrEventKind`](../enumerations/NostrEventKind.md)
 
+Event kind as defined in NIPs
+
 #### Defined in
 
-types.ts:12
+[types/base.ts:84](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L84)
 
 ***
 
@@ -46,9 +58,11 @@ types.ts:12
 
 > **pubkey**: `string`
 
+Public key of the event creator in hex format
+
 #### Defined in
 
-types.ts:16
+[types/base.ts:92](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L92)
 
 ***
 
@@ -56,6 +70,8 @@ types.ts:16
 
 > **tags**: `string`[][]
 
+Array of tags associated with the event
+
 #### Defined in
 
-types.ts:14
+[types/base.ts:88](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L88)

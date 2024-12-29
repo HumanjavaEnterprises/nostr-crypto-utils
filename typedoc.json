@@ -9,7 +9,7 @@
   "excludeExternals": true,
   "plugin": ["typedoc-plugin-markdown"],
   "theme": "default",
-  "readme": "README.md",
+  "readme": "none",
   "categorizeByGroup": true,
   "categoryOrder": [
     "Key Management",

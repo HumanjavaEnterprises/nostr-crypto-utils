@@ -78,6 +78,10 @@ import { randomBytes } from '@noble/hashes/utils';
 import { NostrEvent, SignedNostrEvent, KeyPair, PublicKeyDetails, PublicKey } from '../types';
 import { logger } from '../utils/logger';
 
+// Export schnorr functions
+export const signSchnorr = schnorr.sign;
+export const verifySchnorrSignature = schnorr.verify;
+
 /**
  * Generates a new key pair
  * @returns Generated key pair
