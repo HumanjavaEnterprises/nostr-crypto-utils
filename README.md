@@ -141,6 +141,134 @@ try {
   console.error(error); // Error: Invalid hex string
 }
 
+### Schnorr Signature Examples
+
+The library provides robust support for Schnorr signatures, which are fundamental to Nostr's cryptographic operations. Here are some common use cases:
+
+#### Basic Message Signing
+
+```typescript
+import { schnorrSign, schnorrVerify } from 'nostr-crypto-utils';
+
+// Sign a message
+const message = 'Hello Nostr!';
+const privateKey = 'your-private-key';
+const signature = await schnorrSign(message, privateKey);
+
+// Verify the signature
+const publicKey = 'corresponding-public-key';
+const isValid = await schnorrVerify(signature, message, publicKey);
+console.log('Signature valid:', isValid); // true
+```
+
+#### Delegation Token Example (NIP-26)
+
+```typescript
+import { schnorrSign } from 'nostr-crypto-utils';
+
+// Create a delegation token
+const delegateePubkey = 'delegatee-public-key';
+const delegatorPrivkey = 'delegator-private-key';
+const conditions = {
+  kind: 1,  // Only allow text notes
+  until: Math.floor(Date.now() / 1000) + 86400 // 24 hours from now
+};
+
+// Format conditions string
+const conditionsString = Object.entries(conditions)
+  .map(([key, value]) => `${key}=${value}`)
+  .sort()
+  .join('&');
+
+// Create and sign the delegation message
+const message = `nostr:delegation:${delegateePubkey}:${conditionsString}`;
+const token = await schnorrSign(message, delegatorPrivkey);
+```
+
+These examples demonstrate the library's type-safe approach to Schnorr signatures, ensuring both security and ease of use.
+
+### Encrypted Direct Messages (NIP-04)
+
+The library provides robust support for encrypted direct messages following the NIP-04 specification:
+
+```typescript
+import { encryptMessage, decryptMessage } from 'nostr-crypto-utils';
+
+// Encrypting a direct message
+async function createEncryptedDM(
+  content: string,
+  recipientPubkey: string,
+  senderPrivkey: string
+) {
+  try {
+    const encryptedContent = await encryptMessage(
+      content, 
+      recipientPubkey, 
+      senderPrivkey
+    );
+    
+    return {
+      kind: 4, // NIP-04 Encrypted Direct Message
+      content: encryptedContent,
+      tags: [['p', recipientPubkey]]
+    };
+  } catch (error) {
+    throw new Error(`Failed to create encrypted DM: ${error}`);
+  }
+}
+
+// Decrypting a received message
+async function decryptDM(
+  encryptedContent: string,
+  senderPubkey: string,
+  recipientPrivkey: string
+) {
+  try {
+    const decryptedContent = await decryptMessage(
+      encryptedContent,
+      senderPubkey,
+      recipientPrivkey
+    );
+    return decryptedContent;
+  } catch (error) {
+    throw new Error(`Failed to decrypt DM: ${error}`);
+  }
+}
+```
+
+### Event Validation and Signature Verification
+
+The library provides utilities for validating Nostr events and verifying signatures:
+
+```typescript
+import { validateEvent, verifySignature } from 'nostr-crypto-utils';
+import type { NostrEvent, SignedNostrEvent } from './types';
+
+async function validateSignedMessage(event: NostrEvent): Promise<boolean> {
+  try {
+    // First validate the event structure
+    if (!validateEvent(event)) {
+      console.debug('Invalid event format');
+      return false;
+    }
+
+    // Then verify the signature
+    const isValid = await verifySignature(event as SignedNostrEvent);
+    if (!isValid) {
+      console.debug('Invalid signature');
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error validating signed message:', error);
+    return false;
+  }
+}
+```
+
+These examples demonstrate real-world usage patterns from production Nostr applications, showcasing both the security features and ease of use of the library.
+
 ### NIP-26 Features
 - Create delegation tokens
 - Sign events with delegation
