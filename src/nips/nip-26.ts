@@ -69,8 +69,6 @@ export function checkDelegationConditions(
   event: NostrEvent,
   conditions: DelegationConditions
 ): boolean {
-  const now = Math.floor(Date.now() / 1000);
-
   if (conditions.kind !== undefined && event.kind !== conditions.kind) {
     return false;
   }
