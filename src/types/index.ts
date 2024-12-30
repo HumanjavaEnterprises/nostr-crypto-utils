@@ -8,34 +8,7 @@
  * Re-export all types from base module
  * @packageDocumentation
  */
-export type {
-  /** Public key type */
-  PublicKey,
-  /** Public key in hex format */
-  PublicKeyHex,
-  /** Detailed public key information */
-  PublicKeyDetails,
-  /** Key pair for signing and encryption */
-  KeyPair,
-  /** Basic Nostr event */
-  NostrEvent,
-  /** Signed Nostr event */
-  SignedNostrEvent,
-  /** Validation result */
-  ValidationResult,
-  /** Nostr event filter */
-  NostrFilter,
-  /** Nostr subscription */
-  NostrSubscription,
-  /** Nostr message */
-  NostrMessage,
-  /** Nostr response */
-  NostrResponse,
-  /** Nostr error */
-  NostrError,
-  /** Encryption result */
-  EncryptionResult,
-} from './base';
+export * from './base';
 
 /**
  * Re-export specific enums from base module
@@ -49,3 +22,9 @@ export {
 } from './base';
 
 export * from './guards';
+
+// Re-export NIP-19 types
+export type {
+  Nip19Data,
+  Nip19DataType
+} from '../nips/nip-19';

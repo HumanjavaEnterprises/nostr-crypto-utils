@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.5] - 2024-12-29
+
+### Fixed
+- Fixed NIP-19 function exports to ensure proper access from dependent packages
+- Improved type exports for NIP-19 related types
+- Updated documentation for NIP-19 functionality with clearer examples
+
+## [0.4.4] - 2024-12-29
+
+### Added
+- Enhanced logging system with comprehensive error handling
+- Development mode pretty printing with timestamps
+- TypeScript type exports for logger
+- Export utility functions: `encodeBytes` and `getPublicKeyHex`
+
+### Changed
+- Updated logger implementation to follow project-wide standards
+- Improved error object formatting with stack traces
+- Enhanced development mode output formatting
+
 ## [0.4.3] - 2024-12-29
 
 ### Added

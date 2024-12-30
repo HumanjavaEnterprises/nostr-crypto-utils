@@ -25,7 +25,9 @@ export type {
   KeyPair,
   PublicKeyDetails,
   NostrEventKind,
-  ValidationResult
+  ValidationResult,
+  Nip19Data,
+  Nip19DataType
 } from './types';
 
 // Export protocol functions
@@ -51,3 +53,15 @@ export {
   createChannelMessageEvent,
   createDirectMessageEvent
 } from './utils/events';
+
+// Export NIP-19 functions
+export {
+  npubEncode,
+  nsecEncode,
+  noteEncode,
+  nprofileEncode,
+  neventEncode,
+  naddrEncode,
+  nrelayEncode,
+  decode
+} from './nips/nip-19';

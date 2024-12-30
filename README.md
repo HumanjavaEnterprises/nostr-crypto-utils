@@ -70,6 +70,9 @@ This library implements the following Nostr Implementation Possibilities (NIPs):
 - Comprehensive validation and error handling
 - Support for multiple relay URLs
 - TLV (Type-Length-Value) encoding for complex entities
+- Improved type exports and function accessibility (v0.4.5+)
+- Enhanced error messages and validation
+- Cross-platform compatibility guaranteed
 
 ### NIP-19 Usage Examples
 
