@@ -136,8 +136,7 @@ export function decode(str: string): Nip19Data {
 }
 
 // Helper functions
-function encodeBytes(prefix: string, hex: string): string {
-  const data = Buffer.from(hex, 'hex');
+export function encodeBytes(prefix: string, data: Uint8Array): string {
   const words = bech32.toWords(data);
   return bech32.encode(prefix, words, 1000);
 }

@@ -1,4 +1,4 @@
-import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent, PublicKey } from '../types';
+import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent } from '../types';
 import { isNostrEvent, isNostrFilter, isSignedNostrEvent } from '../types/guards';
 import { schnorr } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
@@ -73,8 +73,8 @@ export function validateEvent(event: NostrEvent): ValidationResult {
  * @param pubkey - Public key in either hex or details format
  * @returns Hex representation of the public key
  */
-function getPublicKeyHex(pubkey: PublicKey): string {
-  return typeof pubkey === 'string' ? pubkey : pubkey.hex;
+export function getPublicKeyHex(pubkey: string): string {
+  return pubkey.startsWith('npub1') ? pubkey.slice(5) : pubkey;
 }
 
 /**
