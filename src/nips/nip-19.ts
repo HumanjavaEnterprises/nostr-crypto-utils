@@ -8,20 +8,34 @@ import { Buffer } from 'buffer';
 
 export type Nip19DataType = 'npub' | 'nsec' | 'note' | 'nprofile' | 'nevent' | 'naddr' | 'nrelay';
 
+const VALID_PREFIXES: Nip19DataType[] = ['npub', 'nsec', 'note', 'nprofile', 'nevent', 'naddr', 'nrelay'];
+
 export interface Nip19Data {
   type: Nip19DataType;
   data: string;
   relays?: string[];
   author?: string;
   kind?: number;
+  identifier?: string; // For naddr
 }
+
+// TLV type constants
+const TLV_TYPES = {
+  SPECIAL: 0,   // Main data (hex)
+  RELAY: 1,     // Relay URL (utf8)
+  AUTHOR: 2,    // Author pubkey (hex)
+  KIND: 3,      // Event kind (uint8)
+  IDENTIFIER: 4 // Identifier (utf8)
+} as const;
 
 /**
  * Encode a public key as an npub
  * @param pubkey Public key in hex format
  * @returns bech32-encoded npub string
+ * @throws {Error} If pubkey is invalid
  */
 export function npubEncode(pubkey: string): string {
+  validateHexString(pubkey, 64);
   const data = Buffer.from(pubkey, 'hex');
   const words = bech32.toWords(data);
   return bech32.encode('npub', words, 1000);
@@ -31,8 +45,10 @@ export function npubEncode(pubkey: string): string {
  * Encode a private key as an nsec
  * @param privkey Private key in hex format
  * @returns bech32-encoded nsec string
+ * @throws {Error} If privkey is invalid
  */
 export function nsecEncode(privkey: string): string {
+  validateHexString(privkey, 64);
   const data = Buffer.from(privkey, 'hex');
   const words = bech32.toWords(data);
   return bech32.encode('nsec', words, 1000);
@@ -42,8 +58,10 @@ export function nsecEncode(privkey: string): string {
  * Encode an event ID as a note
  * @param eventId Event ID in hex format
  * @returns bech32-encoded note string
+ * @throws {Error} If eventId is invalid
  */
 export function noteEncode(eventId: string): string {
+  validateHexString(eventId, 64);
   const data = Buffer.from(eventId, 'hex');
   const words = bech32.toWords(data);
   return bech32.encode('note', words, 1000);
@@ -54,12 +72,18 @@ export function noteEncode(eventId: string): string {
  * @param pubkey Public key in hex format
  * @param relays Optional relay URLs
  * @returns bech32-encoded nprofile string
+ * @throws {Error} If pubkey is invalid or relays are malformed
  */
 export function nprofileEncode(pubkey: string, relays?: string[]): string {
+  validateHexString(pubkey, 64);
+  if (relays) {
+    relays.forEach(validateRelayUrl);
+  }
+
   const data = encodeTLV({
     type: 'nprofile',
     data: pubkey,
-    relays: relays ? [relays[0]] : undefined // Only use first relay
+    relays
   });
   return bech32.encode('nprofile', data, 1000);
 }
@@ -71,6 +95,7 @@ export function nprofileEncode(pubkey: string, relays?: string[]): string {
  * @param author Optional author public key
  * @param kind Optional event kind
  * @returns bech32-encoded nevent string
+ * @throws {Error} If parameters are invalid
  */
 export function neventEncode(
   eventId: string,
@@ -78,10 +103,21 @@ export function neventEncode(
   author?: string,
   kind?: number
 ): string {
+  validateHexString(eventId, 64);
+  if (relays) {
+    relays.forEach(validateRelayUrl);
+  }
+  if (author) {
+    validateHexString(author, 64);
+  }
+  if (kind !== undefined && !Number.isInteger(kind)) {
+    throw new Error('Invalid event kind');
+  }
+
   const data = encodeTLV({
     type: 'nevent',
     data: eventId,
-    relays: relays ? [relays[0]] : undefined, // Only use first relay
+    relays,
     author,
     kind
   });
@@ -89,19 +125,67 @@ export function neventEncode(
 }
 
 /**
+ * Encode an address (NIP-33)
+ * @param pubkey Author's public key
+ * @param kind Event kind
+ * @param identifier String identifier
+ * @param relays Optional relay URLs
+ * @returns bech32-encoded naddr string
+ * @throws {Error} If parameters are invalid
+ */
+export function naddrEncode(
+  pubkey: string,
+  kind: number,
+  identifier: string,
+  relays?: string[]
+): string {
+  validateHexString(pubkey, 64);
+  if (!Number.isInteger(kind)) {
+    throw new Error('Invalid event kind');
+  }
+  if (!identifier) {
+    throw new Error('Identifier is required');
+  }
+  if (relays) {
+    relays.forEach(validateRelayUrl);
+  }
+
+  const data = encodeTLV({
+    type: 'naddr',
+    data: pubkey,
+    kind,
+    identifier,
+    relays
+  });
+  return bech32.encode('naddr', data, 1000);
+}
+
+/**
+ * Encode a relay URL
+ * @param url Relay URL
+ * @returns bech32-encoded nrelay string
+ * @throws {Error} If URL is invalid
+ */
+export function nrelayEncode(url: string): string {
+  validateRelayUrl(url);
+  const data = Buffer.from(url, 'utf8');
+  const words = bech32.toWords(data);
+  return bech32.encode('nrelay', words, 1000);
+}
+
+/**
  * Decode a bech32-encoded Nostr entity
  * @param str bech32-encoded string
  * @returns Decoded data with type and metadata
+ * @throws {Error} If string is invalid or malformed
  */
 export function decode(str: string): Nip19Data {
-  // First validate basic string format
   if (!str.includes('1')) {
     throw new Error('Invalid bech32 string');
   }
 
-  // Then validate the prefix
-  const prefix = str.split('1')[0];
-  if (!['npub', 'nsec', 'note', 'nprofile', 'nevent', 'naddr', 'nrelay'].includes(prefix)) {
+  const prefix = str.split('1')[0].toLowerCase();
+  if (!VALID_PREFIXES.includes(prefix as Nip19DataType)) {
     throw new Error('Unknown prefix');
   }
 
@@ -109,36 +193,63 @@ export function decode(str: string): Nip19Data {
     const decoded = bech32.decode(str, 1000);
     const data = Buffer.from(bech32.fromWords(decoded.words));
 
+    // For nrelay type
+    let url: string;
+    // For TLV types
+    let decodedData: Nip19Data;
+
     switch (decoded.prefix) {
       case 'npub':
       case 'nsec':
       case 'note':
+        validateHexString(data.toString('hex'), 64);
         return {
           type: decoded.prefix as Nip19DataType,
           data: data.toString('hex')
         };
+      case 'nrelay':
+        url = data.toString('utf8');
+        validateRelayUrl(url);
+        return {
+          type: 'nrelay',
+          data: url
+        };
       case 'nprofile':
       case 'nevent':
       case 'naddr':
-      case 'nrelay':
-        return decodeTLV(decoded.prefix as Nip19DataType, data);
+        decodedData = decodeTLV(decoded.prefix as Nip19DataType, data);
+        return decodedData;
       default:
         throw new Error('Unknown prefix');
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
-      if (error.message === 'Unknown prefix') {
-        throw error;
-      }
+      throw error;
     }
     throw new Error('Invalid bech32 string');
   }
 }
 
 // Helper functions
-export function encodeBytes(prefix: string, data: Uint8Array): string {
-  const words = bech32.toWords(data);
-  return bech32.encode(prefix, words, 1000);
+
+function validateHexString(str: string, length?: number): void {
+  if (!/^[0-9a-fA-F]+$/.test(str)) {
+    throw new Error('Invalid hex string');
+  }
+  if (length && str.length !== length) {
+    throw new Error(`Invalid hex string length (expected ${length})`);
+  }
+}
+
+function validateRelayUrl(url: string): void {
+  try {
+    const parsed = new URL(url);
+    if (!['ws:', 'wss:'].includes(parsed.protocol)) {
+      throw new Error('Invalid relay URL protocol');
+    }
+  } catch {
+    throw new Error('Invalid relay URL');
+  }
 }
 
 function encodeTLV(data: Nip19Data): number[] {
@@ -146,16 +257,14 @@ function encodeTLV(data: Nip19Data): number[] {
   
   // Special (type 0): main data
   const bytes = Buffer.from(data.data, 'hex');
-  result.push(0, bytes.length);
+  result.push(TLV_TYPES.SPECIAL, bytes.length);
   result.push(...bytes);
 
   // Relay (type 1): relay URLs
-  if (data.relays) {
-    // Only use first relay to keep size down
-    const relay = data.relays[0];
-    if (relay) {
+  if (data.relays?.length) {
+    for (const relay of data.relays) {
       const relayBytes = Buffer.from(relay, 'utf8');
-      result.push(1, relayBytes.length);
+      result.push(TLV_TYPES.RELAY, relayBytes.length);
       result.push(...relayBytes);
     }
   }
@@ -163,16 +272,23 @@ function encodeTLV(data: Nip19Data): number[] {
   // Author (type 2): author pubkey
   if (data.author) {
     const authorBytes = Buffer.from(data.author, 'hex');
-    result.push(2, authorBytes.length);
+    result.push(TLV_TYPES.AUTHOR, authorBytes.length);
     result.push(...authorBytes);
   }
 
   // Kind (type 3): event kind
   if (data.kind !== undefined) {
-    const kindBytes = Buffer.alloc(1);
-    kindBytes.writeUInt8(data.kind);
-    result.push(3, kindBytes.length);
+    const kindBytes = Buffer.alloc(4);
+    kindBytes.writeUInt32BE(data.kind);
+    result.push(TLV_TYPES.KIND, kindBytes.length);
     result.push(...kindBytes);
+  }
+
+  // Identifier (type 4): for naddr
+  if (data.identifier) {
+    const identifierBytes = Buffer.from(data.identifier, 'utf8');
+    result.push(TLV_TYPES.IDENTIFIER, identifierBytes.length);
+    result.push(...identifierBytes);
   }
 
   return bech32.toWords(Buffer.from(result));
@@ -186,24 +302,42 @@ function decodeTLV(prefix: Nip19DataType, data: Buffer): Nip19Data {
   };
 
   let i = 0;
+  // For relay type
+  let relay: string;
+
   while (i < data.length) {
     const type = data[i];
     const length = data[i + 1];
+    
+    if (i + 2 + length > data.length) {
+      throw new Error('Invalid TLV data');
+    }
+    
     const value = data.slice(i + 2, i + 2 + length);
 
     switch (type) {
-      case 0: // Special
+      case TLV_TYPES.SPECIAL:
         result.data = value.toString('hex');
+        validateHexString(result.data, 64);
         break;
-      case 1: // Relay
+      case TLV_TYPES.RELAY:
+        relay = value.toString('utf8');
+        validateRelayUrl(relay);
         result.relays = result.relays || [];
-        result.relays.push(value.toString('utf8'));
+        result.relays.push(relay);
         break;
-      case 2: // Author
+      case TLV_TYPES.AUTHOR:
         result.author = value.toString('hex');
+        validateHexString(result.author, 64);
         break;
-      case 3: // Kind
-        result.kind = value.readUInt8();
+      case TLV_TYPES.KIND:
+        result.kind = value.readUInt32BE();
+        break;
+      case TLV_TYPES.IDENTIFIER:
+        result.identifier = value.toString('utf8');
+        break;
+      default:
+        // Skip unknown TLV types
         break;
     }
 

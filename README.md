@@ -65,6 +65,78 @@ This library implements the following Nostr Implementation Possibilities (NIPs):
   - Note IDs (`note`)
   - Profile references (`nprofile`)
   - Event references (`nevent`)
+  - Addressable entities (`naddr`)
+  - Relay URLs (`nrelay`)
+- Comprehensive validation and error handling
+- Support for multiple relay URLs
+- TLV (Type-Length-Value) encoding for complex entities
+
+### NIP-19 Usage Examples
+
+```typescript
+import { 
+  npubEncode, 
+  nsecEncode, 
+  noteEncode, 
+  nprofileEncode,
+  neventEncode,
+  naddrEncode,
+  nrelayEncode,
+  decode 
+} from '@humanjavaenterprises/nostr-crypto-utils';
+
+// Encode a public key
+const npub = npubEncode('7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0');
+// npub1xtscya34g58tk0z6v2g0r6w5gpqrxdgkz9xeav
+
+// Encode a private key
+const nsec = nsecEncode('7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0');
+// nsec1xtscya34g58tk0z6v2g0r6w5gpqrxdgkz9xeav
+
+// Encode a note ID
+const note = noteEncode('7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0');
+// note1xtscya34g58tk0z6v2g0r6w5gpqrxdgkz9xeav
+
+// Encode a profile with multiple relays
+const nprofile = nprofileEncode(
+  '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
+  ['wss://relay1.example.com', 'wss://relay2.example.com']
+);
+
+// Encode an event with author and kind
+const nevent = neventEncode(
+  '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
+  ['wss://relay.example.com'],
+  '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
+  1
+);
+
+// Encode an addressable entity (NIP-33)
+const naddr = naddrEncode(
+  '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
+  30023,
+  'my-article',
+  ['wss://relay.example.com']
+);
+
+// Encode a relay URL
+const nrelay = nrelayEncode('wss://relay.example.com');
+
+// Decode any bech32-encoded entity
+const decoded = decode(nprofile);
+console.log(decoded);
+// {
+//   type: 'nprofile',
+//   data: '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
+//   relays: ['wss://relay1.example.com', 'wss://relay2.example.com']
+// }
+
+// All functions include validation
+try {
+  const invalidNpub = npubEncode('invalid-hex');
+} catch (error) {
+  console.error(error); // Error: Invalid hex string
+}
 
 ### NIP-26 Features
 - Create delegation tokens
