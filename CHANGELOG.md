@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.10] - 2025-01-02
+
+### Fixed
+- Corrected crypto module exports path for better ESM compatibility
+- Fixed directory imports for Node.js ESM
+
 ## [0.4.9] - 2025-01-02
 
 ### Fixed

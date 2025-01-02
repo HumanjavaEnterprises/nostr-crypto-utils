@@ -1,6 +1,6 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "description": "A comprehensive TypeScript library for Nostr protocol implementation, supporting multiple NIPs with strict validation",
   "type": "module",
   "main": "./dist/index.js",
