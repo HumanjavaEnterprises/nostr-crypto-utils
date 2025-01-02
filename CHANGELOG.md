@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.9] - 2025-01-02
+
+### Fixed
+- Enhanced Node.js compatibility with proper CJS/ESM module support
+- Improved module resolution for both CommonJS and ES Module environments
+- Fixed package exports to ensure consistent behavior across different Node.js versions
+
 ## [0.4.5] - 2024-12-29
 
 ### Fixed
