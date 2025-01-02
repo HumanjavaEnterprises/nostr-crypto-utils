@@ -1,23 +1,22 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.4.6",
+  "version": "0.4.8",
   "description": "A comprehensive TypeScript library for Nostr protocol implementation, supporting multiple NIPs with strict validation",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.cjs.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
