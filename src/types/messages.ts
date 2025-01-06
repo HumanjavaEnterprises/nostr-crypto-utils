@@ -1,6 +1,4 @@
-import { SignedNostrEvent, NostrFilter } from './base';
-
-export type NostrMessageType = 'EVENT' | 'NOTICE' | 'OK' | 'EOSE' | 'REQ' | 'CLOSE' | 'AUTH';
+import { SignedNostrEvent, NostrFilter } from './base.js';
 
 export type NostrMessageTuple = 
   | ['EVENT', SignedNostrEvent]
@@ -10,8 +8,3 @@ export type NostrMessageTuple =
   | ['REQ', string, ...NostrFilter[]]
   | ['CLOSE', string]
   | ['AUTH', SignedNostrEvent];
-
-export interface NostrMessage {
-  type: NostrMessageType;
-  payload: unknown;
-}

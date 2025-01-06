@@ -14,14 +14,8 @@ export type PublicKeyHex = string;
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 export interface PublicKeyDetails {
-  /** Public key in hex format (33 bytes compressed) */
+  /** Public key in hex format */
   hex: string;
-  /** Public key in bytes format (33 bytes compressed) */
-  bytes: Uint8Array;
-  /** Schnorr public key in hex format (32 bytes x-coordinate) */
-  schnorrHex: string;
-  /** Schnorr public key in bytes format (32 bytes x-coordinate) */
-  schnorrBytes: Uint8Array;
 }
 
 /**

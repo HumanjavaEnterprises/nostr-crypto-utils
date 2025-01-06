@@ -4,19 +4,31 @@
  * Provides functions to validate events, signatures, filters, and subscriptions according to the Nostr protocol.
  */
 
+import { 
+  NostrEvent, 
+  SignedNostrEvent, 
+  NostrFilter, 
+  NostrSubscription, 
+  ValidationResult, 
+  PublicKey,
+  NostrMessageType
+} from '../types/index.js';
+
+import { logger } from '../utils/logger.js';
+
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/curves/abstract/utils';
 import { schnorr } from '@noble/curves/secp256k1';
-import type { NostrEvent, SignedNostrEvent, ValidationResult, PublicKey } from '../types/base';
-import type { NostrFilter, NostrSubscription } from '../types/protocol';
-import { createPublicKey } from '../crypto/keys';
-import { logger } from '../utils/logger';
 
 /**
  * Gets the hex string from a PublicKey
  */
 function getPublicKeyHex(pubkey: PublicKey): string {
   return typeof pubkey === 'string' ? pubkey : pubkey.hex;
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  return new Uint8Array(hex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
 }
 
 /**
@@ -71,9 +83,6 @@ export function validateEventId(event: SignedNostrEvent): ValidationResult {
  */
 export function validateEventSignature(event: SignedNostrEvent): ValidationResult {
   try {
-    // Convert pubkey to PublicKeyDetails if it's a string
-    const pubkeyObj = typeof event.pubkey === 'string' ? createPublicKey(event.pubkey) : event.pubkey;
-
     // Verify the signature
     const serialized = JSON.stringify([
       0,
@@ -84,7 +93,9 @@ export function validateEventSignature(event: SignedNostrEvent): ValidationResul
       event.content
     ]);
     const hash = sha256(new TextEncoder().encode(serialized));
-    const isValid = schnorr.verify(event.sig, hash, pubkeyObj.schnorrBytes);
+    const pubkeyHex = getPublicKeyHex(event.pubkey);
+    const pubkeyBytes = hexToBytes(pubkeyHex);
+    const isValid = schnorr.verify(event.sig, hash, pubkeyBytes);
     
     return {
       isValid,
@@ -352,5 +363,133 @@ export function validateSubscription(subscription: NostrSubscription): Validatio
   } catch (error) {
     logger.error({ error }, 'Failed to validate subscription');
     return { isValid: false, error: 'Failed to validate subscription' };
+  }
+}
+
+/**
+ * Validates a Nostr relay response message.
+ * 
+ * @param {unknown} message - The message to validate
+ * @returns {ValidationResult} Object containing validation result and any error message
+ * @example
+ * ```typescript
+ * const result = validateResponse(['EVENT', eventObj]);
+ * if (!result.isValid) {
+ *   console.error(result.error);
+ * }
+ * ```
+ */
+export function validateResponse(message: unknown): ValidationResult {
+  // Check if message is an array
+  if (!Array.isArray(message)) {
+    return {
+      isValid: false,
+      error: 'Invalid message format: must be an array'
+    };
+  }
+
+  // Check if message has at least one element
+  if (message.length === 0) {
+    return {
+      isValid: false,
+      error: 'Invalid message format: array is empty'
+    };
+  }
+
+  // Check if first element is a valid message type
+  const type = message[0];
+  if (!Object.values(NostrMessageType).includes(type as NostrMessageType)) {
+    return {
+      isValid: false,
+      error: `Invalid message type: ${type}`
+    };
+  }
+
+  // Type-specific validation
+  switch (type) {
+    case NostrMessageType.EVENT:
+      if (message.length !== 2) {
+        return {
+          isValid: false,
+          error: 'EVENT message must have exactly 2 elements'
+        };
+      }
+      return validateSignedEvent(message[1] as SignedNostrEvent);
+
+    case NostrMessageType.NOTICE:
+      if (message.length !== 2 || typeof message[1] !== 'string') {
+        return {
+          isValid: false,
+          error: 'NOTICE message must have exactly 2 elements with a string message'
+        };
+      }
+      return { isValid: true };
+
+    case NostrMessageType.OK:
+      if (message.length !== 4 || 
+          typeof message[1] !== 'string' || 
+          typeof message[2] !== 'boolean' || 
+          typeof message[3] !== 'string') {
+        return {
+          isValid: false,
+          error: 'OK message must have exactly 4 elements: [type, eventId, success, message]'
+        };
+      }
+      return { isValid: true };
+
+    case NostrMessageType.EOSE:
+      if (message.length !== 2 || typeof message[1] !== 'string') {
+        return {
+          isValid: false,
+          error: 'EOSE message must have exactly 2 elements with a subscription ID'
+        };
+      }
+      return { isValid: true };
+
+    case NostrMessageType.REQ:
+      if (message.length < 2) {
+        return {
+          isValid: false,
+          error: 'REQ message must have at least 2 elements'
+        };
+      }
+      if (typeof message[1] !== 'string') {
+        return {
+          isValid: false,
+          error: 'REQ message must have a string subscription ID'
+        };
+      }
+      // Validate each filter if present
+      for (let i = 2; i < message.length; i++) {
+        const filterResult = validateFilter(message[i] as NostrFilter);
+        if (!filterResult.isValid) {
+          return filterResult;
+        }
+      }
+      return { isValid: true };
+
+    case NostrMessageType.CLOSE:
+      if (message.length !== 2 || typeof message[1] !== 'string') {
+        return {
+          isValid: false,
+          error: 'CLOSE message must have exactly 2 elements with a subscription ID'
+        };
+      }
+      return { isValid: true };
+
+    case NostrMessageType.AUTH:
+      if (message.length !== 2) {
+        return {
+          isValid: false,
+          error: 'AUTH message must have exactly 2 elements'
+        };
+      }
+      return validateSignedEvent(message[1] as SignedNostrEvent);
+
+    default:
+      return {
+        isValid: false,
+        error: `Unsupported message type: ${type}`
+      };
   }
 }

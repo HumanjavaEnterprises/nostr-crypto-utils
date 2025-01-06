@@ -1,67 +1,55 @@
 /**
  * @module nostr-crypto-utils
- * A comprehensive TypeScript library providing cryptographic utilities and protocol-compliant message handling for Nostr applications
- * @packageDocumentation
+ * @description Main entry point for the nostr-crypto-utils package
  */
 
-// Export core crypto functions
+// Re-export all types
+export * from './types/index.js';
+
+// Re-export crypto utilities
 export {
+  customCrypto,
+  signSchnorr,
+  verifySchnorrSignature,
   generateKeyPair,
   getPublicKey,
   validateKeyPair,
+  getCompressedPublicKey,
+  getSchnorrPublicKey,
+  createEvent,
   signEvent,
   verifySignature,
-  createEvent,
   encryptMessage,
   decryptMessage
-} from './crypto';
+} from './crypto-utils.js';
 
-// Export types
-export type {
-  NostrEvent,
-  SignedNostrEvent,
-  NostrFilter,
-  NostrSubscription,
-  KeyPair,
-  PublicKeyDetails,
-  NostrEventKind,
-  ValidationResult,
-  Nip19Data,
-  Nip19DataType
-} from './types';
-
-// Export protocol functions
+// Re-export protocol utilities
 export {
   formatEventForRelay,
   formatSubscriptionForRelay,
   formatCloseForRelay,
-  parseMessage
-} from './protocol';
-
-// Export validation functions
-export {
-  validateEvent,
-  validateFilter,
-  validateSubscription,
-  validateSignedEvent
-} from './utils/validation';
-
-// Export event creation utilities
-export {
-  createTextNoteEvent,
+  formatAuthForRelay,
+  parseMessage as parseEventFromRelay,
   createMetadataEvent,
+  createTextNoteEvent,
+  createDirectMessageEvent,
   createChannelMessageEvent,
-  createDirectMessageEvent
-} from './utils/events';
+  extractReferencedEvents,
+  extractMentionedPubkeys,
+  createKindFilter,
+  createAuthorFilter,
+  createReplyFilter,
+  createFilter as validateEvent
+} from './protocol/index.js';
 
-// Export NIP-19 functions
+// Re-export validation utilities
 export {
-  npubEncode,
-  nsecEncode,
-  noteEncode,
-  nprofileEncode,
-  neventEncode,
-  naddrEncode,
-  nrelayEncode,
-  decode
-} from './nips/nip-19';
+  validateEvent as validateRelayMessage,
+  validateResponse as validateRelayResponse
+} from './validation/index.js';
+
+// Re-export encoding utilities
+export * from './encoding/index.js';
+
+// Re-export NIP implementations
+export * from './nips/index.js';

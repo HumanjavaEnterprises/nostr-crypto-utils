@@ -1,8 +1,8 @@
 /**
- * Core type definitions
  * @module core/types
+ * @description Core type definitions for the library
  */
 
 export * from './events';
+export * from './crypto.js';
 export * from './protocol';
-export * from './crypto';

@@ -8,23 +8,18 @@
  * Re-export all types from base module
  * @packageDocumentation
  */
-export * from './base';
+export * from './base.js';
 
-/**
- * Re-export specific enums from base module
- * @packageDocumentation
- */
-export { 
-  /** Nostr event kind */
-  NostrEventKind, 
-  /** Nostr message type */
-  NostrMessageType 
-} from './base';
+/** Re-export protocol types */
+export * from './protocol.js';
 
-export * from './guards';
+/** Re-export message types */
+export * from './messages.js';
+
+/** Re-export type guards */
+export * from './guards.js';
 
 // Re-export NIP-19 types
 export type {
-  Nip19Data,
   Nip19DataType
-} from '../nips/nip-19';
+} from '../nips/nip-19.js';

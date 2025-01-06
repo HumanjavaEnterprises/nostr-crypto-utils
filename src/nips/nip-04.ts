@@ -47,15 +47,6 @@ if (typeof window !== 'undefined' && window.crypto) {
   customCrypto = webcrypto as unknown as CryptoImplementation;
 }
 
-interface EncryptedMessage {
-  content: string;
-  iv: string;
-}
-
-interface DecryptedMessage {
-  content: string;
-}
-
 interface SharedSecret {
   sharedSecret: Uint8Array;
 }
@@ -65,13 +56,13 @@ interface SharedSecret {
  * @param message - Message to encrypt
  * @param recipientPubKey - Recipient's public key
  * @param senderPrivKey - Sender's private key
- * @returns Encrypted message
+ * @returns Encrypted message string
  */
-export async function encrypt(
+export async function encryptMessage(
   message: string,
   recipientPubKey: string,
   senderPrivKey: string
-): Promise<EncryptedMessage> {
+): Promise<string> {
   try {
     const sharedSecret = secp256k1.getSharedSecret(senderPrivKey, '02' + recipientPubKey);
     const sharedKey = await customCrypto.subtle.importKey(
@@ -94,7 +85,7 @@ export async function encrypt(
     combined.set(iv);
     combined.set(encryptedArray, iv.length);
     
-    return { content: bytesToHex(combined), iv: bytesToHex(iv) };
+    return bytesToHex(combined);
   } catch (error) {
     logger.error({ error }, 'Failed to encrypt message');
     throw error;
@@ -103,17 +94,21 @@ export async function encrypt(
 
 /**
  * Decrypts a message using NIP-04 decryption
- * @param encryptedMessage - Encrypted message
+ * @param encryptedMessage - Encrypted message string
  * @param senderPubKey - Sender's public key
  * @param recipientPrivKey - Recipient's private key
- * @returns Decrypted message
+ * @returns Decrypted message string
  */
-export async function decrypt(
-  encryptedMessage: EncryptedMessage,
+export async function decryptMessage(
+  encryptedMessage: string,
   senderPubKey: string,
   recipientPrivKey: string
-): Promise<DecryptedMessage> {
+): Promise<string> {
   try {
+    const combined = hexToBytes(encryptedMessage);
+    const iv = combined.slice(0, 16);
+    const ciphertext = combined.slice(16);
+    
     const sharedSecret = secp256k1.getSharedSecret(recipientPrivKey, '02' + senderPubKey);
     const sharedKey = await customCrypto.subtle.importKey(
       'raw',
@@ -123,17 +118,13 @@ export async function decrypt(
       ['decrypt']
     );
     
-    const encrypted = hexToBytes(encryptedMessage.content);
-    const iv = hexToBytes(encryptedMessage.iv);
-    const ciphertext = encrypted.slice(16);
-    
     const decrypted = await customCrypto.subtle.decrypt(
       { name: 'AES-CBC', iv },
       sharedKey,
       ciphertext
     );
     
-    return { content: new TextDecoder().decode(decrypted) };
+    return new TextDecoder().decode(decrypted);
   } catch (error) {
     logger.error({ error }, 'Failed to decrypt message');
     throw error;
@@ -146,14 +137,10 @@ export async function decrypt(
  * @param publicKey - Public key
  * @returns Shared secret
  */
-export function getSharedSecret(
+export function generateSharedSecret(
   privateKey: string,
   publicKey: string
 ): SharedSecret {
-  try {
-    return { sharedSecret: secp256k1.getSharedSecret(privateKey, '02' + publicKey).slice(1) };
-  } catch (error) {
-    logger.error({ error }, 'Failed to generate shared secret');
-    throw error;
-  }
+  const sharedPoint = secp256k1.getSharedSecret(privateKey, '02' + publicKey);
+  return { sharedSecret: sharedPoint.slice(1) };
 }

@@ -1,6 +1,13 @@
-import { NostrEvent, NostrFilter, NostrEventKind, SignedNostrEvent } from '../types/base';
-import { NostrMessage, NostrMessageTuple, NostrMessageType } from '../types/messages';
-import { logger } from './logger';
+import { 
+  NostrEvent, 
+  NostrFilter, 
+  NostrEventKind, 
+  SignedNostrEvent,
+  NostrMessage,
+  NostrMessageType 
+} from '../types/base.js';
+import { NostrMessageTuple } from '../types/messages.js';
+import { logger } from './logger.js';
 
 /**
  * Format event for relay transmission

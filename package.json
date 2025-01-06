@@ -20,6 +20,11 @@
       "types": "./dist/utils/validation.d.ts",
       "import": "./dist/utils/validation.js",
       "require": "./dist/cjs/utils/validation.js"
+    },
+    "./nips/nip-04": {
+      "types": "./dist/nips/nip-04.d.ts",
+      "import": "./dist/nips/nip-04.js",
+      "require": "./dist/cjs/nips/nip-04.js"
     }
   },
   "files": [
