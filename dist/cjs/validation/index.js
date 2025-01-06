@@ -14,7 +14,6 @@ exports.validateFilter = validateFilter;
 exports.validateSubscription = validateSubscription;
 exports.validateResponse = validateResponse;
 const index_js_1 = require("../types/index.js");
-const crypto_js_1 = require("../crypto.js");
 const logger_js_1 = require("../utils/logger.js");
 const sha256_1 = require("@noble/hashes/sha256");
 const utils_1 = require("@noble/curves/abstract/utils");
@@ -80,8 +79,6 @@ function validateEventId(event) {
  */
 function validateEventSignature(event) {
     try {
-        // Convert pubkey to PublicKeyDetails if it's a string
-        const pubkeyObj = typeof event.pubkey === 'string' ? (0, crypto_js_1.getPublicKey)(event.pubkey) : event.pubkey;
         // Verify the signature
         const serialized = JSON.stringify([
             0,

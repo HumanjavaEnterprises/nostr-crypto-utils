@@ -4,7 +4,6 @@
  * Provides functions to validate events, signatures, filters, and subscriptions according to the Nostr protocol.
  */
 import { NostrMessageType } from '../types/index.js';
-import { getPublicKey } from '../crypto.js';
 import { logger } from '../utils/logger.js';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/curves/abstract/utils';
@@ -70,8 +69,6 @@ export function validateEventId(event) {
  */
 export function validateEventSignature(event) {
     try {
-        // Convert pubkey to PublicKeyDetails if it's a string
-        const pubkeyObj = typeof event.pubkey === 'string' ? getPublicKey(event.pubkey) : event.pubkey;
         // Verify the signature
         const serialized = JSON.stringify([
             0,
