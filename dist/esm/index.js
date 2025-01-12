@@ -13,5 +13,6 @@ export { validateEvent as validateRelayMessage, validateResponse as validateRela
 // Re-export encoding utilities
 export * from './encoding/index';
 // Re-export NIP implementations
+export { npubEncode, nsecEncode, noteEncode, nprofileEncode, neventEncode, naddrEncode, nrelayEncode, decode } from './nips/nip-19';
 export * from './nips/index';
 //# sourceMappingURL=index.js.map

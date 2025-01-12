@@ -7,5 +7,6 @@ export { customCrypto, signSchnorr, verifySchnorrSignature, generateKeyPair, get
 export { formatEventForRelay, formatSubscriptionForRelay, formatCloseForRelay, formatAuthForRelay, parseMessage as parseEventFromRelay, createMetadataEvent, createTextNoteEvent, createDirectMessageEvent, createChannelMessageEvent, extractReferencedEvents, extractMentionedPubkeys, createKindFilter, createAuthorFilter, createReplyFilter, createFilter as validateEvent } from './protocol/index';
 export { validateEvent as validateRelayMessage, validateResponse as validateRelayResponse } from './validation/index';
 export * from './encoding/index';
+export { npubEncode, nsecEncode, noteEncode, nprofileEncode, neventEncode, naddrEncode, nrelayEncode, decode } from './nips/nip-19';
 export * from './nips/index';
 //# sourceMappingURL=index.d.ts.map

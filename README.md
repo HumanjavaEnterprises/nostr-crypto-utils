@@ -199,6 +199,52 @@ try {
   console.error(error); // Error: Invalid hex string
 }
 
+### Quick Start
+
+### Installation
+```bash
+npm install nostr-crypto-utils
+```
+
+### Basic Usage
+
+#### NIP-19 Encoding (Human-Readable Formats)
+```typescript
+import { npubEncode, nsecEncode, noteEncode } from 'nostr-crypto-utils';
+
+// Convert a hex public key to npub format
+const hexPubkey = '12xyl6w6aacmqa3gmmzwrr9m3u0ldx3dwqhczuascswvew9am9q4sfg99cx';
+const npub = npubEncode(hexPubkey);
+console.log(npub); // npub1...
+
+// Convert a hex private key to nsec format
+const hexPrivkey = 'your-hex-private-key';
+const nsec = nsecEncode(hexPrivkey);
+console.log(nsec); // nsec1...
+
+// Convert an event ID to note format
+const eventId = 'your-event-id';
+const note = noteEncode(eventId);
+console.log(note); // note1...
+```
+
+#### Key Generation and Event Signing
+```typescript
+import { generateKeyPair, createEvent, signEvent } from 'nostr-crypto-utils';
+
+// Generate a new key pair
+const keyPair = generateKeyPair();
+console.log(keyPair.publicKey, keyPair.privateKey);
+
+// Create and sign an event
+const event = createEvent({
+  pubkey: keyPair.publicKey,
+  kind: 1,
+  content: 'Hello Nostr!'
+});
+const signedEvent = signEvent(event, keyPair.privateKey);
+```
+
 ### Schnorr Signature Examples
 
 The library provides robust support for Schnorr signatures, which are fundamental to Nostr's cryptographic operations. Here are some common use cases:

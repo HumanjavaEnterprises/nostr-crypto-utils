@@ -18,7 +18,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateRelayResponse = exports.validateRelayMessage = exports.validateEvent = exports.createReplyFilter = exports.createAuthorFilter = exports.createKindFilter = exports.extractMentionedPubkeys = exports.extractReferencedEvents = exports.createChannelMessageEvent = exports.createDirectMessageEvent = exports.createTextNoteEvent = exports.createMetadataEvent = exports.parseEventFromRelay = exports.formatAuthForRelay = exports.formatCloseForRelay = exports.formatSubscriptionForRelay = exports.formatEventForRelay = exports.decryptMessage = exports.encryptMessage = exports.verifySignature = exports.signEvent = exports.createEvent = exports.getSchnorrPublicKey = exports.getCompressedPublicKey = exports.validateKeyPair = exports.getPublicKey = exports.generateKeyPair = exports.verifySchnorrSignature = exports.signSchnorr = exports.customCrypto = void 0;
+exports.decode = exports.nrelayEncode = exports.naddrEncode = exports.neventEncode = exports.nprofileEncode = exports.noteEncode = exports.nsecEncode = exports.npubEncode = exports.validateRelayResponse = exports.validateRelayMessage = exports.validateEvent = exports.createReplyFilter = exports.createAuthorFilter = exports.createKindFilter = exports.extractMentionedPubkeys = exports.extractReferencedEvents = exports.createChannelMessageEvent = exports.createDirectMessageEvent = exports.createTextNoteEvent = exports.createMetadataEvent = exports.parseEventFromRelay = exports.formatAuthForRelay = exports.formatCloseForRelay = exports.formatSubscriptionForRelay = exports.formatEventForRelay = exports.decryptMessage = exports.encryptMessage = exports.verifySignature = exports.signEvent = exports.createEvent = exports.getSchnorrPublicKey = exports.getCompressedPublicKey = exports.validateKeyPair = exports.getPublicKey = exports.generateKeyPair = exports.verifySchnorrSignature = exports.signSchnorr = exports.customCrypto = void 0;
 // Re-export all types
 __exportStar(require("./types/index"), exports);
 // Re-export crypto utilities
@@ -60,5 +60,14 @@ Object.defineProperty(exports, "validateRelayResponse", { enumerable: true, get:
 // Re-export encoding utilities
 __exportStar(require("./encoding/index"), exports);
 // Re-export NIP implementations
+var nip_19_1 = require("./nips/nip-19");
+Object.defineProperty(exports, "npubEncode", { enumerable: true, get: function () { return nip_19_1.npubEncode; } });
+Object.defineProperty(exports, "nsecEncode", { enumerable: true, get: function () { return nip_19_1.nsecEncode; } });
+Object.defineProperty(exports, "noteEncode", { enumerable: true, get: function () { return nip_19_1.noteEncode; } });
+Object.defineProperty(exports, "nprofileEncode", { enumerable: true, get: function () { return nip_19_1.nprofileEncode; } });
+Object.defineProperty(exports, "neventEncode", { enumerable: true, get: function () { return nip_19_1.neventEncode; } });
+Object.defineProperty(exports, "naddrEncode", { enumerable: true, get: function () { return nip_19_1.naddrEncode; } });
+Object.defineProperty(exports, "nrelayEncode", { enumerable: true, get: function () { return nip_19_1.nrelayEncode; } });
+Object.defineProperty(exports, "decode", { enumerable: true, get: function () { return nip_19_1.decode; } });
 __exportStar(require("./nips/index"), exports);
 //# sourceMappingURL=index.js.map
