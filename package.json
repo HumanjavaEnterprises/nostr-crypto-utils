@@ -1,101 +1,89 @@
 {
   "name": "nostr-crypto-utils",
   "version": "0.4.10",
-  "description": "A comprehensive TypeScript library for Nostr protocol implementation, supporting multiple NIPs with strict validation",
+  "description": "Cryptographic utilities for Nostr protocol",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/cjs/index.js"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/esm/index.d.ts"
     },
     "./crypto": {
-      "types": "./dist/crypto/index.d.ts",
-      "import": "./dist/crypto/index.js",
-      "require": "./dist/cjs/crypto/index.js"
+      "import": "./dist/esm/crypto.js",
+      "require": "./dist/cjs/crypto.js",
+      "types": "./dist/esm/crypto.d.ts"
     },
     "./validation": {
-      "types": "./dist/utils/validation.d.ts",
-      "import": "./dist/utils/validation.js",
-      "require": "./dist/cjs/utils/validation.js"
+      "import": "./dist/esm/validation/index.js",
+      "require": "./dist/cjs/validation/index.js",
+      "types": "./dist/esm/validation/index.d.ts"
     },
-    "./nips/nip-04": {
-      "types": "./dist/nips/nip-04.d.ts",
-      "import": "./dist/nips/nip-04.js",
-      "require": "./dist/cjs/nips/nip-04.js"
+    "./protocol": {
+      "import": "./dist/esm/protocol/index.js",
+      "require": "./dist/cjs/protocol/index.js",
+      "types": "./dist/esm/protocol/index.d.ts"
     }
   },
   "files": [
     "dist",
-    "dist/cjs"
+    "src",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && tsc -p tsconfig.cjs.json",
+    "build": "npm run build:ts && npm run build:browser",
+    "build:ts": "tsc && tsc -p tsconfig.cjs.json",
+    "build:browser": "webpack --config webpack.config.cjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "prepublishOnly": "npm run build",
-    "prepare": "npm run build",
-    "docs": "typedoc",
-    "docs:watch": "typedoc --watch",
-    "docs:serve": "npx serve docs",
-    "predeploy": "npm run docs",
-    "deploy:docs": "gh-pages -d docs"
+    "clean": "rimraf dist",
+    "prepare": "npm run clean && npm run build"
   },
   "keywords": [
     "nostr",
     "crypto",
+    "cryptography",
     "utilities",
-    "typescript",
-    "encryption",
-    "event-handling",
-    "nip-01",
-    "nip-02",
-    "nip-03",
-    "nip-04",
-    "nip-05",
-    "nip-06",
-    "nip-07",
-    "nip-19",
-    "bech32"
+    "typescript"
   ],
-  "author": "vveerrgg",
+  "author": "Humanjava Enterprises",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/HumanjavaEnterprises/nostr-crypto-utils.git"
-  },
-  "bugs": {
-    "url": "https://github.com/HumanjavaEnterprises/nostr-crypto-utils/issues"
-  },
-  "homepage": "https://github.com/HumanjavaEnterprises/nostr-crypto-utils#readme",
   "dependencies": {
-    "@noble/curves": "^1.3.0",
-    "@noble/hashes": "^1.3.3",
+    "@noble/curves": "^1.2.0",
+    "@noble/hashes": "^1.3.2",
     "@noble/secp256k1": "^2.0.0",
+    "assert": "^2.1.0",
     "bech32": "^2.0.0",
-    "pino": "^8.17.1",
     "buffer": "^6.0.3",
-    "crypto-js": "^4.2.0"
+    "crypto-browserify": "^3.12.0",
+    "path-browserify": "^1.0.1",
+    "pino": "^8.16.2",
+    "pino-pretty": "^10.2.3",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5",
+    "vm-browserify": "^1.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "@vitest/coverage-v8": "^1.2.1",
     "eslint": "^8.56.0",
-    "gh-pages": "^6.2.0",
-    "prettier": "^3.1.1",
-    "typedoc": "^0.27.0",
-    "typedoc-plugin-markdown": "^4.3.3",
+    "rimraf": "^5.0.5",
+    "ts-loader": "^9.5.1",
     "typescript": "^5.3.3",
-    "vitest": "^1.6.0",
-    "@types/crypto-js": "^4.2.1"
+    "vitest": "^1.2.1",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-node-externals": "^3.0.0"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   }
 }

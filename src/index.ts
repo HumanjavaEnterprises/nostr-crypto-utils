@@ -4,7 +4,7 @@
  */
 
 // Re-export all types
-export * from './types/index.js';
+export * from './types/index';
 
 // Re-export crypto utilities
 export {
@@ -21,7 +21,7 @@ export {
   verifySignature,
   encryptMessage,
   decryptMessage
-} from './crypto-utils.js';
+} from './crypto-utils';
 
 // Re-export protocol utilities
 export {
@@ -40,16 +40,16 @@ export {
   createAuthorFilter,
   createReplyFilter,
   createFilter as validateEvent
-} from './protocol/index.js';
+} from './protocol/index';
 
 // Re-export validation utilities
 export {
   validateEvent as validateRelayMessage,
   validateResponse as validateRelayResponse
-} from './validation/index.js';
+} from './validation/index';
 
 // Re-export encoding utilities
-export * from './encoding/index.js';
+export * from './encoding/index';
 
 // Re-export NIP implementations
-export * from './nips/index.js';
+export * from './nips/index';

@@ -10,6 +10,7 @@ exports.createError = createError;
  * Base error class for all Nostr-related errors
  */
 class NostrError extends Error {
+    code;
     constructor(message, code) {
         super(message);
         this.code = code;

@@ -3,7 +3,7 @@
  * @description Cryptographic utilities for Nostr
  */
 
-import { encryptMessage, decryptMessage } from './nips/nip-04.js';
+import { encryptMessage, decryptMessage } from './nips/nip-04';
 import {
   customCrypto,
   signSchnorr,
@@ -16,7 +16,7 @@ import {
   createEvent,
   signEvent,
   verifySignature
-} from './crypto.js';
+} from './crypto';
 
 export {
   // Core crypto functionality

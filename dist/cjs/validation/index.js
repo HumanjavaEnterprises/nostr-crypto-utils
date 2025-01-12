@@ -13,13 +13,13 @@ exports.validateEventBase = validateEventBase;
 exports.validateFilter = validateFilter;
 exports.validateSubscription = validateSubscription;
 exports.validateResponse = validateResponse;
-const index_js_1 = require("../types/index.js");
-const logger_js_1 = require("../utils/logger.js");
+const index_1 = require("../types/index");
+const logger_1 = require("../utils/logger");
 const sha256_1 = require("@noble/hashes/sha256");
 const utils_1 = require("@noble/curves/abstract/utils");
 const secp256k1_1 = require("@noble/curves/secp256k1");
 /**
- * Gets the hex string from a PublicKey
+ * Gets the hex string from a PublicKey or string
  */
 function getPublicKeyHex(pubkey) {
     return typeof pubkey === 'string' ? pubkey : pubkey.hex;
@@ -57,7 +57,7 @@ function validateEventId(event) {
         };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate event ID');
+        logger_1.logger.error({ error }, 'Failed to validate event ID');
         return {
             isValid: false,
             error: 'Failed to validate event ID'
@@ -98,7 +98,7 @@ function validateEventSignature(event) {
         };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate event signature');
+        logger_1.logger.error({ error }, 'Failed to validate event signature');
         return {
             isValid: false,
             error: 'Failed to validate event signature'
@@ -178,7 +178,7 @@ function validateSignedEvent(event) {
         return { isValid: true };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate signed event');
+        logger_1.logger.error({ error }, 'Failed to validate signed event');
         return {
             isValid: false,
             error: 'Failed to validate signed event'
@@ -288,7 +288,7 @@ function validateFilter(filter) {
         return { isValid: true };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate filter');
+        logger_1.logger.error({ error }, 'Failed to validate filter');
         return { isValid: false, error: 'Failed to validate filter' };
     }
 }
@@ -329,7 +329,7 @@ function validateSubscription(subscription) {
         return { isValid: true };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate subscription');
+        logger_1.logger.error({ error }, 'Failed to validate subscription');
         return { isValid: false, error: 'Failed to validate subscription' };
     }
 }
@@ -363,7 +363,7 @@ function validateResponse(message) {
     }
     // Check if first element is a valid message type
     const type = message[0];
-    if (!Object.values(index_js_1.NostrMessageType).includes(type)) {
+    if (!Object.values(index_1.NostrMessageType).includes(type)) {
         return {
             isValid: false,
             error: `Invalid message type: ${type}`
@@ -371,7 +371,7 @@ function validateResponse(message) {
     }
     // Type-specific validation
     switch (type) {
-        case index_js_1.NostrMessageType.EVENT:
+        case index_1.NostrMessageType.EVENT:
             if (message.length !== 2) {
                 return {
                     isValid: false,
@@ -379,7 +379,7 @@ function validateResponse(message) {
                 };
             }
             return validateSignedEvent(message[1]);
-        case index_js_1.NostrMessageType.NOTICE:
+        case index_1.NostrMessageType.NOTICE:
             if (message.length !== 2 || typeof message[1] !== 'string') {
                 return {
                     isValid: false,
@@ -387,7 +387,7 @@ function validateResponse(message) {
                 };
             }
             return { isValid: true };
-        case index_js_1.NostrMessageType.OK:
+        case index_1.NostrMessageType.OK:
             if (message.length !== 4 ||
                 typeof message[1] !== 'string' ||
                 typeof message[2] !== 'boolean' ||
@@ -398,7 +398,7 @@ function validateResponse(message) {
                 };
             }
             return { isValid: true };
-        case index_js_1.NostrMessageType.EOSE:
+        case index_1.NostrMessageType.EOSE:
             if (message.length !== 2 || typeof message[1] !== 'string') {
                 return {
                     isValid: false,
@@ -406,7 +406,7 @@ function validateResponse(message) {
                 };
             }
             return { isValid: true };
-        case index_js_1.NostrMessageType.REQ:
+        case index_1.NostrMessageType.REQ:
             if (message.length < 2) {
                 return {
                     isValid: false,
@@ -427,7 +427,7 @@ function validateResponse(message) {
                 }
             }
             return { isValid: true };
-        case index_js_1.NostrMessageType.CLOSE:
+        case index_1.NostrMessageType.CLOSE:
             if (message.length !== 2 || typeof message[1] !== 'string') {
                 return {
                     isValid: false,
@@ -435,7 +435,7 @@ function validateResponse(message) {
                 };
             }
             return { isValid: true };
-        case index_js_1.NostrMessageType.AUTH:
+        case index_1.NostrMessageType.AUTH:
             if (message.length !== 2) {
                 return {
                     isValid: false,

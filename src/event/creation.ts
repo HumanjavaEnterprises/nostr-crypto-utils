@@ -3,10 +3,10 @@
  * @description Event creation and serialization utilities for Nostr
  */
 
-import { sha256 } from '@noble/hashes/sha256.js';
-import { bytesToHex } from '@noble/hashes/utils.js';
-import { logger } from '../utils/logger.js';
-import type { NostrEvent, NostrEventKind } from '../types/index.js';
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '@noble/hashes/utils';
+import { logger } from '../utils/logger';
+import type { NostrEvent, NostrEventKind } from '../types/index';
 
 /**
  * Creates a new Nostr event with the specified parameters

@@ -14,7 +14,7 @@ export {
   decode,
   type Nip19Data,
   type Nip19DataType
-} from './nip-19.js';
+} from './nip-19';
 
 /**
  * @module nips

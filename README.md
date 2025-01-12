@@ -1,6 +1,64 @@
-# nostr-crypto-utils
+# Nostr Crypto Utils
 
-A lightweight, type-safe TypeScript library for Nostr cryptography, designed to complement [@humanjavaenterprises/nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase). Together, they provide a robust, security-focused alternative to larger Nostr client libraries.
+A comprehensive cryptographic utility library for Nostr protocol implementation, focusing on core security operations and cross-platform compatibility.
+
+## Overview
+
+This library provides essential cryptographic operations and utilities required for Nostr protocol implementation, with a focus on:
+
+- Schnorr signatures for the Nostr protocol
+- Key management and validation
+- Event signing and verification
+- Encrypted direct messages (NIP-04)
+- Bech32-encoded entities (NIP-19)
+- Delegated event signing (NIP-26)
+
+## Core Features
+
+### Cryptographic Operations
+- Key generation and validation using Schnorr signatures
+- Event signing and verification (NIP-01 compliant)
+- NIP-04 encryption/decryption
+- Shared secret computation
+- Delegation token handling (NIP-26)
+
+### Encoding Utilities
+- Hex encoding/decoding
+- Base64 encoding/decoding
+- UTF-8 encoding/decoding
+- Binary data handling
+- Bech32 encoding/decoding (NIP-19)
+
+### Protocol Support
+- NIP-01: Basic protocol flow
+- NIP-04: Encrypted Direct Messages
+- NIP-19: Bech32-Encoded Entities
+- NIP-26: Delegated Event Signing
+
+## Project Structure
+
+```
+├── src/
+│   ├── crypto.ts           # Core cryptographic operations
+│   ├── encoding/           # Encoding utilities
+│   │   ├── base64.ts
+│   │   ├── hex.ts
+│   │   └── index.ts
+│   ├── types/             # Type definitions
+│   │   ├── base.ts
+│   │   ├── messages.ts
+│   │   ├── protocol.ts
+│   │   └── guards.ts
+│   ├── nips/              # NIP implementations
+│   └── utils/             # Utility functions
+```
+
+## Technical Requirements
+
+- Node.js 18 or higher
+- TypeScript with "bundler" moduleResolution
+- Supports both ESM and CJS formats
+- Cross-platform compatible (Node.js and browser environments)
 
 [![npm version](https://badge.fury.io/js/%40humanjavaenterprises%2Fnostr-crypto-utils.svg)](https://www.npmjs.com/package/@humanjavaenterprises/nostr-crypto-utils)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)

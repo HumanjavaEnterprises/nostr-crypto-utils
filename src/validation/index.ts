@@ -12,18 +12,18 @@ import {
   ValidationResult, 
   PublicKey,
   NostrMessageType
-} from '../types/index.js';
+} from '../types/index';
 
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger';
 
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/curves/abstract/utils';
 import { schnorr } from '@noble/curves/secp256k1';
 
 /**
- * Gets the hex string from a PublicKey
+ * Gets the hex string from a PublicKey or string
  */
-function getPublicKeyHex(pubkey: PublicKey): string {
+function getPublicKeyHex(pubkey: PublicKey | string): string {
   return typeof pubkey === 'string' ? pubkey : pubkey.hex;
 }
 

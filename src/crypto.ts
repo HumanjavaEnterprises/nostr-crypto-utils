@@ -1,15 +1,33 @@
 /**
  * @module crypto
  * @description Cryptographic utilities for Nostr
+ * 
+ * IMPORTANT: Nostr Protocol Cryptographic Requirements
+ * While secp256k1 is the underlying elliptic curve used by Nostr, the protocol specifically
+ * requires schnorr signatures as defined in NIP-01. This means:
+ * 
+ * 1. Always use schnorr-specific functions:
+ *    - schnorr.getPublicKey() for public key generation
+ *    - schnorr.sign() for signing
+ *    - schnorr.verify() for verification
+ * 
+ * 2. Avoid using secp256k1 functions directly:
+ *    - DON'T use secp256k1.getPublicKey()
+ *    - DON'T use secp256k1.sign()
+ *    - DON'T use secp256k1.verify()
+ * 
+ * While both might work in some cases (as they use the same curve), the schnorr signature
+ * scheme has specific requirements for key and signature formats that aren't guaranteed
+ * when using the lower-level secp256k1 functions directly.
  */
 
-import { webcrypto } from 'node:crypto';
 import { schnorr, secp256k1 } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/hashes/utils';
-import { KeyPair, PublicKeyDetails, ValidationResult, NostrEvent, SignedNostrEvent, PublicKey } from './types/index.js';
-import { logger } from './utils/logger.js';
+import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent, PublicKey } from './types/index';
+import { logger } from './utils/logger';
+import cryptoBrowserify from 'crypto-browserify';
 
 /**
  * Custom crypto interface for cross-platform compatibility
@@ -42,21 +60,66 @@ export interface CryptoSubtle {
   getRandomValues<T extends Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array>(array: T): T;
 }
 
+declare global {
+  interface Window {
+    crypto: CryptoSubtle;
+  }
+  interface Global {
+    crypto: CryptoSubtle;
+  }
+}
+
+// Get the appropriate crypto implementation
+const getCrypto = async (): Promise<CryptoSubtle> => {
+  if (typeof window !== 'undefined' && window.crypto) {
+    return window.crypto;
+  }
+  if (typeof global !== 'undefined' && (global as Global).crypto) {
+    return (global as Global).crypto;
+  }
+  try {
+    const cryptoModule = await import('crypto');
+    if (cryptoModule.webcrypto) {
+      return cryptoModule.webcrypto as CryptoSubtle;
+    }
+  } catch {
+    logger.debug('Node crypto not available, falling back to crypto-browserify');
+  }
+  
+  return cryptoBrowserify as CryptoSubtle;
+};
+
 /**
  * Crypto implementation that works in both Node.js and browser environments
  */
 class CustomCrypto {
-  readonly subtle: CryptoSubtle['subtle'];
-  readonly getRandomValues: CryptoSubtle['getRandomValues'];
+  private cryptoInstance: CryptoSubtle | null = null;
+  private initPromise: Promise<void>;
 
   constructor() {
-    if (typeof window !== 'undefined' && window.crypto) {
-      this.subtle = window.crypto.subtle;
-      this.getRandomValues = window.crypto.getRandomValues.bind(window.crypto);
-    } else {
-      this.subtle = webcrypto.subtle;
-      this.getRandomValues = webcrypto.getRandomValues.bind(webcrypto);
+    this.initPromise = this.initialize();
+  }
+
+  private async initialize(): Promise<void> {
+    this.cryptoInstance = await getCrypto();
+  }
+
+  private async ensureInitialized(): Promise<CryptoSubtle> {
+    await this.initPromise;
+    if (!this.cryptoInstance) {
+      throw new Error('Crypto implementation not initialized');
     }
+    return this.cryptoInstance;
+  }
+
+  async getSubtle(): Promise<CryptoSubtle['subtle']> {
+    const crypto = await this.ensureInitialized();
+    return crypto.subtle;
+  }
+
+  async getRandomValues<T extends Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array>(array: T): Promise<T> {
+    const crypto = await this.ensureInitialized();
+    return crypto.getRandomValues(array);
   }
 }
 
@@ -96,15 +159,15 @@ export async function generateKeyPair(): Promise<KeyPair> {
 }
 
 /**
- * Gets the public key from a private key
+ * Gets a public key from a private key
  */
 export async function getPublicKey(privateKey: string): Promise<PublicKeyDetails> {
   try {
-    const publicKeyBytes = secp256k1.getPublicKey(hexToBytes(privateKey));
-    const publicKeyHex = bytesToHex(publicKeyBytes);
-
+    const privateKeyBytes = hexToBytes(privateKey);
+    const publicKeyBytes = schnorr.getPublicKey(privateKeyBytes);
     return {
-      hex: publicKeyHex
+      hex: bytesToHex(publicKeyBytes),
+      bytes: publicKeyBytes
     };
   } catch (error) {
     logger.error({ error }, 'Failed to get public key');
@@ -115,20 +178,13 @@ export async function getPublicKey(privateKey: string): Promise<PublicKeyDetails
 /**
  * Validates a key pair
  */
-export async function validateKeyPair(publicKey: PublicKey, privateKey: string): Promise<ValidationResult> {
+export async function validateKeyPair(keyPair: KeyPair): Promise<boolean> {
   try {
-    const derivedPublicKey = await getPublicKey(privateKey);
-    const pubkeyHex = typeof publicKey === 'string' ? publicKey : publicKey.hex;
-
-    return {
-      isValid: derivedPublicKey.hex === pubkeyHex,
-      error: undefined
-    };
+    const derivedPubKey = await getPublicKey(keyPair.privateKey);
+    return derivedPubKey.hex === keyPair.publicKey.hex;
   } catch (error) {
-    return {
-      isValid: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
+    logger.error({ error }, 'Failed to validate key pair');
+    return false;
   }
 }
 
@@ -152,7 +208,7 @@ export function createEvent(event: Partial<NostrEvent>): NostrEvent {
  */
 export async function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent> {
   try {
-    // Serialize event for signing
+    // Serialize event for signing (NIP-01 format)
     const serialized = JSON.stringify([
       0,
       event.pubkey,
@@ -162,14 +218,18 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
       event.content
     ]);
 
-    const hash = sha256(new TextEncoder().encode(serialized));
-    const sig = secp256k1.sign(hash, hexToBytes(privateKey));
-    const sigBytes = new Uint8Array(sig.toCompactRawBytes());
+    // Calculate event hash
+    const eventHash = sha256(new TextEncoder().encode(serialized));
 
+    // Convert private key to bytes and sign
+    const privateKeyBytes = hexToBytes(privateKey);
+    const signatureBytes = schnorr.sign(eventHash, privateKeyBytes);
+
+    // Create signed event
     return {
       ...event,
-      sig: bytesToHex(sigBytes),
-      id: bytesToHex(hash)
+      id: bytesToHex(eventHash),
+      sig: bytesToHex(signatureBytes)
     };
   } catch (error) {
     logger.error({ error }, 'Failed to sign event');
@@ -182,7 +242,7 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
  */
 export async function verifySignature(event: SignedNostrEvent): Promise<boolean> {
   try {
-    // Serialize event for verification
+    // Serialize event for verification (NIP-01 format)
     const serialized = JSON.stringify([
       0,
       event.pubkey,
@@ -192,19 +252,24 @@ export async function verifySignature(event: SignedNostrEvent): Promise<boolean>
       event.content
     ]);
 
-    const hash = sha256(new TextEncoder().encode(serialized));
-    const pubkeyHex = typeof event.pubkey === 'string' ? event.pubkey : event.pubkey;
+    // Calculate event hash
+    const eventHash = sha256(new TextEncoder().encode(serialized));
+
+    // Verify event ID
+    const calculatedId = bytesToHex(eventHash);
+    if (calculatedId !== event.id) {
+      logger.error('Event ID mismatch');
+      return false;
+    }
+
+    // Convert hex strings to bytes
+    const signatureBytes = hexToBytes(event.sig);
+    const pubkeyBytes = hexToBytes(event.pubkey);
 
     // Verify signature
-    const isValid = secp256k1.verify(
-      hexToBytes(event.sig),
-      hash,
-      hexToBytes(pubkeyHex)
-    );
-
-    return isValid;
+    return schnorr.verify(signatureBytes, eventHash, pubkeyBytes);
   } catch (error) {
-    logger.error({ error }, 'Verification error');
+    logger.error({ error }, 'Failed to verify signature');
     return false;
   }
 }
@@ -224,21 +289,21 @@ export async function encrypt(
     
     // Generate random IV
     const iv = randomBytes(16);
-    const key = await customCrypto.subtle.importKey(
+    const key = await customCrypto.getSubtle().then((subtle) => subtle.importKey(
       'raw',
       sharedX,
       { name: 'AES-CBC', length: 256 },
       false,
       ['encrypt']
-    );
+    ));
 
     // Encrypt the message
     const data = new TextEncoder().encode(message);
-    const encrypted = await customCrypto.subtle.encrypt(
+    const encrypted = await customCrypto.getSubtle().then((subtle) => subtle.encrypt(
       { name: 'AES-CBC', iv },
       key,
       data
-    );
+    ));
 
     // Combine IV and ciphertext
     const combined = new Uint8Array(iv.length + encrypted.byteLength);
@@ -269,19 +334,19 @@ export async function decrypt(
     const iv = encrypted.slice(0, 16);
     const ciphertext = encrypted.slice(16);
 
-    const key = await customCrypto.subtle.importKey(
+    const key = await customCrypto.getSubtle().then((subtle) => subtle.importKey(
       'raw',
       sharedX,
       { name: 'AES-CBC', length: 256 },
       false,
       ['decrypt']
-    );
+    ));
 
-    const decrypted = await customCrypto.subtle.decrypt(
+    const decrypted = await customCrypto.getSubtle().then((subtle) => subtle.decrypt(
       { name: 'AES-CBC', iv },
       key,
       ciphertext
-    );
+    ));
 
     return new TextDecoder().decode(decrypted);
   } catch (error) {

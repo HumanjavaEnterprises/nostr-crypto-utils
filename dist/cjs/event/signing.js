@@ -6,10 +6,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.signEvent = signEvent;
 exports.verifySignature = verifySignature;
-const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
-const utils_js_1 = require("@noble/curves/abstract/utils.js");
-const logger_js_1 = require("../utils/logger.js");
-const creation_js_1 = require("./creation.js");
+const secp256k1_1 = require("@noble/curves/secp256k1");
+const utils_1 = require("@noble/curves/abstract/utils");
+const logger_1 = require("../utils/logger");
+const creation_1 = require("./creation");
 /**
  * Signs a Nostr event with a private key (NIP-01)
  * @param event - Event to sign
@@ -18,16 +18,16 @@ const creation_js_1 = require("./creation.js");
  */
 async function signEvent(event, privateKey) {
     try {
-        const hash = await (0, creation_js_1.getEventHash)(event);
-        const sig = secp256k1_js_1.schnorr.sign(hash, privateKey);
+        const hash = await (0, creation_1.getEventHash)(event);
+        const sig = secp256k1_1.schnorr.sign(hash, privateKey);
         return {
             ...event,
             id: hash,
-            sig: (0, utils_js_1.bytesToHex)(sig),
+            sig: (0, utils_1.bytesToHex)(sig),
         };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to sign event');
+        logger_1.logger.error({ error }, 'Failed to sign event');
         throw error;
     }
 }
@@ -38,10 +38,10 @@ async function signEvent(event, privateKey) {
  */
 function verifySignature(event) {
     try {
-        return secp256k1_js_1.schnorr.verify((0, utils_js_1.hexToBytes)(event.sig), (0, utils_js_1.hexToBytes)(event.id), (0, utils_js_1.hexToBytes)(event.pubkey));
+        return secp256k1_1.schnorr.verify((0, utils_1.hexToBytes)(event.sig), (0, utils_1.hexToBytes)(event.id), (0, utils_1.hexToBytes)(event.pubkey));
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to verify signature');
+        logger_1.logger.error({ error }, 'Failed to verify signature');
         return false;
     }
 }

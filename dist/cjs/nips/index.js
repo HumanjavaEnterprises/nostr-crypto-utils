@@ -19,15 +19,15 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decode = exports.nrelayEncode = exports.naddrEncode = exports.neventEncode = exports.nprofileEncode = exports.noteEncode = exports.nsecEncode = exports.npubEncode = void 0;
-var nip_19_js_1 = require("./nip-19.js");
-Object.defineProperty(exports, "npubEncode", { enumerable: true, get: function () { return nip_19_js_1.npubEncode; } });
-Object.defineProperty(exports, "nsecEncode", { enumerable: true, get: function () { return nip_19_js_1.nsecEncode; } });
-Object.defineProperty(exports, "noteEncode", { enumerable: true, get: function () { return nip_19_js_1.noteEncode; } });
-Object.defineProperty(exports, "nprofileEncode", { enumerable: true, get: function () { return nip_19_js_1.nprofileEncode; } });
-Object.defineProperty(exports, "neventEncode", { enumerable: true, get: function () { return nip_19_js_1.neventEncode; } });
-Object.defineProperty(exports, "naddrEncode", { enumerable: true, get: function () { return nip_19_js_1.naddrEncode; } });
-Object.defineProperty(exports, "nrelayEncode", { enumerable: true, get: function () { return nip_19_js_1.nrelayEncode; } });
-Object.defineProperty(exports, "decode", { enumerable: true, get: function () { return nip_19_js_1.decode; } });
+var nip_19_1 = require("./nip-19");
+Object.defineProperty(exports, "npubEncode", { enumerable: true, get: function () { return nip_19_1.npubEncode; } });
+Object.defineProperty(exports, "nsecEncode", { enumerable: true, get: function () { return nip_19_1.nsecEncode; } });
+Object.defineProperty(exports, "noteEncode", { enumerable: true, get: function () { return nip_19_1.noteEncode; } });
+Object.defineProperty(exports, "nprofileEncode", { enumerable: true, get: function () { return nip_19_1.nprofileEncode; } });
+Object.defineProperty(exports, "neventEncode", { enumerable: true, get: function () { return nip_19_1.neventEncode; } });
+Object.defineProperty(exports, "naddrEncode", { enumerable: true, get: function () { return nip_19_1.naddrEncode; } });
+Object.defineProperty(exports, "nrelayEncode", { enumerable: true, get: function () { return nip_19_1.nrelayEncode; } });
+Object.defineProperty(exports, "decode", { enumerable: true, get: function () { return nip_19_1.decode; } });
 /**
  * @module nips
  * @description Core NIP implementations for cryptographic operations
