@@ -77,7 +77,7 @@ describe('Integration Utilities', () => {
     });
 
     it('should parse OK message', () => {
-      const message = ['OK', 'event1', true, 'success'];
+      const message = ['OK', 'event1', 'true', 'success'];
       const parsed = parseNostrMessage(message);
       expect(parsed).not.toBeNull();
       if (parsed) {

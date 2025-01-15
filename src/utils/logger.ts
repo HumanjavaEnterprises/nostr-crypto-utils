@@ -3,15 +3,21 @@
  * @description Logger utility for the application
  */
 
+enum LogLevel {
+  DEBUG,
+  INFO,
+  WARN,
+  ERROR
+}
+
 import pino from 'pino';
 
 /**
  * Create a logger instance with consistent configuration
  * @param name - Component or module name for the logger
- * @param _options - Optional additional configuration
  * @returns Configured pino logger instance
  */
-export function createLogger(name: string, _options?: unknown): pino.Logger {
+export function createLogger(name: string): pino.Logger {
   return pino({
     name,
     level: process.env.LOG_LEVEL || 'info',
@@ -77,6 +83,44 @@ export const logger: pino.Logger = pino({
     }
   }
 });
+
+export class CustomLogger {
+  private _level: LogLevel;
+
+  constructor(level: LogLevel = LogLevel.INFO) {
+    this._level = level;
+  }
+
+  setLevel(level: LogLevel): void {
+    this._level = level;
+  }
+
+  private _log(level: LogLevel, message: string, context?: Record<string, unknown>): void {
+    if (level >= this._level) {
+      const timestamp = new Date().toISOString();
+      const levelName = LogLevel[level];
+      const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+      console.log(`[${timestamp}] ${levelName}: ${message}${contextStr}`);
+    }
+  }
+
+  debug(message: string, context?: Record<string, unknown>): void {
+    this._log(LogLevel.DEBUG, message, context);
+  }
+
+  info(message: string, context?: Record<string, unknown>): void {
+    this._log(LogLevel.INFO, message, context);
+  }
+
+  warn(message: string, context?: Record<string, unknown>): void {
+    this._log(LogLevel.WARN, message, context);
+  }
+
+  error(message: string | Error | unknown, context?: Record<string, unknown>): void {
+    const errorMessage = message instanceof Error ? message.message : String(message);
+    this._log(LogLevel.ERROR, errorMessage, context);
+  }
+}
 
 // Re-export the Logger type for use in other files
 export type { Logger } from 'pino';

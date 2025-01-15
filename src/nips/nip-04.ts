@@ -230,3 +230,5 @@ export function generateSharedSecret(
     throw error;
   }
 }
+
+export { generateSharedSecret as computeSharedSecret };

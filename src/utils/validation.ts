@@ -156,6 +156,43 @@ export function validateSignedEvent(event: SignedNostrEvent): ValidationResult {
 }
 
 /**
+ * Validates a public key hex string
+ * @param {string} pubkey - Public key to validate
+ * @returns {ValidationResult} Validation result
+ */
+export function validatePublicKey(pubkey: string): ValidationResult {
+  try {
+    // Check if it's a valid hex string
+    if (!/^[0-9a-f]{64}$/i.test(pubkey)) {
+      return {
+        isValid: false,
+        error: 'Public key must be a 32-byte hex string'
+      };
+    }
+
+    // Try to convert to bytes
+    try {
+      hexToBytes(pubkey);
+    } catch (error) {
+      return {
+        isValid: false,
+        error: 'Invalid hex encoding'
+      };
+    }
+
+    return {
+      isValid: true,
+      error: undefined
+    };
+  } catch (error) {
+    return {
+      isValid: false,
+      error: error instanceof Error ? error.message : 'Unknown error validating public key'
+    };
+  }
+}
+
+/**
  * Validates a filter object
  * @param filter - Filter to validate
  * @returns Validation result

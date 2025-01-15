@@ -12,6 +12,7 @@ This library provides essential cryptographic operations and utilities required 
 - Encrypted direct messages (NIP-04)
 - Bech32-encoded entities (NIP-19)
 - Delegated event signing (NIP-26)
+- Authentication protocol (NIP-42)
 
 ## Core Features
 
@@ -21,6 +22,7 @@ This library provides essential cryptographic operations and utilities required 
 - NIP-04 encryption/decryption
 - Shared secret computation
 - Delegation token handling (NIP-26)
+- Authentication protocol (NIP-42)
 
 ### Encoding Utilities
 - Hex encoding/decoding
@@ -34,6 +36,7 @@ This library provides essential cryptographic operations and utilities required 
 - NIP-04: Encrypted Direct Messages
 - NIP-19: Bech32-Encoded Entities
 - NIP-26: Delegated Event Signing
+- NIP-42: Authentication Protocol
 
 ## Project Structure
 
@@ -104,6 +107,7 @@ This library implements the following Nostr Implementation Possibilities (NIPs):
 | [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md) | Encrypted Direct Messages | Secure, end-to-end encrypted direct messaging between users | ✅ Complete |
 | [NIP-19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32-encoded Entities | Human-readable encoding for keys, events, and other entities | ✅ Complete |
 | [NIP-26](https://github.com/nostr-protocol/nips/blob/master/26.md) | Delegated Event Signing | Create and verify delegated event signing capabilities | ✅ Complete |
+| [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md) | Authentication | Client-relay authentication protocol | ✅ Complete |
 
 ### NIP-01 Features
 - Event creation and serialization
@@ -198,6 +202,52 @@ try {
 } catch (error) {
   console.error(error); // Error: Invalid hex string
 }
+
+### Type System
+
+#### Event Types
+The library provides a comprehensive type system for Nostr events:
+
+```typescript
+// Create an unsigned event
+const unsignedEvent: UnsignedNostrEvent = {
+  kind: NostrEventKind.TEXT_NOTE,
+  content: "Hello Nostr!",
+  tags: [],
+  created_at: Math.floor(Date.now() / 1000)
+};
+
+// Sign the event
+const signedEvent = await signEvent(unsignedEvent, privateKey);
+```
+
+#### Authentication (NIP-42)
+Support for NIP-42 authentication:
+
+```typescript
+// Create an auth event
+const authEvent: UnsignedNostrEvent = {
+  kind: NostrEventKind.AUTH,
+  content: "challenge-response",
+  tags: [["challenge", challenge]],
+  created_at: Math.floor(Date.now() / 1000)
+};
+
+// Sign and send the auth event
+const signedAuthEvent = await signEvent(authEvent, privateKey);
+```
+
+#### Custom Tags (NIP-12)
+Support for arbitrary tags:
+
+```typescript
+// Create a filter with custom tags
+const filter: NostrFilter = {
+  kinds: [NostrEventKind.TEXT_NOTE],
+  "#t": ["nostr", "crypto"],  // Filter by custom tag
+  limit: 10
+};
+```
 
 ### Quick Start
 
@@ -659,8 +709,8 @@ import { NostrEvent, NostrFilter, ValidationResult } from '@humanjavaenterprises
 
 // All types are properly defined
 const filter: NostrFilter = {
-  kinds: [1],
-  authors: ['pubkey1', 'pubkey2'],
+  kinds: [NostrEventKind.TEXT_NOTE],
+  "#t": ["nostr", "crypto"],  // Filter by custom tag
   limit: 10
 };
 

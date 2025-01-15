@@ -3,8 +3,17 @@
  * @description Core Nostr protocol implementation
  */
 
-import { NostrEvent, SignedNostrEvent, NostrEventKind, NostrFilter, NostrSubscription, NostrResponse, NostrMessageType, PublicKey } from '../types/base';
-import { NOSTR_TAG } from './constants';
+import { 
+  NostrEvent, 
+  NostrFilter, 
+  NostrEventKind, 
+  SignedNostrEvent,
+  NostrMessageType,
+  UnsignedEvent,
+  PublicKey,
+  NostrResponse,
+  NostrSubscription
+} from '../types/base';
 
 /**
  * Formats an event for relay transmission according to NIP-01
@@ -109,9 +118,9 @@ export function parseMessage(message: string): NostrResponse {
  * @category Event Creation
  * @param {Record<string, string>} metadata - User metadata (name, about, picture, etc.)
  * @param {string | PublicKey} pubkey - Public key of the user
- * @returns {NostrEvent} Created metadata event
+ * @returns {UnsignedEvent} Created metadata event
  */
-export function createMetadataEvent(metadata: Record<string, string>, pubkey: string | PublicKey): NostrEvent {
+export function createMetadataEvent(metadata: Record<string, string>, pubkey: string | PublicKey): UnsignedEvent {
   const pubkeyValue = typeof pubkey === 'string' ? pubkey : pubkey.hex;
   return {
     kind: NostrEventKind.SET_METADATA,
@@ -129,24 +138,24 @@ export function createMetadataEvent(metadata: Record<string, string>, pubkey: st
  * @param {string | PublicKey} pubkey - Public key of the author
  * @param {string} [replyTo] - Optional ID of event being replied to
  * @param {string[]} [mentions] - Optional array of pubkeys to mention
- * @returns {NostrEvent} Created text note event
+ * @returns {UnsignedEvent} Created text note event
  */
 export function createTextNoteEvent(
   content: string,
   pubkey: string | PublicKey,
   replyTo?: string,
   mentions?: string[]
-): NostrEvent {
+): UnsignedEvent {
   const pubkeyValue = typeof pubkey === 'string' ? pubkey : pubkey.hex;
   const tags: string[][] = [];
   
   if (replyTo) {
-    tags.push([NOSTR_TAG.EVENT, replyTo]);
+    tags.push(['e', replyTo]);
   }
   
   if (mentions) {
     mentions.forEach(pubkey => {
-      tags.push([NOSTR_TAG.PUBKEY, pubkey]);
+      tags.push(['p', pubkey]);
     });
   }
 
@@ -165,13 +174,13 @@ export function createTextNoteEvent(
  * @param {string | PublicKey} recipientPubkey - Public key of message recipient
  * @param {string} content - Message content (will be encrypted)
  * @param {string | PublicKey} senderPubkey - Public key of the sender
- * @returns {NostrEvent} Created direct message event
+ * @returns {UnsignedEvent} Created direct message event
  */
 export function createDirectMessageEvent(
   recipientPubkey: string | PublicKey,
   content: string,
   senderPubkey: string | PublicKey
-): NostrEvent {
+): UnsignedEvent {
   const recipientKey = typeof recipientPubkey === 'string' ? recipientPubkey : recipientPubkey.hex;
   const senderKey = typeof senderPubkey === 'string' ? senderPubkey : senderPubkey.hex;
   
@@ -191,14 +200,14 @@ export function createDirectMessageEvent(
  * @param {string} content - Message content
  * @param {string | PublicKey} authorPubkey - Public key of the message author
  * @param {string} [replyTo] - Optional ID of message being replied to
- * @returns {NostrEvent} Created channel message event
+ * @returns {UnsignedEvent} Created channel message event
  */
 export function createChannelMessageEvent(
   channelId: string,
   content: string,
   authorPubkey: string | PublicKey,
   replyTo?: string
-): NostrEvent {
+): UnsignedEvent {
   const pubkeyValue = typeof authorPubkey === 'string' ? authorPubkey : authorPubkey.hex;
   const tags = [['e', channelId, '', 'root']];
   if (replyTo) {
@@ -221,7 +230,7 @@ export function createChannelMessageEvent(
  */
 export function extractReferencedEvents(event: NostrEvent): string[] {
   return event.tags
-    .filter((tag: string[]) => tag[0] === NOSTR_TAG.EVENT)
+    .filter((tag: string[]) => tag[0] === 'e')
     .map((tag: string[]) => tag[1]);
 }
 
@@ -233,7 +242,7 @@ export function extractReferencedEvents(event: NostrEvent): string[] {
  */
 export function extractMentionedPubkeys(event: NostrEvent): string[] {
   return event.tags
-    .filter((tag: string[]) => tag[0] === NOSTR_TAG.PUBKEY)
+    .filter((tag: string[]) => tag[0] === 'p')
     .map((tag: string[]) => tag[1]);
 }
 
