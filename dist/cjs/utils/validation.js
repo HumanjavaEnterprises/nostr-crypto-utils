@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateEvent = validateEvent;
 exports.getPublicKeyHex = getPublicKeyHex;
 exports.validateSignedEvent = validateSignedEvent;
+exports.validatePublicKey = validatePublicKey;
 exports.validateFilter = validateFilter;
 exports.validateSubscription = validateSubscription;
 const guards_1 = require("../types/guards");
@@ -134,6 +135,42 @@ function validateSignedEvent(event) {
         isValid: errors.length === 0,
         error: errors.length > 0 ? errors[0] : undefined
     };
+}
+/**
+ * Validates a public key hex string
+ * @param {string} pubkey - Public key to validate
+ * @returns {ValidationResult} Validation result
+ */
+function validatePublicKey(pubkey) {
+    try {
+        // Check if it's a valid hex string
+        if (!/^[0-9a-f]{64}$/i.test(pubkey)) {
+            return {
+                isValid: false,
+                error: 'Public key must be a 32-byte hex string'
+            };
+        }
+        // Try to convert to bytes
+        try {
+            (0, utils_1.hexToBytes)(pubkey);
+        }
+        catch (error) {
+            return {
+                isValid: false,
+                error: 'Invalid hex encoding'
+            };
+        }
+        return {
+            isValid: true,
+            error: undefined
+        };
+    }
+    catch (error) {
+        return {
+            isValid: false,
+            error: error instanceof Error ? error.message : 'Unknown error validating public key'
+        };
+    }
 }
 /**
  * Validates a filter object

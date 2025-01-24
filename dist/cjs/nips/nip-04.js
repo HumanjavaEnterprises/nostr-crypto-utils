@@ -44,8 +44,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.encryptMessage = encryptMessage;
 exports.decryptMessage = decryptMessage;
 exports.generateSharedSecret = generateSharedSecret;
-const secp256k1 = __importStar(require("@noble/secp256k1"));
-const utils_1 = require("@noble/hashes/utils");
+exports.computeSharedSecret = generateSharedSecret;
+const secp256k1_1 = require("@noble/curves/secp256k1");
+const utils_1 = require("@noble/curves/abstract/utils");
 const logger_1 = require("../utils/logger");
 const crypto_browserify_1 = __importDefault(require("crypto-browserify"));
 const getCrypto = async () => {
@@ -113,7 +114,7 @@ async function encryptMessage(message, senderPrivKey, recipientPubKey) {
             ? recipientPubKey
             : '02' + recipientPubKey;
         // Generate shared secret
-        const sharedPoint = secp256k1.getSharedSecret(senderPrivKey, pubKeyHex);
+        const sharedPoint = secp256k1_1.secp256k1.getSharedSecret(senderPrivKey, pubKeyHex);
         const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
         // Import key for AES
         const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX, { name: 'AES-CBC', length: 256 }, false, ['encrypt']);
@@ -153,7 +154,7 @@ async function decryptMessage(encryptedMessage, recipientPrivKey, senderPubKey) 
             ? senderPubKey
             : '02' + senderPubKey;
         // Generate shared secret
-        const sharedPoint = secp256k1.getSharedSecret(recipientPrivKey, pubKeyHex);
+        const sharedPoint = secp256k1_1.secp256k1.getSharedSecret(recipientPrivKey, pubKeyHex);
         const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
         // Import key for AES
         const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX, { name: 'AES-CBC', length: 256 }, false, ['decrypt']);
@@ -190,7 +191,7 @@ function generateSharedSecret(privateKey, publicKey) {
             ? publicKey
             : '02' + publicKey;
         // Generate shared secret
-        const sharedPoint = secp256k1.getSharedSecret(privateKey, pubKeyHex);
+        const sharedPoint = secp256k1_1.secp256k1.getSharedSecret(privateKey, pubKeyHex);
         return { sharedSecret: sharedPoint.slice(1, 33) }; // Return only x-coordinate
     }
     catch (error) {

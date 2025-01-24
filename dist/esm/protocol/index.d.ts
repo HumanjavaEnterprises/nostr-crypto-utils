@@ -2,7 +2,7 @@
  * @module protocol
  * @description Core Nostr protocol implementation
  */
-import { NostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, NostrResponse, PublicKey } from '../types/base';
+import { NostrEvent, NostrFilter, SignedNostrEvent, UnsignedEvent, PublicKey, NostrResponse, NostrSubscription } from '../types/base';
 /**
  * Formats an event for relay transmission according to NIP-01
  * @category Message Handling
@@ -43,9 +43,9 @@ export declare function parseMessage(message: string): NostrResponse;
  * @category Event Creation
  * @param {Record<string, string>} metadata - User metadata (name, about, picture, etc.)
  * @param {string | PublicKey} pubkey - Public key of the user
- * @returns {NostrEvent} Created metadata event
+ * @returns {UnsignedEvent} Created metadata event
  */
-export declare function createMetadataEvent(metadata: Record<string, string>, pubkey: string | PublicKey): NostrEvent;
+export declare function createMetadataEvent(metadata: Record<string, string>, pubkey: string | PublicKey): UnsignedEvent;
 /**
  * Creates a text note event according to NIP-01
  * @category Event Creation
@@ -53,18 +53,18 @@ export declare function createMetadataEvent(metadata: Record<string, string>, pu
  * @param {string | PublicKey} pubkey - Public key of the author
  * @param {string} [replyTo] - Optional ID of event being replied to
  * @param {string[]} [mentions] - Optional array of pubkeys to mention
- * @returns {NostrEvent} Created text note event
+ * @returns {UnsignedEvent} Created text note event
  */
-export declare function createTextNoteEvent(content: string, pubkey: string | PublicKey, replyTo?: string, mentions?: string[]): NostrEvent;
+export declare function createTextNoteEvent(content: string, pubkey: string | PublicKey, replyTo?: string, mentions?: string[]): UnsignedEvent;
 /**
  * Creates a direct message event according to NIP-04
  * @category Event Creation
  * @param {string | PublicKey} recipientPubkey - Public key of message recipient
  * @param {string} content - Message content (will be encrypted)
  * @param {string | PublicKey} senderPubkey - Public key of the sender
- * @returns {NostrEvent} Created direct message event
+ * @returns {UnsignedEvent} Created direct message event
  */
-export declare function createDirectMessageEvent(recipientPubkey: string | PublicKey, content: string, senderPubkey: string | PublicKey): NostrEvent;
+export declare function createDirectMessageEvent(recipientPubkey: string | PublicKey, content: string, senderPubkey: string | PublicKey): UnsignedEvent;
 /**
  * Creates a channel message event according to NIP-28
  * @category Event Creation
@@ -72,9 +72,9 @@ export declare function createDirectMessageEvent(recipientPubkey: string | Publi
  * @param {string} content - Message content
  * @param {string | PublicKey} authorPubkey - Public key of the message author
  * @param {string} [replyTo] - Optional ID of message being replied to
- * @returns {NostrEvent} Created channel message event
+ * @returns {UnsignedEvent} Created channel message event
  */
-export declare function createChannelMessageEvent(channelId: string, content: string, authorPubkey: string | PublicKey, replyTo?: string): NostrEvent;
+export declare function createChannelMessageEvent(channelId: string, content: string, authorPubkey: string | PublicKey, replyTo?: string): UnsignedEvent;
 /**
  * Extracts referenced event IDs from an event's tags
  * @category Event Operations

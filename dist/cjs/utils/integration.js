@@ -18,8 +18,7 @@ exports.createMockTextNote = createMockTextNote;
 exports.createMockMetadataEvent = createMockMetadataEvent;
 exports.createMockDirectMessage = createMockDirectMessage;
 exports.createMockChannelMessage = createMockChannelMessage;
-const base_js_1 = require("../types/base.js");
-const logger_js_1 = require("./logger.js");
+const base_1 = require("../types/base");
 /**
  * Format event for relay transmission
  */
@@ -49,60 +48,108 @@ function formatAuthForRelay(event) {
  */
 function parseNostrMessage(message) {
     try {
-        // Handle array input
+        let parsed;
         if (Array.isArray(message)) {
-            if (!message.length || typeof message[0] !== 'string') {
-                throw new Error('Invalid relay message: first element not a string');
-            }
-            const [type, ...payload] = message;
-            if (!['EVENT', 'NOTICE', 'OK', 'EOSE', 'REQ', 'CLOSE', 'AUTH'].includes(type)) {
-                throw new Error(`Unknown message type: ${type}`);
-            }
-            return {
-                type: type,
-                payload: payload.length === 1 ? payload[0] : payload
-            };
+            parsed = message;
         }
-        // Handle string input
-        if (typeof message === 'string') {
+        else if (typeof message === 'string') {
             // Try parsing as JSON first
             try {
-                const parsed = JSON.parse(message);
-                if (!Array.isArray(parsed) || !parsed.length || typeof parsed[0] !== 'string') {
-                    throw new Error('Invalid relay message: first element not a string');
-                }
-                const [type, ...payload] = parsed;
-                if (!['EVENT', 'NOTICE', 'OK', 'EOSE', 'REQ', 'CLOSE', 'AUTH'].includes(type)) {
-                    throw new Error(`Unknown message type: ${type}`);
-                }
-                return {
-                    type: type,
-                    payload: payload.length === 1 ? payload[0] : payload
-                };
+                parsed = JSON.parse(message);
             }
-            catch (jsonError) {
-                // If JSON parsing fails, try comma-separated format
-                if (message.includes(',')) {
-                    const [type, ...payload] = message.split(',');
-                    if (!type) {
-                        throw new Error('Invalid relay message: empty command');
-                    }
-                    if (!['EVENT', 'NOTICE', 'OK', 'EOSE', 'REQ', 'CLOSE', 'AUTH'].includes(type)) {
-                        throw new Error(`Unknown message type: ${type}`);
-                    }
-                    return {
-                        type: type,
-                        payload: payload.length === 1 ? payload[0] : payload
-                    };
+            catch {
+                // If message is a single word, it's invalid
+                if (!message.includes(',')) {
+                    throw new Error('Invalid relay message: not an array');
                 }
-                throw new Error('Invalid relay message: not an array');
+                // If JSON parsing fails, try comma-separated format
+                parsed = message.split(',');
             }
         }
-        throw new Error('Invalid relay message: not a string or array');
+        else {
+            throw new Error('Invalid relay message: input must be string or array');
+        }
+        if (!Array.isArray(parsed)) {
+            throw new Error('Invalid relay message: not an array');
+        }
+        const [type, ...payload] = parsed;
+        if (typeof type !== 'string') {
+            throw new Error('Invalid relay message: first element not a string');
+        }
+        if (!Object.values(base_1.NostrMessageType).includes(type)) {
+            throw new Error(`Unknown message type: ${type}. Supported types are: ${Object.values(base_1.NostrMessageType).join(', ')}`);
+        }
+        const nostrMessage = {
+            type: type,
+            payload: [] // Initialize with empty array
+        };
+        switch (type) {
+            case base_1.NostrMessageType.EVENT: {
+                if (payload.length < 1) {
+                    throw new Error('EVENT message missing event data');
+                }
+                const eventData = typeof payload[0] === 'string' && payload[0].startsWith('{')
+                    ? JSON.parse(payload[0])
+                    : payload[0];
+                nostrMessage.event = eventData;
+                nostrMessage.payload = eventData;
+                break;
+            }
+            case base_1.NostrMessageType.NOTICE:
+                if (payload.length < 1) {
+                    throw new Error('NOTICE message missing message text');
+                }
+                nostrMessage.payload = String(payload[0]);
+                break;
+            case base_1.NostrMessageType.OK:
+                if (payload.length < 1) {
+                    throw new Error('OK message missing event ID');
+                }
+                // Convert "true" and "false" strings to actual booleans
+                nostrMessage.payload = payload.map(item => {
+                    if (typeof item === 'string') {
+                        if (item === 'true')
+                            return true;
+                        if (item === 'false')
+                            return false;
+                        return item;
+                    }
+                    return String(item);
+                });
+                break;
+            case base_1.NostrMessageType.REQ: {
+                if (payload.length < 2) {
+                    throw new Error('REQ message missing subscription ID or filters');
+                }
+                nostrMessage.subscriptionId = String(payload[0]);
+                const filters = payload.slice(1).map(filter => typeof filter === 'string' && filter.startsWith('{')
+                    ? JSON.parse(filter)
+                    : filter);
+                nostrMessage.filters = filters;
+                nostrMessage.payload = [String(payload[0]), ...filters.map(f => JSON.stringify(f))];
+                break;
+            }
+            case base_1.NostrMessageType.CLOSE:
+                if (payload.length < 1) {
+                    throw new Error('CLOSE message missing subscription ID');
+                }
+                nostrMessage.subscriptionId = String(payload[0]);
+                nostrMessage.payload = String(payload[0]);
+                break;
+            case base_1.NostrMessageType.AUTH:
+                if (payload.length < 1) {
+                    throw new Error('AUTH message missing challenge');
+                }
+                nostrMessage.message = String(payload[0]);
+                nostrMessage.payload = String(payload[0]);
+                break;
+            default:
+                throw new Error(`Unknown message type: ${type}`);
+        }
+        return nostrMessage;
     }
     catch (error) {
-        logger_js_1.logger.error('Failed to parse message:', error);
-        throw error;
+        throw new Error(`Failed to parse Nostr message: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 /**
@@ -110,11 +157,11 @@ function parseNostrMessage(message) {
  */
 function createMetadataEvent(metadata) {
     return {
-        kind: base_js_1.NostrEventKind.SET_METADATA,
+        kind: base_1.NostrEventKind.SET_METADATA,
         content: JSON.stringify(metadata),
-        tags: [],
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' // Placeholder hex pubkey
+        tags: [],
+        pubkey: '' // Required by UnsignedEvent interface
     };
 }
 /**
@@ -122,22 +169,20 @@ function createMetadataEvent(metadata) {
  */
 function createTextNoteEvent(content, replyTo, mentions) {
     const tags = [];
-    // Add reply tag if specified
     if (replyTo) {
         tags.push(['e', replyTo]);
     }
-    // Add mention tags if specified
-    if (mentions) {
+    if (mentions?.length) {
         mentions.forEach(pubkey => {
             tags.push(['p', pubkey]);
         });
     }
     return {
-        kind: base_js_1.NostrEventKind.TEXT_NOTE,
+        kind: base_1.NostrEventKind.TEXT_NOTE,
         content,
-        tags,
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' // Placeholder hex pubkey
+        tags,
+        pubkey: '' // Required by UnsignedEvent interface
     };
 }
 /**
@@ -145,11 +190,11 @@ function createTextNoteEvent(content, replyTo, mentions) {
  */
 function createDirectMessageEvent(recipientPubkey, content) {
     return {
-        kind: base_js_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
+        kind: base_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
         content,
-        tags: [['p', recipientPubkey]],
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' // Placeholder hex pubkey
+        tags: [['p', recipientPubkey]],
+        pubkey: '' // Required by UnsignedEvent interface
     };
 }
 /**
@@ -161,24 +206,19 @@ function createChannelMessageEvent(channelId, content, replyTo) {
         tags.push(['e', replyTo, '', 'reply']);
     }
     return {
-        kind: base_js_1.NostrEventKind.CHANNEL_MESSAGE,
+        kind: base_1.NostrEventKind.CHANNEL_MESSAGE,
         content,
-        tags,
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' // Placeholder hex pubkey
+        tags,
+        pubkey: '' // Required by UnsignedEvent interface
     };
 }
 /**
  * Extract referenced events from tags
  */
 function extractReferencedEvents(event) {
-    if (typeof event !== 'object' || event === null || !Array.isArray(event.tags)) {
-        return [];
-    }
-    const validEvent = event;
-    const tags = validEvent.tags;
-    return tags
-        .filter(tag => Array.isArray(tag) && tag[0] === 'e' && typeof tag[1] === 'string')
+    return event.tags
+        .filter(tag => tag[0] === 'e')
         .map(tag => tag[1]);
 }
 /**
@@ -193,77 +233,84 @@ function extractMentionedPubkeys(event) {
  * Create a filter for events of a specific kind
  */
 function createKindFilter(kind, limit) {
-    return {
-        kinds: [kind],
-        limit: limit || 10
-    };
+    const filter = { kinds: [kind] };
+    if (limit) {
+        filter.limit = limit;
+    }
+    return filter;
 }
 /**
  * Create a filter for events by a specific author
  */
 function createAuthorFilter(pubkey, kinds, limit) {
-    return {
-        authors: [pubkey],
-        kinds: kinds || [base_js_1.NostrEventKind.TEXT_NOTE],
-        limit: limit || 10
-    };
+    const filter = { authors: [pubkey] };
+    if (kinds?.length) {
+        filter.kinds = kinds;
+    }
+    if (limit) {
+        filter.limit = limit;
+    }
+    return filter;
 }
 /**
  * Create a filter for replies to a specific event
  */
 function createReplyFilter(eventId, limit) {
-    return {
-        '#e': [eventId],
-        kinds: [base_js_1.NostrEventKind.TEXT_NOTE, base_js_1.NostrEventKind.CHANNEL_MESSAGE],
-        limit: limit || 10
+    const filter = {
+        kinds: [base_1.NostrEventKind.TEXT_NOTE, base_1.NostrEventKind.CHANNEL_MESSAGE],
+        '#e': [eventId]
     };
+    if (limit) {
+        filter.limit = limit;
+    }
+    return filter;
 }
 /**
  * Creates a mock text note event for testing
  */
-function createMockTextNote(content) {
+function createMockTextNote(content = 'Hello, Nostr!') {
     return {
-        kind: base_js_1.NostrEventKind.TEXT_NOTE,
-        content: content || 'Mock text note',
-        tags: [],
+        kind: base_1.NostrEventKind.TEXT_NOTE,
+        content,
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        tags: [],
+        pubkey: '' // Required by UnsignedEvent interface
     };
 }
 /**
  * Creates a mock metadata event for testing
  */
-function createMockMetadataEvent(metadata) {
+function createMockMetadataEvent(metadata = {}) {
     return {
-        kind: base_js_1.NostrEventKind.SET_METADATA,
-        content: JSON.stringify(metadata || { name: 'Mock User' }),
-        tags: [],
+        kind: base_1.NostrEventKind.SET_METADATA,
+        content: JSON.stringify(metadata),
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        tags: [],
+        pubkey: '' // Required by UnsignedEvent interface
     };
 }
 /**
  * Creates a mock direct message event for testing
  */
-function createMockDirectMessage(content) {
+function createMockDirectMessage(content = 'Hello!') {
     return {
-        kind: base_js_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
-        content: content || 'Mock DM',
-        tags: [['p', '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef']],
+        kind: base_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
+        content,
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        tags: [],
+        pubkey: '' // Required by UnsignedEvent interface
     };
 }
 /**
  * Creates a mock channel message event for testing
  */
-function createMockChannelMessage(content) {
+function createMockChannelMessage(content = 'Hello, channel!') {
     return {
-        kind: base_js_1.NostrEventKind.CHANNEL_MESSAGE,
-        content: content || 'Mock channel message',
-        tags: [['e', '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', '', 'root']],
+        kind: base_1.NostrEventKind.CHANNEL_MESSAGE,
+        content,
         created_at: Math.floor(Date.now() / 1000),
-        pubkey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        tags: [],
+        pubkey: '' // Required by UnsignedEvent interface
     };
 }
 //# sourceMappingURL=integration.js.map

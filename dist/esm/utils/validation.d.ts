@@ -42,6 +42,12 @@ export declare function getPublicKeyHex(pubkey: string): string;
  */
 export declare function validateSignedEvent(event: SignedNostrEvent): ValidationResult;
 /**
+ * Validates a public key hex string
+ * @param {string} pubkey - Public key to validate
+ * @returns {ValidationResult} Validation result
+ */
+export declare function validatePublicKey(pubkey: string): ValidationResult;
+/**
  * Validates a filter object
  * @param filter - Filter to validate
  * @returns Validation result

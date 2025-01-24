@@ -41,4 +41,31 @@ export function verifySignature(event) {
         return false;
     }
 }
+/**
+ * Validates a Nostr event
+ * @param event - Event to validate
+ * @returns True if event is valid
+ */
+export function validateEvent(event) {
+    try {
+        // Check required fields
+        if (!event.id || !event.pubkey || !event.sig) {
+            return false;
+        }
+        // Verify signature
+        return verifySignature(event);
+    }
+    catch (error) {
+        logger.error('Error validating event:', error);
+        return false;
+    }
+}
+/**
+ * Calculates the event ID for a Nostr event
+ * @param event - Event to calculate ID for
+ * @returns Event ID
+ */
+export function calculateEventId(event) {
+    return getEventHash(event);
+}
 //# sourceMappingURL=signing.js.map

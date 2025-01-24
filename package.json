@@ -1,7 +1,7 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.4.13",
-  "description": "Cryptographic utilities for Nostr protocol, including key management, event signing, NIP-19 bech32 encoding (npub, nsec, note), and encrypted messaging",
+  "version": "0.4.14",
+  "description": "Core cryptographic utilities for Nostr protocol",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -62,7 +62,6 @@
   "dependencies": {
     "@noble/curves": "^1.2.0",
     "@noble/hashes": "^1.3.2",
-    "@noble/secp256k1": "^2.0.0",
     "assert": "^2.1.0",
     "bech32": "^2.0.0",
     "buffer": "^6.0.3",

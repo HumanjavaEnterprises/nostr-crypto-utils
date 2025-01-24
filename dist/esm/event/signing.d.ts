@@ -16,4 +16,16 @@ export declare function signEvent(event: NostrEvent, privateKey: string): Promis
  * @returns True if signature is valid
  */
 export declare function verifySignature(event: SignedNostrEvent): boolean;
+/**
+ * Validates a Nostr event
+ * @param event - Event to validate
+ * @returns True if event is valid
+ */
+export declare function validateEvent(event: SignedNostrEvent): boolean;
+/**
+ * Calculates the event ID for a Nostr event
+ * @param event - Event to calculate ID for
+ * @returns Event ID
+ */
+export declare function calculateEventId(event: NostrEvent): Promise<string>;
 //# sourceMappingURL=signing.d.ts.map

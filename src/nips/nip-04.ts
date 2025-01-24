@@ -4,8 +4,8 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/04.md
  */
 
-import * as secp256k1 from '@noble/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
 import { logger } from '../utils/logger';
 import type { CryptoSubtle } from '../crypto';
 import cryptoBrowserify from 'crypto-browserify';

@@ -7,17 +7,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logger = void 0;
+exports.CustomLogger = exports.logger = void 0;
 exports.createLogger = createLogger;
 exports.log = log;
+var LogLevel;
+(function (LogLevel) {
+    LogLevel[LogLevel["DEBUG"] = 0] = "DEBUG";
+    LogLevel[LogLevel["INFO"] = 1] = "INFO";
+    LogLevel[LogLevel["WARN"] = 2] = "WARN";
+    LogLevel[LogLevel["ERROR"] = 3] = "ERROR";
+})(LogLevel || (LogLevel = {}));
 const pino_1 = __importDefault(require("pino"));
 /**
  * Create a logger instance with consistent configuration
  * @param name - Component or module name for the logger
- * @param _options - Optional additional configuration
  * @returns Configured pino logger instance
  */
-function createLogger(name, _options) {
+function createLogger(name) {
     return (0, pino_1.default)({
         name,
         level: process.env.LOG_LEVEL || 'info',
@@ -81,4 +87,35 @@ exports.logger = (0, pino_1.default)({
         }
     }
 });
+class CustomLogger {
+    _level;
+    constructor(level = LogLevel.INFO) {
+        this._level = level;
+    }
+    setLevel(level) {
+        this._level = level;
+    }
+    _log(level, message, context) {
+        if (level >= this._level) {
+            const timestamp = new Date().toISOString();
+            const levelName = LogLevel[level];
+            const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+            console.log(`[${timestamp}] ${levelName}: ${message}${contextStr}`);
+        }
+    }
+    debug(message, context) {
+        this._log(LogLevel.DEBUG, message, context);
+    }
+    info(message, context) {
+        this._log(LogLevel.INFO, message, context);
+    }
+    warn(message, context) {
+        this._log(LogLevel.WARN, message, context);
+    }
+    error(message, context) {
+        const errorMessage = message instanceof Error ? message.message : String(message);
+        this._log(LogLevel.ERROR, errorMessage, context);
+    }
+}
+exports.CustomLogger = CustomLogger;
 //# sourceMappingURL=logger.js.map

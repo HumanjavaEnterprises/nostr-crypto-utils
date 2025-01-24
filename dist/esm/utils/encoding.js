@@ -23,4 +23,20 @@ export function bytesToHex(bytes) {
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
 }
+/**
+ * Convert a UTF-8 string to Uint8Array
+ * @param str UTF-8 string to convert
+ * @returns Uint8Array of bytes
+ */
+export function utf8ToBytes(str) {
+    return new TextEncoder().encode(str);
+}
+/**
+ * Convert Uint8Array to UTF-8 string
+ * @param bytes Uint8Array to convert
+ * @returns UTF-8 string
+ */
+export function bytesToUtf8(bytes) {
+    return new TextDecoder().decode(bytes);
+}
 //# sourceMappingURL=encoding.js.map

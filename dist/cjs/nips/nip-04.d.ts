@@ -38,5 +38,5 @@ export declare function decryptMessage(encryptedMessage: string, recipientPrivKe
  * @returns Shared secret
  */
 export declare function generateSharedSecret(privateKey: string, publicKey: string): SharedSecret;
-export {};
+export { generateSharedSecret as computeSharedSecret };
 //# sourceMappingURL=nip-04.d.ts.map

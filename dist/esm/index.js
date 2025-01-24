@@ -1,18 +1,20 @@
 /**
  * @module nostr-crypto-utils
- * @description Main entry point for the nostr-crypto-utils package
+ * @description Core cryptographic utilities for Nostr protocol
  */
-// Re-export all types
-export * from './types/index';
-// Re-export crypto utilities
-export { customCrypto, signSchnorr, verifySchnorrSignature, generateKeyPair, getPublicKey, validateKeyPair, getCompressedPublicKey, getSchnorrPublicKey, createEvent, signEvent, verifySignature, encryptMessage, decryptMessage } from './crypto-utils';
-// Re-export protocol utilities
-export { formatEventForRelay, formatSubscriptionForRelay, formatCloseForRelay, formatAuthForRelay, parseMessage as parseEventFromRelay, createMetadataEvent, createTextNoteEvent, createDirectMessageEvent, createChannelMessageEvent, extractReferencedEvents, extractMentionedPubkeys, createKindFilter, createAuthorFilter, createReplyFilter, createFilter as validateEvent } from './protocol/index';
-// Re-export validation utilities
-export { validateEvent as validateRelayMessage, validateResponse as validateRelayResponse } from './validation/index';
-// Re-export encoding utilities
-export * from './encoding/index';
-// Re-export NIP implementations
-export { npubEncode, nsecEncode, noteEncode, nprofileEncode, neventEncode, naddrEncode, nrelayEncode, decode } from './nips/nip-19';
-export * from './nips/index';
+// Event kinds and message types
+export { NostrEventKind, NostrMessageType } from './types';
+// Core crypto functions
+export { generateKeyPair, getPublicKey, validateKeyPair, createEvent, signEvent, verifySignature, encrypt, decrypt, } from './crypto';
+// Event functions
+export { validateEvent, calculateEventId, } from './event';
+// NIP-04 encryption
+export { computeSharedSecret, encryptMessage, decryptMessage, } from './nips/nip-04';
+// Re-export NIPs
+export * as nip01 from './nips/nip-01';
+export * as nip04 from './nips/nip-04';
+export * as nip19 from './nips/nip-19';
+export * as nip26 from './nips/nip-26';
+// Utils
+export { hexToBytes, bytesToHex, utf8ToBytes, bytesToUtf8, } from './utils/encoding';
 //# sourceMappingURL=index.js.map

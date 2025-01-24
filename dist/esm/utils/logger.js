@@ -2,14 +2,20 @@
  * @module logger
  * @description Logger utility for the application
  */
+var LogLevel;
+(function (LogLevel) {
+    LogLevel[LogLevel["DEBUG"] = 0] = "DEBUG";
+    LogLevel[LogLevel["INFO"] = 1] = "INFO";
+    LogLevel[LogLevel["WARN"] = 2] = "WARN";
+    LogLevel[LogLevel["ERROR"] = 3] = "ERROR";
+})(LogLevel || (LogLevel = {}));
 import pino from 'pino';
 /**
  * Create a logger instance with consistent configuration
  * @param name - Component or module name for the logger
- * @param _options - Optional additional configuration
  * @returns Configured pino logger instance
  */
-export function createLogger(name, _options) {
+export function createLogger(name) {
     return pino({
         name,
         level: process.env.LOG_LEVEL || 'info',
@@ -73,4 +79,34 @@ export const logger = pino({
         }
     }
 });
+export class CustomLogger {
+    _level;
+    constructor(level = LogLevel.INFO) {
+        this._level = level;
+    }
+    setLevel(level) {
+        this._level = level;
+    }
+    _log(level, message, context) {
+        if (level >= this._level) {
+            const timestamp = new Date().toISOString();
+            const levelName = LogLevel[level];
+            const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+            console.log(`[${timestamp}] ${levelName}: ${message}${contextStr}`);
+        }
+    }
+    debug(message, context) {
+        this._log(LogLevel.DEBUG, message, context);
+    }
+    info(message, context) {
+        this._log(LogLevel.INFO, message, context);
+    }
+    warn(message, context) {
+        this._log(LogLevel.WARN, message, context);
+    }
+    error(message, context) {
+        const errorMessage = message instanceof Error ? message.message : String(message);
+        this._log(LogLevel.ERROR, errorMessage, context);
+    }
+}
 //# sourceMappingURL=logger.js.map

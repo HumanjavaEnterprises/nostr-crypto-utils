@@ -20,7 +20,6 @@ exports.createAuthorFilter = createAuthorFilter;
 exports.createReplyFilter = createReplyFilter;
 exports.createFilter = createFilter;
 const base_1 = require("../types/base");
-const constants_1 = require("./constants");
 /**
  * Formats an event for relay transmission according to NIP-01
  * @category Message Handling
@@ -113,7 +112,7 @@ function parseMessage(message) {
  * @category Event Creation
  * @param {Record<string, string>} metadata - User metadata (name, about, picture, etc.)
  * @param {string | PublicKey} pubkey - Public key of the user
- * @returns {NostrEvent} Created metadata event
+ * @returns {UnsignedEvent} Created metadata event
  */
 function createMetadataEvent(metadata, pubkey) {
     const pubkeyValue = typeof pubkey === 'string' ? pubkey : pubkey.hex;
@@ -132,17 +131,17 @@ function createMetadataEvent(metadata, pubkey) {
  * @param {string | PublicKey} pubkey - Public key of the author
  * @param {string} [replyTo] - Optional ID of event being replied to
  * @param {string[]} [mentions] - Optional array of pubkeys to mention
- * @returns {NostrEvent} Created text note event
+ * @returns {UnsignedEvent} Created text note event
  */
 function createTextNoteEvent(content, pubkey, replyTo, mentions) {
     const pubkeyValue = typeof pubkey === 'string' ? pubkey : pubkey.hex;
     const tags = [];
     if (replyTo) {
-        tags.push([constants_1.NOSTR_TAG.EVENT, replyTo]);
+        tags.push(['e', replyTo]);
     }
     if (mentions) {
         mentions.forEach(pubkey => {
-            tags.push([constants_1.NOSTR_TAG.PUBKEY, pubkey]);
+            tags.push(['p', pubkey]);
         });
     }
     return {
@@ -159,7 +158,7 @@ function createTextNoteEvent(content, pubkey, replyTo, mentions) {
  * @param {string | PublicKey} recipientPubkey - Public key of message recipient
  * @param {string} content - Message content (will be encrypted)
  * @param {string | PublicKey} senderPubkey - Public key of the sender
- * @returns {NostrEvent} Created direct message event
+ * @returns {UnsignedEvent} Created direct message event
  */
 function createDirectMessageEvent(recipientPubkey, content, senderPubkey) {
     const recipientKey = typeof recipientPubkey === 'string' ? recipientPubkey : recipientPubkey.hex;
@@ -179,7 +178,7 @@ function createDirectMessageEvent(recipientPubkey, content, senderPubkey) {
  * @param {string} content - Message content
  * @param {string | PublicKey} authorPubkey - Public key of the message author
  * @param {string} [replyTo] - Optional ID of message being replied to
- * @returns {NostrEvent} Created channel message event
+ * @returns {UnsignedEvent} Created channel message event
  */
 function createChannelMessageEvent(channelId, content, authorPubkey, replyTo) {
     const pubkeyValue = typeof authorPubkey === 'string' ? authorPubkey : authorPubkey.hex;
@@ -203,7 +202,7 @@ function createChannelMessageEvent(channelId, content, authorPubkey, replyTo) {
  */
 function extractReferencedEvents(event) {
     return event.tags
-        .filter((tag) => tag[0] === constants_1.NOSTR_TAG.EVENT)
+        .filter((tag) => tag[0] === 'e')
         .map((tag) => tag[1]);
 }
 /**
@@ -214,7 +213,7 @@ function extractReferencedEvents(event) {
  */
 function extractMentionedPubkeys(event) {
     return event.tags
-        .filter((tag) => tag[0] === constants_1.NOSTR_TAG.PUBKEY)
+        .filter((tag) => tag[0] === 'p')
         .map((tag) => tag[1]);
 }
 /**
