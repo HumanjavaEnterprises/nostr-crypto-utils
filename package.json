@@ -1,6 +1,6 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.4.14",
+  "version": "0.4.15",
   "description": "Core cryptographic utilities for Nostr protocol",
   "type": "commonjs",
   "main": "./dist/cjs/index.js",
