@@ -30,9 +30,20 @@ export {
   decrypt,
 } from './crypto';
 
-// Event functions
+// Validation functions
 export {
   validateEvent,
+  validateEventId,
+  validateEventSignature,
+  validateSignedEvent,
+  validateEventBase,
+  validateFilter,
+  validateSubscription,
+  validateResponse,
+} from './validation';
+
+// Event functions
+export {
   calculateEventId,
 } from './event';
 
