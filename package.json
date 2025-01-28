@@ -2,35 +2,16 @@
   "name": "nostr-crypto-utils",
   "version": "0.4.14",
   "description": "Core cryptographic utilities for Nostr protocol",
-  "type": "module",
+  "type": "commonjs",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
-  "types": "./dist/esm/index.d.ts",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
-      "types": "./dist/esm/index.d.ts"
-    },
-    "./crypto": {
-      "import": "./dist/esm/crypto.js",
-      "require": "./dist/cjs/crypto.js",
-      "types": "./dist/esm/crypto.d.ts"
-    },
-    "./validation": {
-      "import": "./dist/esm/validation/index.js",
-      "require": "./dist/cjs/validation/index.js",
-      "types": "./dist/esm/validation/index.d.ts"
-    },
-    "./protocol": {
-      "import": "./dist/esm/protocol/index.js",
-      "require": "./dist/cjs/protocol/index.js",
-      "types": "./dist/esm/protocol/index.d.ts"
-    },
-    "./nips": {
-      "import": "./dist/esm/nips/index.js",
-      "require": "./dist/cjs/nips/index.js",
-      "types": "./dist/esm/nips/index.d.ts"
+      "default": "./dist/cjs/index.js"
     }
   },
   "files": [
@@ -40,15 +21,17 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "npm run build:ts && npm run build:browser",
-    "build:ts": "tsc && tsc -p tsconfig.cjs.json",
+    "build": "npm run clean && npm run build:types && npm run build:cjs && npm run build:esm && npm run build:browser",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
     "build:browser": "webpack --config webpack.config.cjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
     "clean": "rimraf dist",
-    "prepare": "npm run clean && npm run build"
+    "prepare": "npm run build"
   },
   "keywords": [
     "nostr",
