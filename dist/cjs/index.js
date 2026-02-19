@@ -37,7 +37,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateEvent = exports.decrypt = exports.encrypt = exports.verifySignature = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKey = exports.generateKeyPair = exports.NostrMessageType = exports.NostrEventKind = void 0;
+exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.decrypt = exports.encrypt = exports.verifySignature = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKey = exports.generateKeyPair = exports.NostrMessageType = exports.NostrEventKind = void 0;
 // Event kinds and message types
 var types_1 = require("./types");
 Object.defineProperty(exports, "NostrEventKind", { enumerable: true, get: function () { return types_1.NostrEventKind; } });
@@ -52,9 +52,18 @@ Object.defineProperty(exports, "signEvent", { enumerable: true, get: function ()
 Object.defineProperty(exports, "verifySignature", { enumerable: true, get: function () { return crypto_1.verifySignature; } });
 Object.defineProperty(exports, "encrypt", { enumerable: true, get: function () { return crypto_1.encrypt; } });
 Object.defineProperty(exports, "decrypt", { enumerable: true, get: function () { return crypto_1.decrypt; } });
+// Validation functions
+var validation_1 = require("./validation");
+Object.defineProperty(exports, "validateEvent", { enumerable: true, get: function () { return validation_1.validateEvent; } });
+Object.defineProperty(exports, "validateEventId", { enumerable: true, get: function () { return validation_1.validateEventId; } });
+Object.defineProperty(exports, "validateEventSignature", { enumerable: true, get: function () { return validation_1.validateEventSignature; } });
+Object.defineProperty(exports, "validateSignedEvent", { enumerable: true, get: function () { return validation_1.validateSignedEvent; } });
+Object.defineProperty(exports, "validateEventBase", { enumerable: true, get: function () { return validation_1.validateEventBase; } });
+Object.defineProperty(exports, "validateFilter", { enumerable: true, get: function () { return validation_1.validateFilter; } });
+Object.defineProperty(exports, "validateSubscription", { enumerable: true, get: function () { return validation_1.validateSubscription; } });
+Object.defineProperty(exports, "validateResponse", { enumerable: true, get: function () { return validation_1.validateResponse; } });
 // Event functions
 var event_1 = require("./event");
-Object.defineProperty(exports, "validateEvent", { enumerable: true, get: function () { return event_1.validateEvent; } });
 Object.defineProperty(exports, "calculateEventId", { enumerable: true, get: function () { return event_1.calculateEventId; } });
 // NIP-04 encryption
 var nip_04_1 = require("./nips/nip-04");

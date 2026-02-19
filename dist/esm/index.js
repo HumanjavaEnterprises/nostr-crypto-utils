@@ -6,8 +6,10 @@
 export { NostrEventKind, NostrMessageType } from './types';
 // Core crypto functions
 export { generateKeyPair, getPublicKey, validateKeyPair, createEvent, signEvent, verifySignature, encrypt, decrypt, } from './crypto';
+// Validation functions
+export { validateEvent, validateEventId, validateEventSignature, validateSignedEvent, validateEventBase, validateFilter, validateSubscription, validateResponse, } from './validation';
 // Event functions
-export { validateEvent, calculateEventId, } from './event';
+export { calculateEventId, } from './event';
 // NIP-04 encryption
 export { computeSharedSecret, encryptMessage, decryptMessage, } from './nips/nip-04';
 // Re-export NIPs

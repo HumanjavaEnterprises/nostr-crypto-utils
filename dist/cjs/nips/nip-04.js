@@ -117,11 +117,12 @@ async function encryptMessage(message, senderPrivKey, recipientPubKey) {
         const sharedPoint = secp256k1_1.secp256k1.getSharedSecret(senderPrivKey, pubKeyHex);
         const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
         // Import key for AES
-        const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX, { name: 'AES-CBC', length: 256 }, false, ['encrypt']);
+        const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['encrypt']);
         // Generate IV and encrypt
         const iv = new Uint8Array(16);
         await cryptoImpl.getRandomValues(iv);
-        const encrypted = await (await cryptoImpl.getSubtle()).encrypt({ name: 'AES-CBC', iv }, sharedKey, new TextEncoder().encode(message));
+        const encoded = new TextEncoder().encode(message);
+        const encrypted = await (await cryptoImpl.getSubtle()).encrypt({ name: 'AES-CBC', iv }, sharedKey, encoded.buffer);
         // Combine IV and ciphertext
         const combined = new Uint8Array(iv.length + encrypted.byteLength);
         combined.set(iv);
@@ -157,13 +158,13 @@ async function decryptMessage(encryptedMessage, recipientPrivKey, senderPubKey) 
         const sharedPoint = secp256k1_1.secp256k1.getSharedSecret(recipientPrivKey, pubKeyHex);
         const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
         // Import key for AES
-        const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX, { name: 'AES-CBC', length: 256 }, false, ['decrypt']);
+        const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['decrypt']);
         // Split IV and ciphertext
         const encrypted = (0, utils_1.hexToBytes)(encryptedMessage);
         const iv = encrypted.slice(0, 16);
         const ciphertext = encrypted.slice(16);
         // Decrypt
-        const decrypted = await (await cryptoImpl.getSubtle()).decrypt({ name: 'AES-CBC', iv }, sharedKey, ciphertext);
+        const decrypted = await (await cryptoImpl.getSubtle()).decrypt({ name: 'AES-CBC', iv }, sharedKey, ciphertext.buffer);
         return new TextDecoder().decode(decrypted);
     }
     catch (error) {

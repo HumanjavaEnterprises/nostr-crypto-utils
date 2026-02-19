@@ -265,13 +265,13 @@ async function encrypt(message, recipientPubKey, senderPrivKey) {
     try {
         const recipientPubKeyHex = typeof recipientPubKey === 'string' ? recipientPubKey : recipientPubKey.hex;
         const sharedPoint = secp256k1_1.secp256k1.getSharedSecret((0, utils_1.hexToBytes)(senderPrivKey), (0, utils_1.hexToBytes)(recipientPubKeyHex));
-        const sharedX = sharedPoint.subarray(1, 33);
+        const sharedX = sharedPoint.slice(1, 33);
         // Generate random IV
         const iv = (0, utils_2.randomBytes)(16);
-        const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX, { name: 'AES-CBC', length: 256 }, false, ['encrypt']));
+        const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['encrypt']));
         // Encrypt the message
         const data = new TextEncoder().encode(message);
-        const encrypted = await exports.customCrypto.getSubtle().then((subtle) => subtle.encrypt({ name: 'AES-CBC', iv }, key, data));
+        const encrypted = await exports.customCrypto.getSubtle().then((subtle) => subtle.encrypt({ name: 'AES-CBC', iv }, key, data.buffer));
         // Combine IV and ciphertext
         const combined = new Uint8Array(iv.length + encrypted.byteLength);
         combined.set(iv);
@@ -290,12 +290,12 @@ async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
     try {
         const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
         const sharedPoint = secp256k1_1.secp256k1.getSharedSecret((0, utils_1.hexToBytes)(recipientPrivKey), (0, utils_1.hexToBytes)(senderPubKeyHex));
-        const sharedX = sharedPoint.subarray(1, 33);
+        const sharedX = sharedPoint.slice(1, 33);
         const encrypted = (0, utils_1.hexToBytes)(encryptedMessage);
         const iv = encrypted.slice(0, 16);
         const ciphertext = encrypted.slice(16);
-        const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX, { name: 'AES-CBC', length: 256 }, false, ['decrypt']));
-        const decrypted = await exports.customCrypto.getSubtle().then((subtle) => subtle.decrypt({ name: 'AES-CBC', iv }, key, ciphertext));
+        const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['decrypt']));
+        const decrypted = await exports.customCrypto.getSubtle().then((subtle) => subtle.decrypt({ name: 'AES-CBC', iv }, key, ciphertext.buffer));
         return new TextDecoder().decode(decrypted);
     }
     catch (error) {

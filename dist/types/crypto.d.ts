@@ -60,8 +60,8 @@ declare class CustomCrypto {
     getRandomValues<T extends Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array>(array: T): Promise<T>;
 }
 export declare const customCrypto: CustomCrypto;
-export declare const signSchnorr: (message: import("@noble/curves/abstract/utils").Hex, privateKey: import("@noble/curves/abstract/utils").PrivKey, auxRand?: import("@noble/curves/abstract/utils").Hex) => Uint8Array;
-export declare const verifySchnorrSignature: (signature: import("@noble/curves/abstract/utils").Hex, message: import("@noble/curves/abstract/utils").Hex, publicKey: import("@noble/curves/abstract/utils").Hex) => boolean;
+export declare const signSchnorr: (message: import("@noble/curves/utils").Hex, secretKey: import("@noble/curves/utils").PrivKey, auxRand?: import("@noble/curves/utils").Hex) => Uint8Array;
+export declare const verifySchnorrSignature: (signature: import("@noble/curves/utils").Hex, message: import("@noble/curves/utils").Hex, publicKey: import("@noble/curves/utils").Hex) => boolean;
 /**
  * Gets the compressed public key (33 bytes with prefix)
  */

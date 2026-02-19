@@ -5,7 +5,8 @@
 export type { NostrEvent, UnsignedNostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, PublicKey, KeyPair, NostrMessageTuple, } from './types';
 export { NostrEventKind, NostrMessageType } from './types';
 export { generateKeyPair, getPublicKey, validateKeyPair, createEvent, signEvent, verifySignature, encrypt, decrypt, } from './crypto';
-export { validateEvent, calculateEventId, } from './event';
+export { validateEvent, validateEventId, validateEventSignature, validateSignedEvent, validateEventBase, validateFilter, validateSubscription, validateResponse, } from './validation';
+export { calculateEventId, } from './event';
 export { computeSharedSecret, encryptMessage, decryptMessage, } from './nips/nip-04';
 export * as nip01 from './nips/nip-01';
 export * as nip04 from './nips/nip-04';

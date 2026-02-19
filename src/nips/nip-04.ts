@@ -110,7 +110,7 @@ export async function encryptMessage(
     // Import key for AES
     const sharedKey = await (await cryptoImpl.getSubtle()).importKey(
       'raw',
-      sharedX,
+      sharedX.buffer,
       { name: 'AES-CBC', length: 256 },
       false,
       ['encrypt']
@@ -120,10 +120,11 @@ export async function encryptMessage(
     const iv = new Uint8Array(16);
     await cryptoImpl.getRandomValues(iv);
 
+    const encoded = new TextEncoder().encode(message);
     const encrypted = await (await cryptoImpl.getSubtle()).encrypt(
       { name: 'AES-CBC', iv },
       sharedKey,
-      new TextEncoder().encode(message)
+      encoded.buffer
     );
 
     // Combine IV and ciphertext
@@ -172,7 +173,7 @@ export async function decryptMessage(
     // Import key for AES
     const sharedKey = await (await cryptoImpl.getSubtle()).importKey(
       'raw',
-      sharedX,
+      sharedX.buffer,
       { name: 'AES-CBC', length: 256 },
       false,
       ['decrypt']
@@ -187,7 +188,7 @@ export async function decryptMessage(
     const decrypted = await (await cryptoImpl.getSubtle()).decrypt(
       { name: 'AES-CBC', iv },
       sharedKey,
-      ciphertext
+      ciphertext.buffer
     );
 
     return new TextDecoder().decode(decrypted);
