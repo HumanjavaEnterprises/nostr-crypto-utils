@@ -63,7 +63,7 @@ This library provides essential cryptographic operations and utilities required 
 - Supports both ESM and CJS formats
 - Cross-platform compatible (Node.js and browser environments)
 
-[![npm version](https://badge.fury.io/js/%40humanjavaenterprises%2Fnostr-crypto-utils.svg)](https://www.npmjs.com/package/@humanjavaenterprises/nostr-crypto-utils)
+[![npm version](https://badge.fury.io/js/nostr-crypto-utils.svg)](https://www.npmjs.com/package/nostr-crypto-utils)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/main/LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-TypeDoc-blue.svg)](https://humanjavaenterprises.github.io/nostr-crypto-utils/)
@@ -148,7 +148,7 @@ import {
   naddrEncode,
   nrelayEncode,
   decode 
-} from '@humanjavaenterprises/nostr-crypto-utils';
+} from 'nostr-crypto-utils';
 
 // Encode a public key
 const npub = npubEncode('7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0');
@@ -202,6 +202,7 @@ try {
 } catch (error) {
   console.error(error); // Error: Invalid hex string
 }
+```
 
 ### Type System
 
@@ -448,11 +449,11 @@ These examples demonstrate real-world usage patterns from production Nostr appli
 
 ## Integration with nostr-nsec-seedphrase
 
-This library is designed to work seamlessly with [@humanjavaenterprises/nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase) to provide a complete solution for Nostr key management and cryptographic operations:
+This library is designed to work seamlessly with [nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase) to provide a complete solution for Nostr key management and cryptographic operations:
 
 ```typescript
-import { generateSeedPhrase } from '@humanjavaenterprises/nostr-nsec-seedphrase';
-import { createTextNoteEvent, signEvent } from '@humanjavaenterprises/nostr-crypto-utils';
+import { generateSeedPhrase } from 'nostr-nsec-seedphrase';
+import { createTextNoteEvent, signEvent } from 'nostr-crypto-utils';
 
 // Generate keys using nostr-nsec-seedphrase
 const seedPhrase = generateSeedPhrase();
@@ -481,7 +482,7 @@ You can use this library to create delegate tokens for use on web servers or oth
 ### Basic Delegation Example
 
 ```typescript
-import { createDelegation, validateDelegation } from '@humanjavaenterprises/nostr-crypto-utils';
+import { createDelegation, validateDelegation } from 'nostr-crypto-utils';
 
 // Create a delegation token (delegator's perspective)
 const delegatorKeyPair = await generateKeyPair();
@@ -510,7 +511,7 @@ const isValid = await validateDelegation({
 Here's how to use delegation tokens in a web server context:
 
 ```typescript
-import { createEvent, signEventWithDelegation } from '@humanjavaenterprises/nostr-crypto-utils';
+import { createEvent, signEventWithDelegation } from 'nostr-crypto-utils';
 
 // On your server, store these securely
 const DELEGATE_PRIVKEY = 'nsec1...';  // Your server's private key
@@ -589,7 +590,7 @@ For more details on delegation, see the [NIP-26 specification](https://github.co
 Enable debug mode to get detailed logging:
 
 ```typescript
-import { setDebugLevel } from '@humanjavaenterprises/nostr-crypto-utils';
+import { setDebugLevel } from 'nostr-crypto-utils';
 
 // Enable debug logging
 setDebugLevel('debug');
@@ -671,53 +672,6 @@ const testEventSigning = async (event, delegation) => {
 
 For more help, join our [Discord community](https://discord.gg/nostr) or [open an issue](https://github.com/humanjavaenterprises/nostr-crypto-utils/issues).
 
-## Installation
-
-```bash
-npm install @humanjavaenterprises/nostr-crypto-utils
-```
-
-## Quick Start
-
-```typescript
-import { createKeyPair, createTextNoteEvent, signEvent } from '@humanjavaenterprises/nostr-crypto-utils';
-
-// Generate a new key pair
-const keyPair = createKeyPair();
-
-// Create a text note event
-const event = createTextNoteEvent({
-  content: 'Hello Nostr!',
-  pubkey: keyPair.publicKey,
-  created_at: Math.floor(Date.now() / 1000)
-});
-
-// Sign the event
-const signedEvent = signEvent(event, keyPair.privateKey);
-```
-
-## Documentation
-
-Comprehensive documentation is available at [https://humanjavaenterprises.github.io/nostr-crypto-utils/](https://humanjavaenterprises.github.io/nostr-crypto-utils/)
-
-## Type Safety
-
-This library is written in TypeScript and provides comprehensive type definitions for all functions and data structures. Type checking is enforced at compile time to catch potential errors early.
-
-```typescript
-import { NostrEvent, NostrFilter, ValidationResult } from '@humanjavaenterprises/nostr-crypto-utils';
-
-// All types are properly defined
-const filter: NostrFilter = {
-  kinds: [NostrEventKind.TEXT_NOTE],
-  "#t": ["nostr", "crypto"],  // Filter by custom tag
-  limit: 10
-};
-
-// Validation results include type information
-const result: ValidationResult = validateEvent(event);
-```
-
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
@@ -728,29 +682,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### v0.3.0 (2024-12-28)
-- 🔒 Improved type safety with stricter TypeScript checks
-- 🐛 Fixed crypto implementation for cross-platform compatibility
-- ✨ Added comprehensive validation for all message types
-- 📝 Updated documentation with more examples
-
-### v0.2.0 (2024-12-26)
-- 🎉 Initial public release
-- ✨ Added support for NIP-01 and NIP-04
-- 🔑 Implemented key pair generation and management
-- 📝 Added comprehensive documentation
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 
 ## Support
 
-- 📖 [Documentation](https://humanjavaenterprises.github.io/nostr-crypto-utils/)
-- 🐛 [Issue Tracker](https://github.com/humanjavaenterprises/nostr-crypto-utils/issues)
-- 💬 [Discussions](https://github.com/humanjavaenterprises/nostr-crypto-utils/discussions)
+- [Documentation](https://humanjavaenterprises.github.io/nostr-crypto-utils/)
+- [Issue Tracker](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/issues)
+- [Discussions](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/discussions)
 
 ## Related Projects
 
-- [@humanjavaenterprises/nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase) - Generate and manage Nostr private keys using BIP-39 seed phrases
-
----
-<div align="center">
-Made with ❤️ by <a href="https://github.com/humanjavaenterprises">Humanjava Enterprises</a>
-</div>
+- [nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase) - Generate and manage Nostr private keys using BIP-39 seed phrases

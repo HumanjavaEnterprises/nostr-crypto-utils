@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.16] - 2025-02-19
+
+### Changed
+- Updated dependencies to latest within major versions
+
+### Fixed
+- Updated exports to include validation functions
+
+## [0.4.15] - 2025-02-09
+
+### Changed
+- Bumped version for npm publish
+
+### Fixed
+- Fixed Vite security vulnerability
+
+### Refactored
+- Updated build configuration for better ESM/CJS compatibility
+
+## [0.4.14] - 2025-01-15
+
+### Added
+- NIP-19 support and updated dependencies
+
+### Changed
+- Improved types and NIP support
+
+## [0.4.13] - 2025-01-10
+
+### Added
+- Improved NIP-19 documentation and exports
+
+## [0.4.12] - 2025-01-05
+
+### Fixed
+- Improved TypeScript type handling and browser compatibility
+- Removed unused imports
+
+## [0.4.11] - 2025-01-03
+
+### Changed
+- Updated dist files after build cleanup
+- Fixed linting issues and removed unused imports
+
 ## [0.4.10] - 2025-01-02
 
 ### Fixed

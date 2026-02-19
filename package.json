@@ -17,6 +17,7 @@
   "files": [
     "dist",
     "src",
+    "examples/**/*",
     "README.md",
     "LICENSE"
   ],
@@ -40,8 +41,16 @@
     "utilities",
     "typescript"
   ],
-  "author": "Humanjava Enterprises",
+  "author": "vveerrgg",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HumanjavaEnterprises/nostr-crypto-utils.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HumanjavaEnterprises/nostr-crypto-utils/issues"
+  },
+  "homepage": "https://github.com/HumanjavaEnterprises/nostr-crypto-utils#readme",
   "dependencies": {
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",
