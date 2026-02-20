@@ -77,6 +77,12 @@ This library provides essential cryptographic operations and utilities required 
 
 If you discover a security vulnerability, please follow our [Security Policy](SECURITY.md) and report it through [GitHub's Security Advisory feature](https://github.com/humanjavaenterprises/nostr-crypto-utils/security/advisories/new).
 
+### Dependency Vulnerability Status
+
+We actively monitor and address security vulnerabilities in this codebase. **`npm audit --omit=dev` reports zero vulnerabilities** for this package — there are no known security issues in production dependencies.
+
+Any remaining `npm audit` findings are in development-only tooling (eslint, typescript-eslint, vitest, etc.) and stem from transitive dependencies with no upstream fix available. These are devDependencies that are never included in the published package and pose no risk to consumers of this library. We monitor upstream fixes and update promptly when they become available.
+
 ## Why Choose nostr-crypto-utils?
 
 - **Lightweight**: Only 208.7KB unpacked, focusing on essential cryptographic operations
