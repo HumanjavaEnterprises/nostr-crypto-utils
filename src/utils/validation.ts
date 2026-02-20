@@ -173,7 +173,7 @@ export function validatePublicKey(pubkey: string): ValidationResult {
     // Try to convert to bytes
     try {
       hexToBytes(pubkey);
-    } catch (error) {
+    } catch (_error) {
       return {
         isValid: false,
         error: 'Invalid hex encoding'
