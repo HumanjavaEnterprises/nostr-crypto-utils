@@ -27,7 +27,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/hashes/utils';
 import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent, PublicKey } from './types/index';
 import { logger } from './utils/logger';
-import cryptoBrowserify from 'crypto-browserify';
+
 
 /**
  * Custom crypto interface for cross-platform compatibility
@@ -83,10 +83,10 @@ const getCrypto = async (): Promise<CryptoSubtle> => {
       return cryptoModule.webcrypto as CryptoSubtle;
     }
   } catch {
-    logger.debug('Node crypto not available, falling back to crypto-browserify');
+    logger.debug('Node crypto not available');
   }
-  
-  return cryptoBrowserify as CryptoSubtle;
+
+  throw new Error('No WebCrypto implementation available');
 };
 
 /**

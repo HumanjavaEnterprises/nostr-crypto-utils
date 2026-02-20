@@ -41,7 +41,7 @@ module.exports = {
         extensions: ['.tsx', '.ts', '.mjs', '.js', '.jsx'],
         modules: ['node_modules', path.resolve(__dirname, 'src')],
         fallback: {
-            "crypto": require.resolve('crypto-browserify'),
+            "crypto": false,
             "buffer": require.resolve('buffer/'),
             "stream": require.resolve('stream-browserify'),
             "path": require.resolve('path-browserify'),
@@ -51,9 +51,7 @@ module.exports = {
         },
         alias: {
             '@noble/curves': path.resolve(__dirname, 'node_modules/@noble/curves'),
-            '@noble/hashes': path.resolve(__dirname, 'node_modules/@noble/hashes'),
-            'node:crypto': 'crypto-browserify',
-            'crypto': 'crypto-browserify'
+            '@noble/hashes': path.resolve(__dirname, 'node_modules/@noble/hashes')
         },
         mainFields: ['browser', 'module', 'main']
     },
@@ -79,18 +77,13 @@ module.exports = {
     plugins: [
         new webpack.ProvidePlugin({
             Buffer: ['buffer', 'Buffer'],
-            process: 'process/browser',
-            crypto: ['crypto-browserify', 'default']
+            process: 'process/browser'
         }),
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify('production'),
             'global.crypto': JSON.stringify({}),
             'window.crypto': JSON.stringify({})
         }),
-        new webpack.NormalModuleReplacementPlugin(
-            /node:crypto/,
-            require.resolve('crypto-browserify')
-        ),
         new webpack.NormalModuleReplacementPlugin(
             /\.js$/,
             resource => {

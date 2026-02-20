@@ -26,6 +26,7 @@ export var NostrEventKind;
     NostrEventKind[NostrEventKind["PIN_LIST"] = 10001] = "PIN_LIST";
     NostrEventKind[NostrEventKind["RELAY_LIST_METADATA"] = 10002] = "RELAY_LIST_METADATA";
     NostrEventKind[NostrEventKind["CLIENT_AUTH"] = 22242] = "CLIENT_AUTH";
+    NostrEventKind[NostrEventKind["AUTH_RESPONSE"] = 22243] = "AUTH_RESPONSE";
     NostrEventKind[NostrEventKind["NOSTR_CONNECT"] = 24133] = "NOSTR_CONNECT";
     NostrEventKind[NostrEventKind["CATEGORIZED_PEOPLE"] = 30000] = "CATEGORIZED_PEOPLE";
     NostrEventKind[NostrEventKind["CATEGORIZED_BOOKMARKS"] = 30001] = "CATEGORIZED_BOOKMARKS";

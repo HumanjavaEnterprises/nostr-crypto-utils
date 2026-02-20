@@ -54,9 +54,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifySchnorrSignature = exports.signSchnorr = exports.customCrypto = void 0;
 exports.getCompressedPublicKey = getCompressedPublicKey;
@@ -74,7 +71,6 @@ const utils_1 = require("@noble/curves/abstract/utils");
 const sha256_1 = require("@noble/hashes/sha256");
 const utils_2 = require("@noble/hashes/utils");
 const logger_1 = require("./utils/logger");
-const crypto_browserify_1 = __importDefault(require("crypto-browserify"));
 // Get the appropriate crypto implementation
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
@@ -90,9 +86,9 @@ const getCrypto = async () => {
         }
     }
     catch {
-        logger_1.logger.debug('Node crypto not available, falling back to crypto-browserify');
+        logger_1.logger.debug('Node crypto not available');
     }
-    return crypto_browserify_1.default;
+    throw new Error('No WebCrypto implementation available');
 };
 /**
  * Crypto implementation that works in both Node.js and browser environments

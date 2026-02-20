@@ -8,7 +8,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
 import { logger } from '../utils/logger';
 import type { CryptoSubtle } from '../crypto';
-import cryptoBrowserify from 'crypto-browserify';
+
 
 // Configure crypto for Node.js and test environments
 declare global {
@@ -33,10 +33,10 @@ const getCrypto = async (): Promise<CryptoSubtle> => {
       return cryptoModule.webcrypto as CryptoSubtle;
     }
   } catch {
-    logger.debug('Node crypto not available, falling back to crypto-browserify');
+    logger.debug('Node crypto not available');
   }
-  
-  return cryptoBrowserify as unknown as CryptoSubtle;
+
+  throw new Error('No WebCrypto implementation available');
 };
 
 class CryptoImplementation {

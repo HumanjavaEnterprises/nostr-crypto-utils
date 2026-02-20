@@ -2,7 +2,7 @@
  * NIP-26: Delegated Event Signing
  * Implements delegation of event signing capabilities
  */
-import { createHash } from 'crypto';
+import { sha256 } from '@noble/hashes/sha256';
 import { signSchnorr, verifySchnorrSignature } from '../crypto';
 import { bytesToHex } from '@noble/curves/abstract/utils';
 /**
@@ -116,14 +116,12 @@ function parseConditions(conditionsString) {
 }
 function signDelegation(delegator, delegatee, conditions) {
     const message = `nostr:delegation:${delegatee}:${conditions}`;
-    const hash = createHash('sha256').update(message).digest();
+    const hash = sha256(new TextEncoder().encode(message));
     const signature = signSchnorr(hash, delegator);
     return bytesToHex(signature);
 }
 async function verifyDelegationSignature(delegator, delegatee, conditions, signature) {
-    const message = createHash('sha256')
-        .update(Buffer.from(`nostr:delegation:${delegatee}:${conditions}`))
-        .digest();
-    return verifySchnorrSignature(message, delegator, signature);
+    const msgHash = sha256(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
+    return verifySchnorrSignature(msgHash, delegator, signature);
 }
 //# sourceMappingURL=nip-26.js.map

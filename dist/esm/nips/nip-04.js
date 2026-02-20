@@ -6,7 +6,6 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
 import { logger } from '../utils/logger';
-import cryptoBrowserify from 'crypto-browserify';
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
         return window.crypto;
@@ -21,9 +20,9 @@ const getCrypto = async () => {
         }
     }
     catch {
-        logger.debug('Node crypto not available, falling back to crypto-browserify');
+        logger.debug('Node crypto not available');
     }
-    return cryptoBrowserify;
+    throw new Error('No WebCrypto implementation available');
 };
 class CryptoImplementation {
     cryptoInstance = null;

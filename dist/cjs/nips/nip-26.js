@@ -9,8 +9,8 @@ exports.verifyDelegation = verifyDelegation;
 exports.checkDelegationConditions = checkDelegationConditions;
 exports.addDelegationTag = addDelegationTag;
 exports.extractDelegation = extractDelegation;
-const crypto_1 = require("crypto");
-const crypto_2 = require("../crypto");
+const sha256_1 = require("@noble/hashes/sha256");
+const crypto_1 = require("../crypto");
 const utils_1 = require("@noble/curves/abstract/utils");
 /**
  * Create a delegation token
@@ -123,14 +123,12 @@ function parseConditions(conditionsString) {
 }
 function signDelegation(delegator, delegatee, conditions) {
     const message = `nostr:delegation:${delegatee}:${conditions}`;
-    const hash = (0, crypto_1.createHash)('sha256').update(message).digest();
-    const signature = (0, crypto_2.signSchnorr)(hash, delegator);
+    const hash = (0, sha256_1.sha256)(new TextEncoder().encode(message));
+    const signature = (0, crypto_1.signSchnorr)(hash, delegator);
     return (0, utils_1.bytesToHex)(signature);
 }
 async function verifyDelegationSignature(delegator, delegatee, conditions, signature) {
-    const message = (0, crypto_1.createHash)('sha256')
-        .update(Buffer.from(`nostr:delegation:${delegatee}:${conditions}`))
-        .digest();
-    return (0, crypto_2.verifySchnorrSignature)(message, delegator, signature);
+    const msgHash = (0, sha256_1.sha256)(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
+    return (0, crypto_1.verifySchnorrSignature)(msgHash, delegator, signature);
 }
 //# sourceMappingURL=nip-26.js.map

@@ -146,7 +146,7 @@ export function validatePublicKey(pubkey) {
         try {
             hexToBytes(pubkey);
         }
-        catch (error) {
+        catch (_error) {
             return {
                 isValid: false,
                 error: 'Invalid hex encoding'

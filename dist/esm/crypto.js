@@ -25,7 +25,6 @@ import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/hashes/utils';
 import { logger } from './utils/logger';
-import cryptoBrowserify from 'crypto-browserify';
 // Get the appropriate crypto implementation
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
@@ -41,9 +40,9 @@ const getCrypto = async () => {
         }
     }
     catch {
-        logger.debug('Node crypto not available, falling back to crypto-browserify');
+        logger.debug('Node crypto not available');
     }
-    return cryptoBrowserify;
+    throw new Error('No WebCrypto implementation available');
 };
 /**
  * Crypto implementation that works in both Node.js and browser environments

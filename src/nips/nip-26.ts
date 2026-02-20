@@ -3,7 +3,7 @@
  * Implements delegation of event signing capabilities
  */
 
-import { createHash } from 'crypto';
+import { sha256 } from '@noble/hashes/sha256';
 import { NostrEvent } from '../types';
 import { signSchnorr, verifySchnorrSignature } from '../crypto';
 import { bytesToHex } from '@noble/curves/abstract/utils';
@@ -166,7 +166,7 @@ function signDelegation(
   conditions: string
 ): string {
   const message = `nostr:delegation:${delegatee}:${conditions}`;
-  const hash = createHash('sha256').update(message).digest();
+  const hash = sha256(new TextEncoder().encode(message));
   const signature = signSchnorr(hash, delegator);
   return bytesToHex(signature);
 }
@@ -177,9 +177,7 @@ async function verifyDelegationSignature(
   conditions: string,
   signature: string
 ): Promise<boolean> {
-  const message = createHash('sha256')
-    .update(Buffer.from(`nostr:delegation:${delegatee}:${conditions}`))
-    .digest();
-  
-  return verifySchnorrSignature(message, delegator, signature);
+  const msgHash = sha256(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
+
+  return verifySchnorrSignature(msgHash, delegator, signature);
 }
