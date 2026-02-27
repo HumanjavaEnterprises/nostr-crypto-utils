@@ -5,8 +5,9 @@
  */
 
 import { secp256k1 } from '@noble/curves/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { hexToBytes } from '@noble/curves/abstract/utils';
 import { logger } from '../utils/logger';
+import { bytesToBase64, base64ToBytes } from '../encoding/base64';
 import type { CryptoSubtle } from '../crypto';
 
 
@@ -127,12 +128,11 @@ export async function encryptMessage(
       encoded.buffer
     );
 
-    // Combine IV and ciphertext
-    const combined = new Uint8Array(iv.length + encrypted.byteLength);
-    combined.set(iv);
-    combined.set(new Uint8Array(encrypted), iv.length);
+    // NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
+    const ciphertextBase64 = bytesToBase64(new Uint8Array(encrypted));
+    const ivBase64 = bytesToBase64(iv);
 
-    return bytesToHex(combined);
+    return ciphertextBase64 + '?iv=' + ivBase64;
   } catch (error) {
     logger.error({ error }, 'Failed to encrypt message');
     throw error;
@@ -179,16 +179,28 @@ export async function decryptMessage(
       ['decrypt']
     );
 
-    // Split IV and ciphertext
-    const encrypted = hexToBytes(encryptedMessage);
-    const iv = encrypted.slice(0, 16);
-    const ciphertext = encrypted.slice(16);
+    // Parse NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
+    // Also support legacy hex format (iv + ciphertext concatenated) as fallback
+    let iv: Uint8Array;
+    let ciphertext: Uint8Array;
+
+    if (encryptedMessage.includes('?iv=')) {
+      // NIP-04 standard format
+      const [ciphertextBase64, ivBase64] = encryptedMessage.split('?iv=');
+      ciphertext = base64ToBytes(ciphertextBase64);
+      iv = base64ToBytes(ivBase64);
+    } else {
+      // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
+      const encrypted = hexToBytes(encryptedMessage);
+      iv = encrypted.slice(0, 16);
+      ciphertext = encrypted.slice(16);
+    }
 
     // Decrypt
     const decrypted = await (await cryptoImpl.getSubtle()).decrypt(
       { name: 'AES-CBC', iv },
       sharedKey,
-      ciphertext.buffer
+      ciphertext.buffer as ArrayBuffer
     );
 
     return new TextDecoder().decode(decrypted);

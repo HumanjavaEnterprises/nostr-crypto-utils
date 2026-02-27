@@ -27,6 +27,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/hashes/utils';
 import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent, PublicKey } from './types/index';
 import { logger } from './utils/logger';
+import { bytesToBase64, base64ToBytes } from './encoding/base64';
 
 
 /**
@@ -305,12 +306,11 @@ export async function encrypt(
       data.buffer
     ));
 
-    // Combine IV and ciphertext
-    const combined = new Uint8Array(iv.length + encrypted.byteLength);
-    combined.set(iv);
-    combined.set(new Uint8Array(encrypted), iv.length);
+    // NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
+    const ciphertextBase64 = bytesToBase64(new Uint8Array(encrypted));
+    const ivBase64 = bytesToBase64(iv);
 
-    return bytesToHex(combined);
+    return ciphertextBase64 + '?iv=' + ivBase64;
   } catch (error) {
     logger.error({ error }, 'Failed to encrypt message');
     throw error;
@@ -330,9 +330,22 @@ export async function decrypt(
     const sharedPoint = secp256k1.getSharedSecret(hexToBytes(recipientPrivKey), hexToBytes(senderPubKeyHex));
     const sharedX = sharedPoint.slice(1, 33);
 
-    const encrypted = hexToBytes(encryptedMessage);
-    const iv = encrypted.slice(0, 16);
-    const ciphertext = encrypted.slice(16);
+    // Parse NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
+    // Also support legacy hex format (iv + ciphertext concatenated) as fallback
+    let iv: Uint8Array;
+    let ciphertext: Uint8Array;
+
+    if (encryptedMessage.includes('?iv=')) {
+      // NIP-04 standard format
+      const [ciphertextBase64, ivBase64] = encryptedMessage.split('?iv=');
+      ciphertext = base64ToBytes(ciphertextBase64);
+      iv = base64ToBytes(ivBase64);
+    } else {
+      // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
+      const encrypted = hexToBytes(encryptedMessage);
+      iv = encrypted.slice(0, 16);
+      ciphertext = encrypted.slice(16);
+    }
 
     const key = await customCrypto.getSubtle().then((subtle) => subtle.importKey(
       'raw',
@@ -345,7 +358,7 @@ export async function decrypt(
     const decrypted = await customCrypto.getSubtle().then((subtle) => subtle.decrypt(
       { name: 'AES-CBC', iv },
       key,
-      ciphertext.buffer
+      ciphertext.buffer as ArrayBuffer
     ));
 
     return new TextDecoder().decode(decrypted);
