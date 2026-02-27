@@ -6,7 +6,8 @@
 import { sha256 } from '@noble/hashes/sha256';
 import { NostrEvent } from '../types';
 import { signSchnorr, verifySchnorrSignature } from '../crypto';
-import { bytesToHex } from '@noble/curves/abstract/utils';
+import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { schnorr } from '@noble/curves/secp256k1';
 
 export interface DelegationConditions {
   kind?: number;
@@ -23,21 +24,24 @@ export interface Delegation {
 
 /**
  * Create a delegation token
- * @param delegator Delegator's private key
+ * @param delegatorPrivateKey Delegator's private key (used for signing only, never returned)
  * @param delegatee Delegatee's public key
  * @param conditions Delegation conditions
- * @returns Delegation token
+ * @returns Delegation token (delegator field contains the PUBLIC key, not the private key)
  */
 export function createDelegation(
-  delegator: string,
+  delegatorPrivateKey: string,
   delegatee: string,
   conditions: DelegationConditions
 ): Delegation {
   const conditionsString = serializeConditions(conditions);
-  const token = signDelegation(delegator, delegatee, conditionsString);
+  const token = signDelegation(delegatorPrivateKey, delegatee, conditionsString);
+
+  // Derive the public key from the private key — NEVER return the private key
+  const delegatorPublicKey = bytesToHex(schnorr.getPublicKey(hexToBytes(delegatorPrivateKey)));
 
   return {
-    delegator,
+    delegator: delegatorPublicKey,
     delegatee,
     conditions,
     token
@@ -179,5 +183,5 @@ async function verifyDelegationSignature(
 ): Promise<boolean> {
   const msgHash = sha256(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
 
-  return verifySchnorrSignature(msgHash, delegator, signature);
+  return verifySchnorrSignature(signature, msgHash, delegator);
 }
