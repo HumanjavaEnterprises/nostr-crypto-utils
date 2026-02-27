@@ -151,6 +151,7 @@ export function getSchnorrPublicKey(privateKeyBytes: Uint8Array): Uint8Array {
 export async function generateKeyPair(): Promise<KeyPair> {
   const privateKeyBytes = randomBytes(32);
   const privateKey = bytesToHex(privateKeyBytes);
+  privateKeyBytes.fill(0); // zero source material
   const publicKey = await getPublicKey(privateKey);
 
   return {
@@ -298,6 +299,10 @@ export async function encrypt(
       ['encrypt']
     ));
 
+    // Zero shared secret material now that AES key is imported
+    sharedX.fill(0);
+    sharedPoint.fill(0);
+
     // Encrypt the message
     const data = new TextEncoder().encode(message);
     const encrypted = await customCrypto.getSubtle().then((subtle) => subtle.encrypt(
@@ -354,6 +359,10 @@ export async function decrypt(
       false,
       ['decrypt']
     ));
+
+    // Zero shared secret material now that AES key is imported
+    sharedX.fill(0);
+    sharedPoint.fill(0);
 
     const decrypted = await customCrypto.getSubtle().then((subtle) => subtle.decrypt(
       { name: 'AES-CBC', iv },

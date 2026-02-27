@@ -117,6 +117,10 @@ export async function encryptMessage(
       ['encrypt']
     );
 
+    // Zero shared secret material now that AES key is imported
+    sharedX.fill(0);
+    sharedPoint.fill(0);
+
     // Generate IV and encrypt
     const iv = new Uint8Array(16);
     await cryptoImpl.getRandomValues(iv);
@@ -178,6 +182,10 @@ export async function decryptMessage(
       false,
       ['decrypt']
     );
+
+    // Zero shared secret material now that AES key is imported
+    sharedX.fill(0);
+    sharedPoint.fill(0);
 
     // Parse NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
     // Also support legacy hex format (iv + ciphertext concatenated) as fallback
