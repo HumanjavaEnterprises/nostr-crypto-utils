@@ -44,7 +44,7 @@
     "build:types": "tsc -p tsconfig.types.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
-    "build:browser": "webpack --config webpack.config.cjs",
+    "build:browser": "node esbuild.browser.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -91,13 +91,10 @@
     "@typescript-eslint/eslint-plugin": "^8.56.0",
     "@typescript-eslint/parser": "^8.56.0",
     "@vitest/coverage-v8": "^3.2.4",
+    "esbuild": "^0.27.3",
     "eslint": "^10.0.0",
-    "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4",
-    "webpack": "^5.105.2",
-    "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0"
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=18.0.0"
