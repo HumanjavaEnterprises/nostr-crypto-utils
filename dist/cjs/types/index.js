@@ -63,4 +63,6 @@ __exportStar(require("./protocol"), exports);
 __exportStar(require("./messages"), exports);
 /** Re-export type guards */
 __exportStar(require("./guards"), exports);
+/** Re-export NIP-46 types */
+__exportStar(require("./nip46"), exports);
 //# sourceMappingURL=index.js.map

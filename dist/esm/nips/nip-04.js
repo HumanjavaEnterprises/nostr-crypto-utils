@@ -4,8 +4,9 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/04.md
  */
 import { secp256k1 } from '@noble/curves/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { hexToBytes } from '@noble/curves/abstract/utils';
 import { logger } from '../utils/logger';
+import { bytesToBase64, base64ToBytes } from '../encoding/base64';
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
         return window.crypto;
@@ -75,16 +76,18 @@ export async function encryptMessage(message, senderPrivKey, recipientPubKey) {
         const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
         // Import key for AES
         const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['encrypt']);
+        // Zero shared secret material now that AES key is imported
+        sharedX.fill(0);
+        sharedPoint.fill(0);
         // Generate IV and encrypt
         const iv = new Uint8Array(16);
         await cryptoImpl.getRandomValues(iv);
         const encoded = new TextEncoder().encode(message);
         const encrypted = await (await cryptoImpl.getSubtle()).encrypt({ name: 'AES-CBC', iv }, sharedKey, encoded.buffer);
-        // Combine IV and ciphertext
-        const combined = new Uint8Array(iv.length + encrypted.byteLength);
-        combined.set(iv);
-        combined.set(new Uint8Array(encrypted), iv.length);
-        return bytesToHex(combined);
+        // NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
+        const ciphertextBase64 = bytesToBase64(new Uint8Array(encrypted));
+        const ivBase64 = bytesToBase64(iv);
+        return ciphertextBase64 + '?iv=' + ivBase64;
     }
     catch (error) {
         logger.error({ error }, 'Failed to encrypt message');
@@ -116,10 +119,25 @@ export async function decryptMessage(encryptedMessage, recipientPrivKey, senderP
         const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
         // Import key for AES
         const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['decrypt']);
-        // Split IV and ciphertext
-        const encrypted = hexToBytes(encryptedMessage);
-        const iv = encrypted.slice(0, 16);
-        const ciphertext = encrypted.slice(16);
+        // Zero shared secret material now that AES key is imported
+        sharedX.fill(0);
+        sharedPoint.fill(0);
+        // Parse NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
+        // Also support legacy hex format (iv + ciphertext concatenated) as fallback
+        let iv;
+        let ciphertext;
+        if (encryptedMessage.includes('?iv=')) {
+            // NIP-04 standard format
+            const [ciphertextBase64, ivBase64] = encryptedMessage.split('?iv=');
+            ciphertext = base64ToBytes(ciphertextBase64);
+            iv = base64ToBytes(ivBase64);
+        }
+        else {
+            // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
+            const encrypted = hexToBytes(encryptedMessage);
+            iv = encrypted.slice(0, 16);
+            ciphertext = encrypted.slice(16);
+        }
         // Decrypt
         const decrypted = await (await cryptoImpl.getSubtle()).decrypt({ name: 'AES-CBC', iv }, sharedKey, ciphertext.buffer);
         return new TextDecoder().decode(decrypted);

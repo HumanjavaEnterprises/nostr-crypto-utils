@@ -25,6 +25,7 @@ import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
 import { sha256 } from '@noble/hashes/sha256';
 import { randomBytes } from '@noble/hashes/utils';
 import { logger } from './utils/logger';
+import { bytesToBase64, base64ToBytes } from './encoding/base64';
 // Get the appropriate crypto implementation
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
@@ -95,6 +96,7 @@ export function getSchnorrPublicKey(privateKeyBytes) {
 export async function generateKeyPair() {
     const privateKeyBytes = randomBytes(32);
     const privateKey = bytesToHex(privateKeyBytes);
+    privateKeyBytes.fill(0); // zero source material
     const publicKey = await getPublicKey(privateKey);
     return {
         privateKey,
@@ -176,6 +178,34 @@ export async function signEvent(event, privateKey) {
     }
 }
 /**
+ * Gets a public key hex string from a private key hex string (synchronous)
+ * @param privateKey - Hex-encoded private key
+ * @returns Hex-encoded public key (32-byte x-only schnorr key)
+ */
+export function getPublicKeySync(privateKey) {
+    const privateKeyBytes = hexToBytes(privateKey);
+    const publicKeyBytes = schnorr.getPublicKey(privateKeyBytes);
+    return bytesToHex(publicKeyBytes);
+}
+/**
+ * Creates, hashes, and signs a Nostr event in one step
+ * @param event - Partial event (kind, content, tags required; pubkey derived if missing)
+ * @param privateKey - Hex-encoded private key
+ * @returns Fully signed event with id, pubkey, and sig
+ */
+export async function finalizeEvent(event, privateKey) {
+    const pubkey = event.pubkey || getPublicKeySync(privateKey);
+    const timestamp = event.created_at || Math.floor(Date.now() / 1000);
+    const fullEvent = {
+        kind: event.kind || 1,
+        created_at: timestamp,
+        tags: event.tags || [],
+        content: event.content || '',
+        pubkey,
+    };
+    return signEvent(fullEvent, privateKey);
+}
+/**
  * Verifies an event signature
  */
 export async function verifySignature(event) {
@@ -219,14 +249,16 @@ export async function encrypt(message, recipientPubKey, senderPrivKey) {
         // Generate random IV
         const iv = randomBytes(16);
         const key = await customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['encrypt']));
+        // Zero shared secret material now that AES key is imported
+        sharedX.fill(0);
+        sharedPoint.fill(0);
         // Encrypt the message
         const data = new TextEncoder().encode(message);
         const encrypted = await customCrypto.getSubtle().then((subtle) => subtle.encrypt({ name: 'AES-CBC', iv }, key, data.buffer));
-        // Combine IV and ciphertext
-        const combined = new Uint8Array(iv.length + encrypted.byteLength);
-        combined.set(iv);
-        combined.set(new Uint8Array(encrypted), iv.length);
-        return bytesToHex(combined);
+        // NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
+        const ciphertextBase64 = bytesToBase64(new Uint8Array(encrypted));
+        const ivBase64 = bytesToBase64(iv);
+        return ciphertextBase64 + '?iv=' + ivBase64;
     }
     catch (error) {
         logger.error({ error }, 'Failed to encrypt message');
@@ -241,10 +273,26 @@ export async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) 
         const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
         const sharedPoint = secp256k1.getSharedSecret(hexToBytes(recipientPrivKey), hexToBytes(senderPubKeyHex));
         const sharedX = sharedPoint.slice(1, 33);
-        const encrypted = hexToBytes(encryptedMessage);
-        const iv = encrypted.slice(0, 16);
-        const ciphertext = encrypted.slice(16);
+        // Parse NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
+        // Also support legacy hex format (iv + ciphertext concatenated) as fallback
+        let iv;
+        let ciphertext;
+        if (encryptedMessage.includes('?iv=')) {
+            // NIP-04 standard format
+            const [ciphertextBase64, ivBase64] = encryptedMessage.split('?iv=');
+            ciphertext = base64ToBytes(ciphertextBase64);
+            iv = base64ToBytes(ivBase64);
+        }
+        else {
+            // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
+            const encrypted = hexToBytes(encryptedMessage);
+            iv = encrypted.slice(0, 16);
+            ciphertext = encrypted.slice(16);
+        }
         const key = await customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['decrypt']));
+        // Zero shared secret material now that AES key is imported
+        sharedX.fill(0);
+        sharedPoint.fill(0);
         const decrypted = await customCrypto.getSubtle().then((subtle) => subtle.decrypt({ name: 'AES-CBC', iv }, key, ciphertext.buffer));
         return new TextDecoder().decode(decrypted);
     }

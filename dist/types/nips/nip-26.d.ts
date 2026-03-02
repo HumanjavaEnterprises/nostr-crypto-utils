@@ -16,12 +16,12 @@ export interface Delegation {
 }
 /**
  * Create a delegation token
- * @param delegator Delegator's private key
+ * @param delegatorPrivateKey Delegator's private key (used for signing only, never returned)
  * @param delegatee Delegatee's public key
  * @param conditions Delegation conditions
- * @returns Delegation token
+ * @returns Delegation token (delegator field contains the PUBLIC key, not the private key)
  */
-export declare function createDelegation(delegator: string, delegatee: string, conditions: DelegationConditions): Delegation;
+export declare function createDelegation(delegatorPrivateKey: string, delegatee: string, conditions: DelegationConditions): Delegation;
 /**
  * Verify a delegation token
  * @param delegation Delegation to verify

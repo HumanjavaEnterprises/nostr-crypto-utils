@@ -12,18 +12,21 @@ exports.extractDelegation = extractDelegation;
 const sha256_1 = require("@noble/hashes/sha256");
 const crypto_1 = require("../crypto");
 const utils_1 = require("@noble/curves/abstract/utils");
+const secp256k1_1 = require("@noble/curves/secp256k1");
 /**
  * Create a delegation token
- * @param delegator Delegator's private key
+ * @param delegatorPrivateKey Delegator's private key (used for signing only, never returned)
  * @param delegatee Delegatee's public key
  * @param conditions Delegation conditions
- * @returns Delegation token
+ * @returns Delegation token (delegator field contains the PUBLIC key, not the private key)
  */
-function createDelegation(delegator, delegatee, conditions) {
+function createDelegation(delegatorPrivateKey, delegatee, conditions) {
     const conditionsString = serializeConditions(conditions);
-    const token = signDelegation(delegator, delegatee, conditionsString);
+    const token = signDelegation(delegatorPrivateKey, delegatee, conditionsString);
+    // Derive the public key from the private key — NEVER return the private key
+    const delegatorPublicKey = (0, utils_1.bytesToHex)(secp256k1_1.schnorr.getPublicKey((0, utils_1.hexToBytes)(delegatorPrivateKey)));
     return {
-        delegator,
+        delegator: delegatorPublicKey,
         delegatee,
         conditions,
         token
@@ -129,6 +132,6 @@ function signDelegation(delegator, delegatee, conditions) {
 }
 async function verifyDelegationSignature(delegator, delegatee, conditions, signature) {
     const msgHash = (0, sha256_1.sha256)(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
-    return (0, crypto_1.verifySchnorrSignature)(msgHash, delegator, signature);
+    return (0, crypto_1.verifySchnorrSignature)(signature, msgHash, delegator);
 }
 //# sourceMappingURL=nip-26.js.map

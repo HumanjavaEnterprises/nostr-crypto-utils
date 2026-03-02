@@ -37,6 +37,11 @@ Object.defineProperty(exports, "decode", { enumerable: true, get: function () { 
  * - NIP-04: Encrypted Direct Messages
  * - NIP-19: bech32-encoded entities
  * - NIP-26: Delegated Event Signing
+ *
+ * NIP-44, NIP-46, and NIP-49 are exported as namespaces from src/index.ts
+ * to avoid name collisions (e.g. multiple encrypt/decrypt exports).
+ * Import them as: import { nip44, nip46, nip49 } from 'nostr-crypto-utils'
+ * Or via subpath: import * as nip46 from 'nostr-crypto-utils/nip46'
  */
 __exportStar(require("./nip-01"), exports);
 __exportStar(require("./nip-04"), exports);

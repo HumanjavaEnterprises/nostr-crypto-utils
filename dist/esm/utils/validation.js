@@ -61,7 +61,10 @@ export function validateEvent(event) {
  * @returns Hex representation of the public key
  */
 export function getPublicKeyHex(pubkey) {
-    return pubkey.startsWith('npub1') ? pubkey.slice(5) : pubkey;
+    if (pubkey.startsWith('npub1')) {
+        throw new Error('npub inputs require bech32 decoding — use nip19.decode() instead');
+    }
+    return pubkey;
 }
 /**
  * Validates a signed Nostr event (NIP-01)

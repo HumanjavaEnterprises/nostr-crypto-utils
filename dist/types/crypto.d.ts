@@ -91,6 +91,19 @@ export declare function createEvent(event: Partial<NostrEvent>): NostrEvent;
  */
 export declare function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent>;
 /**
+ * Gets a public key hex string from a private key hex string (synchronous)
+ * @param privateKey - Hex-encoded private key
+ * @returns Hex-encoded public key (32-byte x-only schnorr key)
+ */
+export declare function getPublicKeySync(privateKey: string): string;
+/**
+ * Creates, hashes, and signs a Nostr event in one step
+ * @param event - Partial event (kind, content, tags required; pubkey derived if missing)
+ * @param privateKey - Hex-encoded private key
+ * @returns Fully signed event with id, pubkey, and sig
+ */
+export declare function finalizeEvent(event: Partial<NostrEvent>, privateKey: string): Promise<SignedNostrEvent>;
+/**
  * Verifies an event signature
  */
 export declare function verifySignature(event: SignedNostrEvent): Promise<boolean>;

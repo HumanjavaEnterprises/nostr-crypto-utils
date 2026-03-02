@@ -46,4 +46,6 @@ export * from './protocol';
 export * from './messages';
 /** Re-export type guards */
 export * from './guards';
+/** Re-export NIP-46 types */
+export * from './nip46';
 //# sourceMappingURL=index.js.map

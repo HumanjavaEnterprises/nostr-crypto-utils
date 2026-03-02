@@ -10,6 +10,9 @@ This library provides essential cryptographic operations and utilities required 
 - Key management and validation
 - Event signing and verification
 - Encrypted direct messages (NIP-04)
+- Versioned encrypted payloads (NIP-44)
+- Remote signing / Nostr Connect (NIP-46)
+- Private key encryption / ncryptsec (NIP-49)
 - Bech32-encoded entities (NIP-19)
 - Delegated event signing (NIP-26)
 - Authentication protocol (NIP-42)
@@ -37,6 +40,9 @@ This library provides essential cryptographic operations and utilities required 
 - NIP-19: Bech32-Encoded Entities
 - NIP-26: Delegated Event Signing
 - NIP-42: Authentication Protocol
+- NIP-44: Versioned Encrypted Payloads
+- NIP-46: Nostr Connect (Remote Signing)
+- NIP-49: Private Key Encryption (ncryptsec)
 
 ## Project Structure
 
@@ -114,6 +120,9 @@ This library implements the following Nostr Implementation Possibilities (NIPs):
 | [NIP-19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32-encoded Entities | Human-readable encoding for keys, events, and other entities | ✅ Complete |
 | [NIP-26](https://github.com/nostr-protocol/nips/blob/master/26.md) | Delegated Event Signing | Create and verify delegated event signing capabilities | ✅ Complete |
 | [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md) | Authentication | Client-relay authentication protocol | ✅ Complete |
+| [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned Encrypted Payloads | Modern encryption replacing NIP-04 (ChaCha20 + HMAC) | ✅ Complete |
+| [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md) | Nostr Connect (Remote Signing) | Protocol layer for remote signing via bunker | ✅ Complete |
+| [NIP-49](https://github.com/nostr-protocol/nips/blob/master/49.md) | Private Key Encryption | ncryptsec password-encrypted key storage | ✅ Complete |
 
 ### NIP-01 Features
 - Event creation and serialization
@@ -208,6 +217,61 @@ try {
 } catch (error) {
   console.error(error); // Error: Invalid hex string
 }
+```
+
+### NIP-44 Usage (Encrypted Payloads)
+
+```typescript
+import { nip44 } from 'nostr-crypto-utils';
+// Or via subpath: import * as nip44 from 'nostr-crypto-utils/nip44';
+
+// Derive a conversation key from ECDH
+const conversationKey = nip44.getConversationKey(myPrivKeyBytes, theirPubkeyHex);
+
+// Encrypt
+const encrypted = nip44.encrypt('Hello!', conversationKey);
+
+// Decrypt
+const plaintext = nip44.decrypt(encrypted, conversationKey);
+```
+
+### NIP-46 Usage (Remote Signing)
+
+```typescript
+import { nip46 } from 'nostr-crypto-utils';
+// Or via subpath: import * as nip46 from 'nostr-crypto-utils/nip46';
+
+// Parse a bunker:// URI
+const bunker = nip46.parseBunkerURI('bunker://pubkey...?relay=wss://relay.example.com&secret=abc');
+
+// Create a session (ephemeral keypair + NIP-44 conversation key)
+const session = nip46.createSession(bunker.remotePubkey);
+
+// Build a request
+const req = nip46.connectRequest(bunker.remotePubkey, bunker.secret);
+
+// Wrap into a kind 24133 encrypted event (ready to publish to relay)
+const event = await nip46.wrapEvent(req, session, bunker.remotePubkey);
+
+// On receiving a response event, unwrap it
+const response = nip46.unwrapEvent(responseEvent, session);
+
+// Create a filter for subscribing to responses
+const filter = nip46.createResponseFilter(session.clientPubkey);
+```
+
+### NIP-49 Usage (ncryptsec Key Encryption)
+
+```typescript
+import { nip49 } from 'nostr-crypto-utils';
+// Or via subpath: import * as nip49 from 'nostr-crypto-utils/nip49';
+
+// Encrypt a private key with a password
+const ncryptsec = nip49.encrypt(secretKeyBytes, 'my-password');
+// Returns: 'ncryptsec1...'
+
+// Decrypt it back
+const secretKey = nip49.decrypt(ncryptsec, 'my-password');
 ```
 
 ### Type System

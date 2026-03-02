@@ -8,7 +8,10 @@ module.exports = {
         main: './src/index.ts',
         crypto: './src/crypto.ts',
         validation: './src/utils/validation.ts',
-        protocol: './src/protocol/index.ts'
+        protocol: './src/protocol/index.ts',
+        'nip-44': './src/nips/nip-44.ts',
+        'nip-46': './src/nips/nip-46.ts',
+        'nip-49': './src/nips/nip-49.ts'
     },
     output: {
         path: path.resolve(__dirname, 'dist/browser'),
@@ -51,7 +54,9 @@ module.exports = {
         },
         alias: {
             '@noble/curves': path.resolve(__dirname, 'node_modules/@noble/curves'),
-            '@noble/hashes': path.resolve(__dirname, 'node_modules/@noble/hashes')
+            '@noble/hashes': path.resolve(__dirname, 'node_modules/@noble/hashes'),
+            '@noble/ciphers': path.resolve(__dirname, 'node_modules/@noble/ciphers'),
+            '@scure/base': path.resolve(__dirname, 'node_modules/@scure/base')
         },
         mainFields: ['browser', 'module', 'main']
     },

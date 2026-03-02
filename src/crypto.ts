@@ -240,6 +240,41 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
 }
 
 /**
+ * Gets a public key hex string from a private key hex string (synchronous)
+ * @param privateKey - Hex-encoded private key
+ * @returns Hex-encoded public key (32-byte x-only schnorr key)
+ */
+export function getPublicKeySync(privateKey: string): string {
+  const privateKeyBytes = hexToBytes(privateKey);
+  const publicKeyBytes = schnorr.getPublicKey(privateKeyBytes);
+  return bytesToHex(publicKeyBytes);
+}
+
+/**
+ * Creates, hashes, and signs a Nostr event in one step
+ * @param event - Partial event (kind, content, tags required; pubkey derived if missing)
+ * @param privateKey - Hex-encoded private key
+ * @returns Fully signed event with id, pubkey, and sig
+ */
+export async function finalizeEvent(
+  event: Partial<NostrEvent>,
+  privateKey: string
+): Promise<SignedNostrEvent> {
+  const pubkey = event.pubkey || getPublicKeySync(privateKey);
+  const timestamp = event.created_at || Math.floor(Date.now() / 1000);
+
+  const fullEvent: NostrEvent = {
+    kind: event.kind || 1,
+    created_at: timestamp,
+    tags: event.tags || [],
+    content: event.content || '',
+    pubkey,
+  };
+
+  return signEvent(fullEvent, privateKey);
+}
+
+/**
  * Verifies an event signature
  */
 export async function verifySignature(event: SignedNostrEvent): Promise<boolean> {

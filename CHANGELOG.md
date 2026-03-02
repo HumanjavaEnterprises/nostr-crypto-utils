@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-03-02
+
+### Added
+- **NIP-46 (Nostr Connect / Remote Signing):** Pure protocol layer for remote signing
+  - Bunker URI parsing, creation, and validation
+  - Session management with ephemeral keypairs and NIP-44 conversation keys
+  - JSON-RPC request/response creation and parsing
+  - Kind 24133 event wrapping (encrypt + sign) and unwrapping (decrypt + parse)
+  - Convenience request creators for all NIP-46 methods
+  - Response filter helper for relay subscriptions
+  - Full TypeScript types: `Nip46Method`, `BunkerURI`, `Nip46Request`, `Nip46Response`, `Nip46Session`
+- `getPublicKeySync()` — synchronous public key derivation from private key
+- `finalizeEvent()` — one-step event creation + signing utility
+- Subpath exports: `nostr-crypto-utils/nip44`, `nostr-crypto-utils/nip46`, `nostr-crypto-utils/nip49`
+
+### Restored
+- **NIP-44 (Versioned Encrypted Payloads):** Restored from published v0.5.0 (lost during security refactoring)
+  - `getConversationKey()`, `encrypt()`, `decrypt()`, `calcPaddedLen()`, `v2` API object
+- **NIP-49 (Private Key Encryption / ncryptsec):** Restored from published v0.5.0
+  - `encrypt()` and `decrypt()` for ncryptsec bech32 strings
+
+### Dependencies
+- Added `@noble/ciphers` (chacha20, xchacha20poly1305 for NIP-44/49)
+- Added `@scure/base` (base64 for NIP-44, bech32 for NIP-49)
+
 ## [Unreleased]
 
 ## [0.4.16] - 2025-02-19

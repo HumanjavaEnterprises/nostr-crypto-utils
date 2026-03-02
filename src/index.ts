@@ -15,16 +15,26 @@ export type {
   NostrMessageTuple,
 } from './types';
 
-// Event kinds and message types
-export { NostrEventKind, NostrMessageType } from './types';
+// Event kinds, message types, and NIP-46 types
+export { NostrEventKind, NostrMessageType, Nip46Method } from './types';
+export type {
+  Nip46Request,
+  Nip46Response,
+  Nip46Session,
+  Nip46SessionInfo,
+  BunkerURI,
+  BunkerValidationResult,
+} from './types';
 
 // Core crypto functions
 export {
   generateKeyPair,
   getPublicKey,
+  getPublicKeySync,
   validateKeyPair,
   createEvent,
   signEvent,
+  finalizeEvent,
   verifySignature,
   encrypt,
   decrypt,
@@ -59,6 +69,9 @@ export * as nip01 from './nips/nip-01';
 export * as nip04 from './nips/nip-04';
 export * as nip19 from './nips/nip-19';
 export * as nip26 from './nips/nip-26';
+export * as nip44 from './nips/nip-44';
+export * as nip46 from './nips/nip-46';
+export * as nip49 from './nips/nip-49';
 
 // Utils
 export {

@@ -1,6 +1,6 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.4.17",
+  "version": "0.5.1",
   "description": "Core cryptographic utilities for Nostr protocol",
   "type": "commonjs",
   "main": "./dist/cjs/index.js",
@@ -12,6 +12,24 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
+    },
+    "./nip44": {
+      "types": "./dist/types/nips/nip-44.d.ts",
+      "import": "./dist/esm/nips/nip-44.js",
+      "require": "./dist/cjs/nips/nip-44.js",
+      "default": "./dist/cjs/nips/nip-44.js"
+    },
+    "./nip46": {
+      "types": "./dist/types/nips/nip-46.d.ts",
+      "import": "./dist/esm/nips/nip-46.js",
+      "require": "./dist/cjs/nips/nip-46.js",
+      "default": "./dist/cjs/nips/nip-46.js"
+    },
+    "./nip49": {
+      "types": "./dist/types/nips/nip-49.d.ts",
+      "import": "./dist/esm/nips/nip-49.js",
+      "require": "./dist/cjs/nips/nip-49.js",
+      "default": "./dist/cjs/nips/nip-49.js"
     }
   },
   "files": [
@@ -53,8 +71,10 @@
   },
   "homepage": "https://github.com/HumanjavaEnterprises/nostr-crypto-utils#readme",
   "dependencies": {
+    "@noble/ciphers": "^2.1.1",
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",
+    "@scure/base": "^2.0.0",
     "assert": "^2.1.0",
     "bech32": "^2.0.0",
     "buffer": "^6.0.3",

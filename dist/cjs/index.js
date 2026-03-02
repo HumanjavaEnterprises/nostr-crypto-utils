@@ -37,18 +37,21 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.decrypt = exports.encrypt = exports.verifySignature = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKey = exports.generateKeyPair = exports.NostrMessageType = exports.NostrEventKind = void 0;
-// Event kinds and message types
+exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip49 = exports.nip46 = exports.nip44 = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.decrypt = exports.encrypt = exports.verifySignature = exports.finalizeEvent = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKeySync = exports.getPublicKey = exports.generateKeyPair = exports.Nip46Method = exports.NostrMessageType = exports.NostrEventKind = void 0;
+// Event kinds, message types, and NIP-46 types
 var types_1 = require("./types");
 Object.defineProperty(exports, "NostrEventKind", { enumerable: true, get: function () { return types_1.NostrEventKind; } });
 Object.defineProperty(exports, "NostrMessageType", { enumerable: true, get: function () { return types_1.NostrMessageType; } });
+Object.defineProperty(exports, "Nip46Method", { enumerable: true, get: function () { return types_1.Nip46Method; } });
 // Core crypto functions
 var crypto_1 = require("./crypto");
 Object.defineProperty(exports, "generateKeyPair", { enumerable: true, get: function () { return crypto_1.generateKeyPair; } });
 Object.defineProperty(exports, "getPublicKey", { enumerable: true, get: function () { return crypto_1.getPublicKey; } });
+Object.defineProperty(exports, "getPublicKeySync", { enumerable: true, get: function () { return crypto_1.getPublicKeySync; } });
 Object.defineProperty(exports, "validateKeyPair", { enumerable: true, get: function () { return crypto_1.validateKeyPair; } });
 Object.defineProperty(exports, "createEvent", { enumerable: true, get: function () { return crypto_1.createEvent; } });
 Object.defineProperty(exports, "signEvent", { enumerable: true, get: function () { return crypto_1.signEvent; } });
+Object.defineProperty(exports, "finalizeEvent", { enumerable: true, get: function () { return crypto_1.finalizeEvent; } });
 Object.defineProperty(exports, "verifySignature", { enumerable: true, get: function () { return crypto_1.verifySignature; } });
 Object.defineProperty(exports, "encrypt", { enumerable: true, get: function () { return crypto_1.encrypt; } });
 Object.defineProperty(exports, "decrypt", { enumerable: true, get: function () { return crypto_1.decrypt; } });
@@ -75,6 +78,9 @@ exports.nip01 = __importStar(require("./nips/nip-01"));
 exports.nip04 = __importStar(require("./nips/nip-04"));
 exports.nip19 = __importStar(require("./nips/nip-19"));
 exports.nip26 = __importStar(require("./nips/nip-26"));
+exports.nip44 = __importStar(require("./nips/nip-44"));
+exports.nip46 = __importStar(require("./nips/nip-46"));
+exports.nip49 = __importStar(require("./nips/nip-49"));
 // Utils
 var encoding_1 = require("./utils/encoding");
 Object.defineProperty(exports, "hexToBytes", { enumerable: true, get: function () { return encoding_1.hexToBytes; } });

@@ -88,3 +88,6 @@ export * from './guards';
 export type {
   Nip19DataType
 } from '../nips/nip-19';
+
+/** Re-export NIP-46 types */
+export * from './nip46';
