@@ -2,6 +2,7 @@
 /**
  * Base64 encoding utilities for Nostr
  * Provides consistent base64 encoding/decoding across all Nostr-related projects
+ * Uses browser-compatible APIs (no Node.js Buffer dependency)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.stringToBase64 = stringToBase64;
@@ -24,7 +25,8 @@ exports.addBase64Padding = addBase64Padding;
  * @returns Base64 string
  */
 function stringToBase64(str) {
-    return Buffer.from(str, 'utf8').toString('base64');
+    const bytes = new TextEncoder().encode(str);
+    return bytesToBase64(bytes);
 }
 /**
  * Convert base64 to string
@@ -36,27 +38,28 @@ function base64ToString(base64) {
     if (!isValidBase64(base64)) {
         throw new Error('Invalid base64 string');
     }
-    return Buffer.from(base64, 'base64').toString('utf8');
+    const bytes = base64ToBytes(base64);
+    return new TextDecoder().decode(bytes);
 }
 /**
- * Convert buffer to base64
- * @param buffer Buffer to convert
+ * Convert Uint8Array to base64
+ * @param buffer Uint8Array to convert
  * @returns Base64 string
  */
 function bufferToBase64(buffer) {
-    return buffer.toString('base64');
+    return bytesToBase64(buffer);
 }
 /**
- * Convert base64 to buffer
+ * Convert base64 to Uint8Array
  * @param base64 Base64 string to convert
- * @returns Buffer
+ * @returns Uint8Array
  * @throws Error if base64 string is invalid
  */
 function base64ToBuffer(base64) {
     if (!isValidBase64(base64)) {
         throw new Error('Invalid base64 string');
     }
-    return Buffer.from(base64, 'base64');
+    return base64ToBytes(base64);
 }
 /**
  * Check if string is valid base64
@@ -99,7 +102,11 @@ function hexToBase64(hex) {
     if (!hex.match(/^[0-9a-fA-F]*$/)) {
         throw new Error('Invalid hex string');
     }
-    return Buffer.from(hex, 'hex').toString('base64');
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+    }
+    return bytesToBase64(bytes);
 }
 /**
  * Convert base64 to hex string
@@ -111,7 +118,8 @@ function base64ToHex(base64) {
     if (!isValidBase64(base64)) {
         throw new Error('Invalid base64 string');
     }
-    return Buffer.from(base64, 'base64').toString('hex');
+    const bytes = base64ToBytes(base64);
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 /**
  * Create base64 string from byte array
@@ -119,7 +127,11 @@ function base64ToHex(base64) {
  * @returns Base64 string
  */
 function bytesToBase64(bytes) {
-    return Buffer.from(bytes).toString('base64');
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
 }
 /**
  * Convert base64 to byte array
@@ -131,7 +143,12 @@ function base64ToBytes(base64) {
     if (!isValidBase64(base64)) {
         throw new Error('Invalid base64 string');
     }
-    return new Uint8Array(Buffer.from(base64, 'base64'));
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
 }
 /**
  * Calculate padded length for base64 string

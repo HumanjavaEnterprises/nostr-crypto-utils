@@ -195,10 +195,22 @@ function createEvent(event) {
     };
 }
 /**
+ * Normalize a private key to hex string (accepts both hex string and Uint8Array)
+ */
+function normalizePrivateKey(privateKey) {
+    if (privateKey instanceof Uint8Array) {
+        return (0, utils_1.bytesToHex)(privateKey);
+    }
+    return privateKey;
+}
+/**
  * Signs an event
+ * @param event - Event to sign
+ * @param privateKey - Private key as hex string or Uint8Array
  */
 async function signEvent(event, privateKey) {
     try {
+        const privateKeyHex = normalizePrivateKey(privateKey);
         // Serialize event for signing (NIP-01 format)
         const serialized = JSON.stringify([
             0,
@@ -211,7 +223,7 @@ async function signEvent(event, privateKey) {
         // Calculate event hash
         const eventHash = (0, sha256_1.sha256)(new TextEncoder().encode(serialized));
         // Convert private key to bytes and sign
-        const privateKeyBytes = (0, utils_1.hexToBytes)(privateKey);
+        const privateKeyBytes = (0, utils_1.hexToBytes)(privateKeyHex);
         const signatureBytes = secp256k1_1.schnorr.sign(eventHash, privateKeyBytes);
         // Create signed event
         return {
@@ -226,19 +238,21 @@ async function signEvent(event, privateKey) {
     }
 }
 /**
- * Gets a public key hex string from a private key hex string (synchronous)
- * @param privateKey - Hex-encoded private key
+ * Gets a public key hex string from a private key (synchronous)
+ * @param privateKey - Private key as hex string or Uint8Array
  * @returns Hex-encoded public key (32-byte x-only schnorr key)
  */
 function getPublicKeySync(privateKey) {
-    const privateKeyBytes = (0, utils_1.hexToBytes)(privateKey);
+    const privateKeyBytes = privateKey instanceof Uint8Array
+        ? privateKey
+        : (0, utils_1.hexToBytes)(privateKey);
     const publicKeyBytes = secp256k1_1.schnorr.getPublicKey(privateKeyBytes);
     return (0, utils_1.bytesToHex)(publicKeyBytes);
 }
 /**
  * Creates, hashes, and signs a Nostr event in one step
  * @param event - Partial event (kind, content, tags required; pubkey derived if missing)
- * @param privateKey - Hex-encoded private key
+ * @param privateKey - Private key as hex string or Uint8Array
  * @returns Fully signed event with id, pubkey, and sig
  */
 async function finalizeEvent(event, privateKey) {

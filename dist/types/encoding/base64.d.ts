@@ -1,6 +1,7 @@
 /**
  * Base64 encoding utilities for Nostr
  * Provides consistent base64 encoding/decoding across all Nostr-related projects
+ * Uses browser-compatible APIs (no Node.js Buffer dependency)
  */
 /**
  * Convert string to base64
@@ -16,18 +17,18 @@ export declare function stringToBase64(str: string): string;
  */
 export declare function base64ToString(base64: string): string;
 /**
- * Convert buffer to base64
- * @param buffer Buffer to convert
+ * Convert Uint8Array to base64
+ * @param buffer Uint8Array to convert
  * @returns Base64 string
  */
-export declare function bufferToBase64(buffer: Buffer): string;
+export declare function bufferToBase64(buffer: Uint8Array): string;
 /**
- * Convert base64 to buffer
+ * Convert base64 to Uint8Array
  * @param base64 Base64 string to convert
- * @returns Buffer
+ * @returns Uint8Array
  * @throws Error if base64 string is invalid
  */
-export declare function base64ToBuffer(base64: string): Buffer;
+export declare function base64ToBuffer(base64: string): Uint8Array;
 /**
  * Check if string is valid base64
  * @param base64 String to check

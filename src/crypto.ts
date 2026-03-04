@@ -206,10 +206,24 @@ export function createEvent(event: Partial<NostrEvent>): NostrEvent {
 }
 
 /**
- * Signs an event
+ * Normalize a private key to hex string (accepts both hex string and Uint8Array)
  */
-export async function signEvent(event: NostrEvent, privateKey: string): Promise<SignedNostrEvent> {
+function normalizePrivateKey(privateKey: string | Uint8Array): string {
+  if (privateKey instanceof Uint8Array) {
+    return bytesToHex(privateKey);
+  }
+  return privateKey;
+}
+
+/**
+ * Signs an event
+ * @param event - Event to sign
+ * @param privateKey - Private key as hex string or Uint8Array
+ */
+export async function signEvent(event: NostrEvent, privateKey: string | Uint8Array): Promise<SignedNostrEvent> {
   try {
+    const privateKeyHex = normalizePrivateKey(privateKey);
+
     // Serialize event for signing (NIP-01 format)
     const serialized = JSON.stringify([
       0,
@@ -224,7 +238,7 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
     const eventHash = sha256(new TextEncoder().encode(serialized));
 
     // Convert private key to bytes and sign
-    const privateKeyBytes = hexToBytes(privateKey);
+    const privateKeyBytes = hexToBytes(privateKeyHex);
     const signatureBytes = schnorr.sign(eventHash, privateKeyBytes);
 
     // Create signed event
@@ -240,12 +254,14 @@ export async function signEvent(event: NostrEvent, privateKey: string): Promise<
 }
 
 /**
- * Gets a public key hex string from a private key hex string (synchronous)
- * @param privateKey - Hex-encoded private key
+ * Gets a public key hex string from a private key (synchronous)
+ * @param privateKey - Private key as hex string or Uint8Array
  * @returns Hex-encoded public key (32-byte x-only schnorr key)
  */
-export function getPublicKeySync(privateKey: string): string {
-  const privateKeyBytes = hexToBytes(privateKey);
+export function getPublicKeySync(privateKey: string | Uint8Array): string {
+  const privateKeyBytes = privateKey instanceof Uint8Array
+    ? privateKey
+    : hexToBytes(privateKey);
   const publicKeyBytes = schnorr.getPublicKey(privateKeyBytes);
   return bytesToHex(publicKeyBytes);
 }
@@ -253,12 +269,12 @@ export function getPublicKeySync(privateKey: string): string {
 /**
  * Creates, hashes, and signs a Nostr event in one step
  * @param event - Partial event (kind, content, tags required; pubkey derived if missing)
- * @param privateKey - Hex-encoded private key
+ * @param privateKey - Private key as hex string or Uint8Array
  * @returns Fully signed event with id, pubkey, and sig
  */
 export async function finalizeEvent(
   event: Partial<NostrEvent>,
-  privateKey: string
+  privateKey: string | Uint8Array
 ): Promise<SignedNostrEvent> {
   const pubkey = event.pubkey || getPublicKeySync(privateKey);
   const timestamp = event.created_at || Math.floor(Date.now() / 1000);

@@ -1,6 +1,7 @@
 /**
  * Base64 encoding utilities for Nostr
  * Provides consistent base64 encoding/decoding across all Nostr-related projects
+ * Uses browser-compatible APIs (no Node.js Buffer dependency)
  */
 
 /**
@@ -9,7 +10,8 @@
  * @returns Base64 string
  */
 export function stringToBase64(str: string): string {
-  return Buffer.from(str, 'utf8').toString('base64');
+  const bytes = new TextEncoder().encode(str);
+  return bytesToBase64(bytes);
 }
 
 /**
@@ -22,29 +24,30 @@ export function base64ToString(base64: string): string {
   if (!isValidBase64(base64)) {
     throw new Error('Invalid base64 string');
   }
-  return Buffer.from(base64, 'base64').toString('utf8');
+  const bytes = base64ToBytes(base64);
+  return new TextDecoder().decode(bytes);
 }
 
 /**
- * Convert buffer to base64
- * @param buffer Buffer to convert
+ * Convert Uint8Array to base64
+ * @param buffer Uint8Array to convert
  * @returns Base64 string
  */
-export function bufferToBase64(buffer: Buffer): string {
-  return buffer.toString('base64');
+export function bufferToBase64(buffer: Uint8Array): string {
+  return bytesToBase64(buffer);
 }
 
 /**
- * Convert base64 to buffer
+ * Convert base64 to Uint8Array
  * @param base64 Base64 string to convert
- * @returns Buffer
+ * @returns Uint8Array
  * @throws Error if base64 string is invalid
  */
-export function base64ToBuffer(base64: string): Buffer {
+export function base64ToBuffer(base64: string): Uint8Array {
   if (!isValidBase64(base64)) {
     throw new Error('Invalid base64 string');
   }
-  return Buffer.from(base64, 'base64');
+  return base64ToBytes(base64);
 }
 
 /**
@@ -90,7 +93,11 @@ export function hexToBase64(hex: string): string {
   if (!hex.match(/^[0-9a-fA-F]*$/)) {
     throw new Error('Invalid hex string');
   }
-  return Buffer.from(hex, 'hex').toString('base64');
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytesToBase64(bytes);
 }
 
 /**
@@ -103,7 +110,8 @@ export function base64ToHex(base64: string): string {
   if (!isValidBase64(base64)) {
     throw new Error('Invalid base64 string');
   }
-  return Buffer.from(base64, 'base64').toString('hex');
+  const bytes = base64ToBytes(base64);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -112,7 +120,11 @@ export function base64ToHex(base64: string): string {
  * @returns Base64 string
  */
 export function bytesToBase64(bytes: Uint8Array): string {
-  return Buffer.from(bytes).toString('base64');
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 /**
@@ -125,7 +137,12 @@ export function base64ToBytes(base64: string): Uint8Array {
   if (!isValidBase64(base64)) {
     throw new Error('Invalid base64 string');
   }
-  return new Uint8Array(Buffer.from(base64, 'base64'));
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
 
 /**
