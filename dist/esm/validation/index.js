@@ -5,9 +5,9 @@
  */
 import { NostrMessageType } from '../types/index';
 import { logger } from '../utils/logger';
-import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex } from '@noble/curves/abstract/utils';
-import { schnorr } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex } from '@noble/hashes/utils.js';
+import { schnorr } from '@noble/curves/secp256k1.js';
 /**
  * Gets the hex string from a PublicKey or string
  */
@@ -81,7 +81,7 @@ export function validateEventSignature(event) {
         const hash = sha256(new TextEncoder().encode(serialized));
         const pubkeyHex = getPublicKeyHex(event.pubkey);
         const pubkeyBytes = hexToBytes(pubkeyHex);
-        const isValid = schnorr.verify(event.sig, hash, pubkeyBytes);
+        const isValid = schnorr.verify(hexToBytes(event.sig), hash, pubkeyBytes);
         return {
             isValid,
             error: isValid ? undefined : 'Invalid signature'

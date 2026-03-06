@@ -3,9 +3,9 @@
  * @description Implementation of NIP-01: Basic Protocol Flow Description
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
-import { schnorr } from '@noble/curves/secp256k1';
-import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { schnorr } from '@noble/curves/secp256k1.js';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { logger } from '../utils/logger';
 /**
  * Creates a new Nostr event with the specified parameters (NIP-01)
@@ -62,7 +62,7 @@ export async function getEventHash(event) {
 export async function signEvent(event, privateKey) {
     try {
         const hash = await getEventHash(event);
-        const sig = schnorr.sign(hexToBytes(hash), privateKey);
+        const sig = schnorr.sign(hexToBytes(hash), hexToBytes(privateKey));
         return {
             ...event,
             id: hash,

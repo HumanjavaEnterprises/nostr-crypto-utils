@@ -2,10 +2,10 @@
  * NIP-26: Delegated Event Signing
  * Implements delegation of event signing capabilities
  */
-import { sha256 } from '@noble/hashes/sha256';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { signSchnorr, verifySchnorrSignature } from '../crypto';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
-import { schnorr } from '@noble/curves/secp256k1';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
+import { schnorr } from '@noble/curves/secp256k1.js';
 /**
  * Create a delegation token
  * @param delegatorPrivateKey Delegator's private key (used for signing only, never returned)
@@ -120,11 +120,11 @@ function parseConditions(conditionsString) {
 function signDelegation(delegator, delegatee, conditions) {
     const message = `nostr:delegation:${delegatee}:${conditions}`;
     const hash = sha256(new TextEncoder().encode(message));
-    const signature = signSchnorr(hash, delegator);
+    const signature = signSchnorr(hash, hexToBytes(delegator));
     return bytesToHex(signature);
 }
 async function verifyDelegationSignature(delegator, delegatee, conditions, signature) {
     const msgHash = sha256(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
-    return verifySchnorrSignature(signature, msgHash, delegator);
+    return verifySchnorrSignature(hexToBytes(signature), msgHash, hexToBytes(delegator));
 }
 //# sourceMappingURL=nip-26.js.map

@@ -4,8 +4,8 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/04.md
  */
 
-import { secp256k1 } from '@noble/curves/secp256k1';
-import { hexToBytes } from '@noble/curves/abstract/utils';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { hexToBytes } from '@noble/hashes/utils.js';
 import { logger } from '../utils/logger';
 import { bytesToBase64, base64ToBytes } from '../encoding/base64';
 import type { CryptoSubtle } from '../crypto';
@@ -105,7 +105,7 @@ export async function encryptMessage(
       : '02' + recipientPubKey;
 
     // Generate shared secret
-    const sharedPoint = secp256k1.getSharedSecret(senderPrivKey, pubKeyHex);
+    const sharedPoint = secp256k1.getSharedSecret(hexToBytes(senderPrivKey), hexToBytes(pubKeyHex));
     const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
 
     // Import key for AES
@@ -171,7 +171,7 @@ export async function decryptMessage(
       : '02' + senderPubKey;
 
     // Generate shared secret
-    const sharedPoint = secp256k1.getSharedSecret(recipientPrivKey, pubKeyHex);
+    const sharedPoint = secp256k1.getSharedSecret(hexToBytes(recipientPrivKey), hexToBytes(pubKeyHex));
     const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
 
     // Import key for AES
@@ -244,7 +244,7 @@ export function generateSharedSecret(
       : '02' + publicKey;
 
     // Generate shared secret
-    const sharedPoint = secp256k1.getSharedSecret(privateKey, pubKeyHex);
+    const sharedPoint = secp256k1.getSharedSecret(hexToBytes(privateKey), hexToBytes(pubKeyHex));
     return { sharedSecret: sharedPoint.slice(1, 33) }; // Return only x-coordinate
   } catch (error) {
     logger.error({ error }, 'Failed to generate shared secret');

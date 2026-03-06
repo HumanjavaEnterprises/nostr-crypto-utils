@@ -15,9 +15,9 @@ exports.validateSubscription = validateSubscription;
 exports.validateResponse = validateResponse;
 const index_1 = require("../types/index");
 const logger_1 = require("../utils/logger");
-const sha256_1 = require("@noble/hashes/sha256");
-const utils_1 = require("@noble/curves/abstract/utils");
-const secp256k1_1 = require("@noble/curves/secp256k1");
+const sha2_js_1 = require("@noble/hashes/sha2.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
+const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 /**
  * Gets the hex string from a PublicKey or string
  */
@@ -50,7 +50,7 @@ function validateEventId(event) {
             event.tags,
             event.content
         ]);
-        const hash = (0, utils_1.bytesToHex)((0, sha256_1.sha256)(new TextEncoder().encode(serialized)));
+        const hash = (0, utils_js_1.bytesToHex)((0, sha2_js_1.sha256)(new TextEncoder().encode(serialized)));
         return {
             isValid: hash === event.id,
             error: hash === event.id ? undefined : 'Invalid event ID'
@@ -88,10 +88,10 @@ function validateEventSignature(event) {
             event.tags,
             event.content
         ]);
-        const hash = (0, sha256_1.sha256)(new TextEncoder().encode(serialized));
+        const hash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
         const pubkeyHex = getPublicKeyHex(event.pubkey);
         const pubkeyBytes = hexToBytes(pubkeyHex);
-        const isValid = secp256k1_1.schnorr.verify(event.sig, hash, pubkeyBytes);
+        const isValid = secp256k1_js_1.schnorr.verify(hexToBytes(event.sig), hash, pubkeyBytes);
         return {
             isValid,
             error: isValid ? undefined : 'Invalid signature'

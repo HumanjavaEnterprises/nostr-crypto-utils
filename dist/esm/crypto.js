@@ -20,10 +20,9 @@
  * scheme has specific requirements for key and signature formats that aren't guaranteed
  * when using the lower-level secp256k1 functions directly.
  */
-import { schnorr, secp256k1 } from '@noble/curves/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
-import { sha256 } from '@noble/hashes/sha256';
-import { randomBytes } from '@noble/hashes/utils';
+import { schnorr, secp256k1 } from '@noble/curves/secp256k1.js';
+import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { logger } from './utils/logger';
 import { bytesToBase64, base64ToBytes } from './encoding/base64';
 // Get the appropriate crypto implementation

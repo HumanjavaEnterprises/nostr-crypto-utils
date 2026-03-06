@@ -5,8 +5,8 @@
  */
 
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { scrypt } from '@noble/hashes/scrypt';
-import { concatBytes, randomBytes } from '@noble/hashes/utils';
+import { scrypt } from '@noble/hashes/scrypt.js';
+import { concatBytes, randomBytes } from '@noble/hashes/utils.js';
 import { bech32 as scureBech32 } from '@scure/base';
 
 type KeySecurityByte = 0x00 | 0x01 | 0x02;

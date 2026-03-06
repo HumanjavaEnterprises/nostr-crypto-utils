@@ -3,8 +3,8 @@
  * @description Event signing and verification utilities for Nostr
  */
 
-import { schnorr } from '@noble/curves/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { schnorr } from '@noble/curves/secp256k1.js';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { logger } from '../utils/logger';
 import { getEventHash } from './creation';
 import type { NostrEvent, SignedNostrEvent } from '../types';
@@ -21,7 +21,7 @@ export async function signEvent(
 ): Promise<SignedNostrEvent> {
   try {
     const hash = await getEventHash(event);
-    const sig = schnorr.sign(hash, privateKey);
+    const sig = schnorr.sign(hexToBytes(hash), hexToBytes(privateKey));
     
     return {
       ...event,
@@ -67,7 +67,7 @@ export function validateEvent(event: SignedNostrEvent): boolean {
     // Verify signature
     return verifySignature(event);
   } catch (error) {
-    logger.error('Error validating event:', error);
+    logger.error({ error }, 'Error validating event');
     return false;
   }
 }

@@ -8,8 +8,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.encrypt = encrypt;
 exports.decrypt = decrypt;
 const chacha_js_1 = require("@noble/ciphers/chacha.js");
-const scrypt_1 = require("@noble/hashes/scrypt");
-const utils_1 = require("@noble/hashes/utils");
+const scrypt_js_1 = require("@noble/hashes/scrypt.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
 const base_1 = require("@scure/base");
 /**
  * Encrypt a Nostr private key with a password, producing an ncryptsec bech32 string
@@ -20,16 +20,16 @@ const base_1 = require("@scure/base");
  * @returns bech32-encoded ncryptsec string
  */
 function encrypt(sec, password, logn = 16, ksb = 0x02) {
-    const salt = (0, utils_1.randomBytes)(16);
+    const salt = (0, utils_js_1.randomBytes)(16);
     const n = 2 ** logn;
     const normalizedPassword = password.normalize('NFKC');
-    const key = (0, scrypt_1.scrypt)(normalizedPassword, salt, { N: n, r: 8, p: 1, dkLen: 32 });
-    const nonce = (0, utils_1.randomBytes)(24);
+    const key = (0, scrypt_js_1.scrypt)(normalizedPassword, salt, { N: n, r: 8, p: 1, dkLen: 32 });
+    const nonce = (0, utils_js_1.randomBytes)(24);
     const aad = Uint8Array.from([ksb]);
     const cipher = (0, chacha_js_1.xchacha20poly1305)(key, nonce, aad);
     const ciphertext = cipher.encrypt(sec);
     // Binary format: version(1) + logn(1) + salt(16) + nonce(24) + ksb(1) + ciphertext(48 = 32 + 16 tag)
-    const payload = (0, utils_1.concatBytes)(Uint8Array.from([0x02]), Uint8Array.from([logn]), salt, nonce, aad, ciphertext);
+    const payload = (0, utils_js_1.concatBytes)(Uint8Array.from([0x02]), Uint8Array.from([logn]), salt, nonce, aad, ciphertext);
     const words = base_1.bech32.toWords(payload);
     return base_1.bech32.encode('ncryptsec', words, 200);
 }
@@ -54,7 +54,7 @@ function decrypt(ncryptsec, password) {
     const ciphertext = data.subarray(43);
     const n = 2 ** logn;
     const normalizedPassword = password.normalize('NFKC');
-    const key = (0, scrypt_1.scrypt)(normalizedPassword, salt, { N: n, r: 8, p: 1, dkLen: 32 });
+    const key = (0, scrypt_js_1.scrypt)(normalizedPassword, salt, { N: n, r: 8, p: 1, dkLen: 32 });
     const aad = Uint8Array.from([ksb]);
     const cipher = (0, chacha_js_1.xchacha20poly1305)(key, nonce, aad);
     return cipher.decrypt(ciphertext);

@@ -9,10 +9,10 @@ exports.verifyDelegation = verifyDelegation;
 exports.checkDelegationConditions = checkDelegationConditions;
 exports.addDelegationTag = addDelegationTag;
 exports.extractDelegation = extractDelegation;
-const sha256_1 = require("@noble/hashes/sha256");
+const sha2_js_1 = require("@noble/hashes/sha2.js");
 const crypto_1 = require("../crypto");
-const utils_1 = require("@noble/curves/abstract/utils");
-const secp256k1_1 = require("@noble/curves/secp256k1");
+const utils_js_1 = require("@noble/hashes/utils.js");
+const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 /**
  * Create a delegation token
  * @param delegatorPrivateKey Delegator's private key (used for signing only, never returned)
@@ -24,7 +24,7 @@ function createDelegation(delegatorPrivateKey, delegatee, conditions) {
     const conditionsString = serializeConditions(conditions);
     const token = signDelegation(delegatorPrivateKey, delegatee, conditionsString);
     // Derive the public key from the private key — NEVER return the private key
-    const delegatorPublicKey = (0, utils_1.bytesToHex)(secp256k1_1.schnorr.getPublicKey((0, utils_1.hexToBytes)(delegatorPrivateKey)));
+    const delegatorPublicKey = (0, utils_js_1.bytesToHex)(secp256k1_js_1.schnorr.getPublicKey((0, utils_js_1.hexToBytes)(delegatorPrivateKey)));
     return {
         delegator: delegatorPublicKey,
         delegatee,
@@ -126,12 +126,12 @@ function parseConditions(conditionsString) {
 }
 function signDelegation(delegator, delegatee, conditions) {
     const message = `nostr:delegation:${delegatee}:${conditions}`;
-    const hash = (0, sha256_1.sha256)(new TextEncoder().encode(message));
-    const signature = (0, crypto_1.signSchnorr)(hash, delegator);
-    return (0, utils_1.bytesToHex)(signature);
+    const hash = (0, sha2_js_1.sha256)(new TextEncoder().encode(message));
+    const signature = (0, crypto_1.signSchnorr)(hash, (0, utils_js_1.hexToBytes)(delegator));
+    return (0, utils_js_1.bytesToHex)(signature);
 }
 async function verifyDelegationSignature(delegator, delegatee, conditions, signature) {
-    const msgHash = (0, sha256_1.sha256)(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
-    return (0, crypto_1.verifySchnorrSignature)(signature, msgHash, delegator);
+    const msgHash = (0, sha2_js_1.sha256)(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
+    return (0, crypto_1.verifySchnorrSignature)((0, utils_js_1.hexToBytes)(signature), msgHash, (0, utils_js_1.hexToBytes)(delegator));
 }
 //# sourceMappingURL=nip-26.js.map

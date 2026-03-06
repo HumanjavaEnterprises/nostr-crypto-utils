@@ -8,8 +8,8 @@ exports.signEvent = signEvent;
 exports.verifySignature = verifySignature;
 exports.validateEvent = validateEvent;
 exports.calculateEventId = calculateEventId;
-const secp256k1_1 = require("@noble/curves/secp256k1");
-const utils_1 = require("@noble/curves/abstract/utils");
+const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
 const logger_1 = require("../utils/logger");
 const creation_1 = require("./creation");
 /**
@@ -21,11 +21,11 @@ const creation_1 = require("./creation");
 async function signEvent(event, privateKey) {
     try {
         const hash = await (0, creation_1.getEventHash)(event);
-        const sig = secp256k1_1.schnorr.sign(hash, privateKey);
+        const sig = secp256k1_js_1.schnorr.sign((0, utils_js_1.hexToBytes)(hash), (0, utils_js_1.hexToBytes)(privateKey));
         return {
             ...event,
             id: hash,
-            sig: (0, utils_1.bytesToHex)(sig),
+            sig: (0, utils_js_1.bytesToHex)(sig),
         };
     }
     catch (error) {
@@ -40,7 +40,7 @@ async function signEvent(event, privateKey) {
  */
 function verifySignature(event) {
     try {
-        return secp256k1_1.schnorr.verify((0, utils_1.hexToBytes)(event.sig), (0, utils_1.hexToBytes)(event.id), (0, utils_1.hexToBytes)(event.pubkey));
+        return secp256k1_js_1.schnorr.verify((0, utils_js_1.hexToBytes)(event.sig), (0, utils_js_1.hexToBytes)(event.id), (0, utils_js_1.hexToBytes)(event.pubkey));
     }
     catch (error) {
         logger_1.logger.error({ error }, 'Failed to verify signature');
@@ -62,7 +62,7 @@ function validateEvent(event) {
         return verifySignature(event);
     }
     catch (error) {
-        logger_1.logger.error('Error validating event:', error);
+        logger_1.logger.error({ error }, 'Error validating event');
         return false;
     }
 }

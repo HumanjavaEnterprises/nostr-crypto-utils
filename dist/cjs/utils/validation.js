@@ -7,9 +7,9 @@ exports.validatePublicKey = validatePublicKey;
 exports.validateFilter = validateFilter;
 exports.validateSubscription = validateSubscription;
 const guards_1 = require("../types/guards");
-const secp256k1_1 = require("@noble/curves/secp256k1");
-const utils_1 = require("@noble/hashes/utils");
-const sha256_1 = require("@noble/hashes/sha256");
+const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
+const sha2_js_1 = require("@noble/hashes/sha2.js");
 /**
  * Validates a Nostr event against the protocol specification (NIP-01)
  * @category Validation
@@ -119,13 +119,13 @@ function validateSignedEvent(event) {
             event.tags,
             event.content,
         ]);
-        const expectedId = (0, utils_1.bytesToHex)((0, sha256_1.sha256)(new TextEncoder().encode(serializedEvent)));
+        const expectedId = (0, utils_js_1.bytesToHex)((0, sha2_js_1.sha256)(new TextEncoder().encode(serializedEvent)));
         if (event.id !== expectedId) {
             errors.push('Invalid event ID');
         }
         // Verify signature
         try {
-            const isValid = secp256k1_1.schnorr.verify((0, utils_1.hexToBytes)(event.sig), (0, utils_1.hexToBytes)(event.id), (0, utils_1.hexToBytes)(event.pubkey));
+            const isValid = secp256k1_js_1.schnorr.verify((0, utils_js_1.hexToBytes)(event.sig), (0, utils_js_1.hexToBytes)(event.id), (0, utils_js_1.hexToBytes)(event.pubkey));
             if (!isValid) {
                 errors.push('Invalid signature');
             }
@@ -155,7 +155,7 @@ function validatePublicKey(pubkey) {
         }
         // Try to convert to bytes
         try {
-            (0, utils_1.hexToBytes)(pubkey);
+            (0, utils_js_1.hexToBytes)(pubkey);
         }
         catch (_error) {
             return {

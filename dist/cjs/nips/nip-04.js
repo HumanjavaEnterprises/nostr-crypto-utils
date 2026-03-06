@@ -42,8 +42,8 @@ exports.encryptMessage = encryptMessage;
 exports.decryptMessage = decryptMessage;
 exports.generateSharedSecret = generateSharedSecret;
 exports.computeSharedSecret = generateSharedSecret;
-const secp256k1_1 = require("@noble/curves/secp256k1");
-const utils_1 = require("@noble/curves/abstract/utils");
+const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
 const logger_1 = require("../utils/logger");
 const base64_1 = require("../encoding/base64");
 const getCrypto = async () => {
@@ -111,7 +111,7 @@ async function encryptMessage(message, senderPrivKey, recipientPubKey) {
             ? recipientPubKey
             : '02' + recipientPubKey;
         // Generate shared secret
-        const sharedPoint = secp256k1_1.secp256k1.getSharedSecret(senderPrivKey, pubKeyHex);
+        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(senderPrivKey), (0, utils_js_1.hexToBytes)(pubKeyHex));
         const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
         // Import key for AES
         const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['encrypt']);
@@ -154,7 +154,7 @@ async function decryptMessage(encryptedMessage, recipientPrivKey, senderPubKey) 
             ? senderPubKey
             : '02' + senderPubKey;
         // Generate shared secret
-        const sharedPoint = secp256k1_1.secp256k1.getSharedSecret(recipientPrivKey, pubKeyHex);
+        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(recipientPrivKey), (0, utils_js_1.hexToBytes)(pubKeyHex));
         const sharedX = sharedPoint.slice(1, 33); // Use only x-coordinate
         // Import key for AES
         const sharedKey = await (await cryptoImpl.getSubtle()).importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['decrypt']);
@@ -173,7 +173,7 @@ async function decryptMessage(encryptedMessage, recipientPrivKey, senderPubKey) 
         }
         else {
             // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
-            const encrypted = (0, utils_1.hexToBytes)(encryptedMessage);
+            const encrypted = (0, utils_js_1.hexToBytes)(encryptedMessage);
             iv = encrypted.slice(0, 16);
             ciphertext = encrypted.slice(16);
         }
@@ -206,7 +206,7 @@ function generateSharedSecret(privateKey, publicKey) {
             ? publicKey
             : '02' + publicKey;
         // Generate shared secret
-        const sharedPoint = secp256k1_1.secp256k1.getSharedSecret(privateKey, pubKeyHex);
+        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(privateKey), (0, utils_js_1.hexToBytes)(pubKeyHex));
         return { sharedSecret: sharedPoint.slice(1, 33) }; // Return only x-coordinate
     }
     catch (error) {

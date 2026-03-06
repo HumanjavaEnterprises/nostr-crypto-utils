@@ -4,8 +4,8 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/49.md
  */
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { scrypt } from '@noble/hashes/scrypt';
-import { concatBytes, randomBytes } from '@noble/hashes/utils';
+import { scrypt } from '@noble/hashes/scrypt.js';
+import { concatBytes, randomBytes } from '@noble/hashes/utils.js';
 import { bech32 as scureBech32 } from '@scure/base';
 /**
  * Encrypt a Nostr private key with a password, producing an ncryptsec bech32 string

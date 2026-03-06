@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { validateEvent, validateFilter, validateSubscription } from '../validation';
 import { SignedNostrEvent, NostrEventKind } from '../types/base';
 import { NostrFilter, NostrSubscription } from '../types/protocol';
-import { bytesToHex } from '@noble/curves/abstract/utils';
+import { bytesToHex } from '@noble/hashes/utils.js';
 
 describe('Validation Functions', () => {
   describe('validateEvent', () => {

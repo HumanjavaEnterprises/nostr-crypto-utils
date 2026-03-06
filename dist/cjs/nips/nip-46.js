@@ -33,10 +33,9 @@ exports.nip44EncryptRequest = nip44EncryptRequest;
 exports.nip44DecryptRequest = nip44DecryptRequest;
 exports.getRelaysRequest = getRelaysRequest;
 exports.createResponseFilter = createResponseFilter;
-const secp256k1_1 = require("@noble/curves/secp256k1");
-const utils_1 = require("@noble/curves/abstract/utils");
-const sha256_1 = require("@noble/hashes/sha256");
-const utils_2 = require("@noble/hashes/utils");
+const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
+const sha2_js_1 = require("@noble/hashes/sha2.js");
 const nip_44_1 = require("./nip-44");
 const types_1 = require("../types");
 // ─── 1. Bunker URI ─────────────────────────────────────────────────────────
@@ -103,10 +102,10 @@ function createSession(remotePubkey) {
     if (!/^[0-9a-f]{64}$/.test(remotePubkey)) {
         throw new Error('remotePubkey must be 64 hex characters');
     }
-    const clientSecretKeyBytes = (0, utils_2.randomBytes)(32);
-    const clientSecretKey = (0, utils_1.bytesToHex)(clientSecretKeyBytes);
-    const clientPubkeyBytes = secp256k1_1.schnorr.getPublicKey(clientSecretKeyBytes);
-    const clientPubkey = (0, utils_1.bytesToHex)(clientPubkeyBytes);
+    const clientSecretKeyBytes = (0, utils_js_1.randomBytes)(32);
+    const clientSecretKey = (0, utils_js_1.bytesToHex)(clientSecretKeyBytes);
+    const clientPubkeyBytes = secp256k1_js_1.schnorr.getPublicKey(clientSecretKeyBytes);
+    const clientPubkey = (0, utils_js_1.bytesToHex)(clientPubkeyBytes);
     const conversationKey = (0, nip_44_1.getConversationKey)(clientSecretKeyBytes, remotePubkey);
     return {
         clientSecretKey,
@@ -122,9 +121,9 @@ function createSession(remotePubkey) {
  * @returns Restored session
  */
 function restoreSession(clientSecretKey, remotePubkey) {
-    const clientSecretKeyBytes = (0, utils_1.hexToBytes)(clientSecretKey);
-    const clientPubkeyBytes = secp256k1_1.schnorr.getPublicKey(clientSecretKeyBytes);
-    const clientPubkey = (0, utils_1.bytesToHex)(clientPubkeyBytes);
+    const clientSecretKeyBytes = (0, utils_js_1.hexToBytes)(clientSecretKey);
+    const clientPubkeyBytes = secp256k1_js_1.schnorr.getPublicKey(clientSecretKeyBytes);
+    const clientPubkey = (0, utils_js_1.bytesToHex)(clientPubkeyBytes);
     const conversationKey = (0, nip_44_1.getConversationKey)(clientSecretKeyBytes, remotePubkey);
     return {
         clientSecretKey,
@@ -152,7 +151,7 @@ function getSessionInfo(session) {
  */
 function createRequest(method, params, id) {
     return {
-        id: id || (0, utils_1.bytesToHex)((0, utils_2.randomBytes)(16)),
+        id: id || (0, utils_js_1.bytesToHex)((0, utils_js_1.randomBytes)(16)),
         method,
         params,
     };
@@ -224,13 +223,13 @@ async function wrapEvent(payload, session, recipientPubkey) {
         event.tags,
         event.content,
     ]);
-    const eventHash = (0, sha256_1.sha256)(new TextEncoder().encode(serialized));
-    const privateKeyBytes = (0, utils_1.hexToBytes)(session.clientSecretKey);
-    const signatureBytes = secp256k1_1.schnorr.sign(eventHash, privateKeyBytes);
+    const eventHash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
+    const privateKeyBytes = (0, utils_js_1.hexToBytes)(session.clientSecretKey);
+    const signatureBytes = secp256k1_js_1.schnorr.sign(eventHash, privateKeyBytes);
     return {
         ...event,
-        id: (0, utils_1.bytesToHex)(eventHash),
-        sig: (0, utils_1.bytesToHex)(signatureBytes),
+        id: (0, utils_js_1.bytesToHex)(eventHash),
+        sig: (0, utils_js_1.bytesToHex)(signatureBytes),
     };
 }
 /**

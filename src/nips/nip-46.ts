@@ -9,10 +9,9 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/46.md
  */
 
-import { schnorr } from '@noble/curves/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
-import { sha256 } from '@noble/hashes/sha256';
-import { randomBytes } from '@noble/hashes/utils';
+import { schnorr } from '@noble/curves/secp256k1.js';
+import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import {
   getConversationKey as nip44GetConversationKey,
   encrypt as nip44Encrypt,

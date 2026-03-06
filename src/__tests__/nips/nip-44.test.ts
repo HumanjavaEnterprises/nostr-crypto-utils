@@ -4,9 +4,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { bytesToHex } from '@noble/curves/abstract/utils';
-import { schnorr } from '@noble/curves/secp256k1';
-import { randomBytes } from '@noble/hashes/utils';
+import { bytesToHex, randomBytes } from '@noble/hashes/utils.js';
+import { schnorr } from '@noble/curves/secp256k1.js';
 import { getConversationKey, encrypt, decrypt, calcPaddedLen } from '../../nips/nip-44';
 
 describe('NIP-44', () => {

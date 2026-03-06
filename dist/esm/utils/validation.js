@@ -1,7 +1,7 @@
 import { isNostrEvent, isNostrFilter, isSignedNostrEvent } from '../types/guards';
-import { schnorr } from '@noble/curves/secp256k1';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
-import { sha256 } from '@noble/hashes/sha256';
+import { schnorr } from '@noble/curves/secp256k1.js';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 /**
  * Validates a Nostr event against the protocol specification (NIP-01)
  * @category Validation

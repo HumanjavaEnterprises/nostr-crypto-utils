@@ -12,9 +12,9 @@ exports.signEvent = signEvent;
 exports.verifySignature = verifySignature;
 exports.calculateEventId = calculateEventId;
 exports.validateEvent = validateEvent;
-const secp256k1_1 = require("@noble/curves/secp256k1");
-const sha256_1 = require("@noble/hashes/sha256");
-const utils_1 = require("@noble/curves/abstract/utils");
+const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
+const sha2_js_1 = require("@noble/hashes/sha2.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
 const logger_1 = require("../utils/logger");
 /**
  * Creates a new Nostr event with the specified parameters (NIP-01)
@@ -54,8 +54,8 @@ function serializeEvent(event) {
 async function getEventHash(event) {
     try {
         const serialized = serializeEvent(event);
-        const hash = (0, sha256_1.sha256)(new TextEncoder().encode(serialized));
-        return (0, utils_1.bytesToHex)(hash);
+        const hash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
+        return (0, utils_js_1.bytesToHex)(hash);
     }
     catch (error) {
         logger_1.logger.error({ error }, 'Failed to get event hash');
@@ -71,11 +71,11 @@ async function getEventHash(event) {
 async function signEvent(event, privateKey) {
     try {
         const hash = await getEventHash(event);
-        const sig = secp256k1_1.schnorr.sign((0, utils_1.hexToBytes)(hash), privateKey);
+        const sig = secp256k1_js_1.schnorr.sign((0, utils_js_1.hexToBytes)(hash), (0, utils_js_1.hexToBytes)(privateKey));
         return {
             ...event,
             id: hash,
-            sig: (0, utils_1.bytesToHex)(sig),
+            sig: (0, utils_js_1.bytesToHex)(sig),
         };
     }
     catch (error) {
@@ -96,7 +96,7 @@ function verifySignature(event) {
             return false;
         }
         // Verify signature
-        return secp256k1_1.schnorr.verify((0, utils_1.hexToBytes)(event.sig), (0, utils_1.hexToBytes)(event.id), (0, utils_1.hexToBytes)(event.pubkey));
+        return secp256k1_js_1.schnorr.verify((0, utils_js_1.hexToBytes)(event.sig), (0, utils_js_1.hexToBytes)(event.id), (0, utils_js_1.hexToBytes)(event.pubkey));
     }
     catch (error) {
         logger_1.logger.error({ error }, 'Failed to verify signature');
@@ -110,8 +110,8 @@ function verifySignature(event) {
  */
 function calculateEventId(event) {
     const serialized = serializeEvent(event);
-    const hash = (0, sha256_1.sha256)(new TextEncoder().encode(serialized));
-    return (0, utils_1.bytesToHex)(hash);
+    const hash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
+    return (0, utils_js_1.bytesToHex)(hash);
 }
 /**
  * Validates a Nostr event structure (NIP-01)

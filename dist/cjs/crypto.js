@@ -68,10 +68,9 @@ exports.finalizeEvent = finalizeEvent;
 exports.verifySignature = verifySignature;
 exports.encrypt = encrypt;
 exports.decrypt = decrypt;
-const secp256k1_1 = require("@noble/curves/secp256k1");
-const utils_1 = require("@noble/curves/abstract/utils");
-const sha256_1 = require("@noble/hashes/sha256");
-const utils_2 = require("@noble/hashes/utils");
+const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
+const sha2_js_1 = require("@noble/hashes/sha2.js");
 const logger_1 = require("./utils/logger");
 const base64_1 = require("./encoding/base64");
 // Get the appropriate crypto implementation
@@ -124,26 +123,26 @@ class CustomCrypto {
 // Create and export default instance
 exports.customCrypto = new CustomCrypto();
 // Export schnorr functions
-exports.signSchnorr = secp256k1_1.schnorr.sign;
-exports.verifySchnorrSignature = secp256k1_1.schnorr.verify;
+exports.signSchnorr = secp256k1_js_1.schnorr.sign;
+exports.verifySchnorrSignature = secp256k1_js_1.schnorr.verify;
 /**
  * Gets the compressed public key (33 bytes with prefix)
  */
 function getCompressedPublicKey(privateKeyBytes) {
-    return secp256k1_1.secp256k1.getPublicKey(privateKeyBytes, true);
+    return secp256k1_js_1.secp256k1.getPublicKey(privateKeyBytes, true);
 }
 /**
  * Gets the schnorr public key (32 bytes x-coordinate) as per BIP340
  */
 function getSchnorrPublicKey(privateKeyBytes) {
-    return secp256k1_1.schnorr.getPublicKey(privateKeyBytes);
+    return secp256k1_js_1.schnorr.getPublicKey(privateKeyBytes);
 }
 /**
  * Generates a new key pair
  */
 async function generateKeyPair() {
-    const privateKeyBytes = (0, utils_2.randomBytes)(32);
-    const privateKey = (0, utils_1.bytesToHex)(privateKeyBytes);
+    const privateKeyBytes = (0, utils_js_1.randomBytes)(32);
+    const privateKey = (0, utils_js_1.bytesToHex)(privateKeyBytes);
     privateKeyBytes.fill(0); // zero source material
     const publicKey = await getPublicKey(privateKey);
     return {
@@ -156,10 +155,10 @@ async function generateKeyPair() {
  */
 async function getPublicKey(privateKey) {
     try {
-        const privateKeyBytes = (0, utils_1.hexToBytes)(privateKey);
-        const publicKeyBytes = secp256k1_1.schnorr.getPublicKey(privateKeyBytes);
+        const privateKeyBytes = (0, utils_js_1.hexToBytes)(privateKey);
+        const publicKeyBytes = secp256k1_js_1.schnorr.getPublicKey(privateKeyBytes);
         return {
-            hex: (0, utils_1.bytesToHex)(publicKeyBytes),
+            hex: (0, utils_js_1.bytesToHex)(publicKeyBytes),
             bytes: publicKeyBytes
         };
     }
@@ -199,7 +198,7 @@ function createEvent(event) {
  */
 function normalizePrivateKey(privateKey) {
     if (privateKey instanceof Uint8Array) {
-        return (0, utils_1.bytesToHex)(privateKey);
+        return (0, utils_js_1.bytesToHex)(privateKey);
     }
     return privateKey;
 }
@@ -221,15 +220,15 @@ async function signEvent(event, privateKey) {
             event.content
         ]);
         // Calculate event hash
-        const eventHash = (0, sha256_1.sha256)(new TextEncoder().encode(serialized));
+        const eventHash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
         // Convert private key to bytes and sign
-        const privateKeyBytes = (0, utils_1.hexToBytes)(privateKeyHex);
-        const signatureBytes = secp256k1_1.schnorr.sign(eventHash, privateKeyBytes);
+        const privateKeyBytes = (0, utils_js_1.hexToBytes)(privateKeyHex);
+        const signatureBytes = secp256k1_js_1.schnorr.sign(eventHash, privateKeyBytes);
         // Create signed event
         return {
             ...event,
-            id: (0, utils_1.bytesToHex)(eventHash),
-            sig: (0, utils_1.bytesToHex)(signatureBytes)
+            id: (0, utils_js_1.bytesToHex)(eventHash),
+            sig: (0, utils_js_1.bytesToHex)(signatureBytes)
         };
     }
     catch (error) {
@@ -245,9 +244,9 @@ async function signEvent(event, privateKey) {
 function getPublicKeySync(privateKey) {
     const privateKeyBytes = privateKey instanceof Uint8Array
         ? privateKey
-        : (0, utils_1.hexToBytes)(privateKey);
-    const publicKeyBytes = secp256k1_1.schnorr.getPublicKey(privateKeyBytes);
-    return (0, utils_1.bytesToHex)(publicKeyBytes);
+        : (0, utils_js_1.hexToBytes)(privateKey);
+    const publicKeyBytes = secp256k1_js_1.schnorr.getPublicKey(privateKeyBytes);
+    return (0, utils_js_1.bytesToHex)(publicKeyBytes);
 }
 /**
  * Creates, hashes, and signs a Nostr event in one step
@@ -282,18 +281,18 @@ async function verifySignature(event) {
             event.content
         ]);
         // Calculate event hash
-        const eventHash = (0, sha256_1.sha256)(new TextEncoder().encode(serialized));
+        const eventHash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
         // Verify event ID
-        const calculatedId = (0, utils_1.bytesToHex)(eventHash);
+        const calculatedId = (0, utils_js_1.bytesToHex)(eventHash);
         if (calculatedId !== event.id) {
             logger_1.logger.error('Event ID mismatch');
             return false;
         }
         // Convert hex strings to bytes
-        const signatureBytes = (0, utils_1.hexToBytes)(event.sig);
-        const pubkeyBytes = (0, utils_1.hexToBytes)(event.pubkey);
+        const signatureBytes = (0, utils_js_1.hexToBytes)(event.sig);
+        const pubkeyBytes = (0, utils_js_1.hexToBytes)(event.pubkey);
         // Verify signature
-        return secp256k1_1.schnorr.verify(signatureBytes, eventHash, pubkeyBytes);
+        return secp256k1_js_1.schnorr.verify(signatureBytes, eventHash, pubkeyBytes);
     }
     catch (error) {
         logger_1.logger.error({ error }, 'Failed to verify signature');
@@ -306,10 +305,10 @@ async function verifySignature(event) {
 async function encrypt(message, recipientPubKey, senderPrivKey) {
     try {
         const recipientPubKeyHex = typeof recipientPubKey === 'string' ? recipientPubKey : recipientPubKey.hex;
-        const sharedPoint = secp256k1_1.secp256k1.getSharedSecret((0, utils_1.hexToBytes)(senderPrivKey), (0, utils_1.hexToBytes)(recipientPubKeyHex));
+        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(senderPrivKey), (0, utils_js_1.hexToBytes)(recipientPubKeyHex));
         const sharedX = sharedPoint.slice(1, 33);
         // Generate random IV
-        const iv = (0, utils_2.randomBytes)(16);
+        const iv = (0, utils_js_1.randomBytes)(16);
         const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['encrypt']));
         // Zero shared secret material now that AES key is imported
         sharedX.fill(0);
@@ -333,7 +332,7 @@ async function encrypt(message, recipientPubKey, senderPrivKey) {
 async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
     try {
         const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
-        const sharedPoint = secp256k1_1.secp256k1.getSharedSecret((0, utils_1.hexToBytes)(recipientPrivKey), (0, utils_1.hexToBytes)(senderPubKeyHex));
+        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(recipientPrivKey), (0, utils_js_1.hexToBytes)(senderPubKeyHex));
         const sharedX = sharedPoint.slice(1, 33);
         // Parse NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
         // Also support legacy hex format (iv + ciphertext concatenated) as fallback
@@ -347,7 +346,7 @@ async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
         }
         else {
             // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
-            const encrypted = (0, utils_1.hexToBytes)(encryptedMessage);
+            const encrypted = (0, utils_js_1.hexToBytes)(encryptedMessage);
             iv = encrypted.slice(0, 16);
             ciphertext = encrypted.slice(16);
         }

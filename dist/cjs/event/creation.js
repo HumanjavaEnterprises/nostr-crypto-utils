@@ -7,8 +7,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createEvent = createEvent;
 exports.serializeEvent = serializeEvent;
 exports.getEventHash = getEventHash;
-const sha256_1 = require("@noble/hashes/sha256");
-const utils_1 = require("@noble/hashes/utils");
+const sha2_js_1 = require("@noble/hashes/sha2.js");
+const utils_js_1 = require("@noble/hashes/utils.js");
 const logger_1 = require("../utils/logger");
 /**
  * Creates a new Nostr event with the specified parameters
@@ -48,8 +48,8 @@ function serializeEvent(event) {
 async function getEventHash(event) {
     try {
         const serialized = serializeEvent(event);
-        const hash = await (0, sha256_1.sha256)(new TextEncoder().encode(serialized));
-        return (0, utils_1.bytesToHex)(hash);
+        const hash = await (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
+        return (0, utils_js_1.bytesToHex)(hash);
     }
     catch (error) {
         logger_1.logger.error({ error }, 'Failed to get event hash');

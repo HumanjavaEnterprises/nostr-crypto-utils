@@ -4,9 +4,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { bytesToHex } from '@noble/curves/abstract/utils';
-import { schnorr } from '@noble/curves/secp256k1';
-import { randomBytes } from '@noble/hashes/utils';
+import { bytesToHex, randomBytes } from '@noble/hashes/utils.js';
+import { schnorr } from '@noble/curves/secp256k1.js';
 import {
   parseBunkerURI,
   createBunkerURI,
@@ -225,7 +224,7 @@ describe('NIP-46', () => {
       // Signer-side: create a session from the signer's perspective
       // The conversation key is the same (ECDH is commutative)
       const { getConversationKey } = await import('../../nips/nip-44');
-      const { hexToBytes } = await import('@noble/curves/abstract/utils');
+      const { hexToBytes } = await import('@noble/hashes/utils.js');
       const signerConvKey = getConversationKey(hexToBytes(signer.secretKey), session.clientPubkey);
       const signerSession = {
         clientSecretKey: signer.secretKey,
