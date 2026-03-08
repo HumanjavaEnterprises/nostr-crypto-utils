@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-03-06
+
+### Added
+- **NIP-46 server-side signer primitives:**
+  - `unwrapRequest()` — decrypt incoming kind 24133 event using signer's secret key
+  - `wrapResponse()` — encrypt and sign a NIP-46 response from the signer's perspective
+  - `handleSignerRequest()` — pure dispatch function routing NIP-46 methods to consumer-provided handlers
+  - `createRequestFilter()` — Nostr filter for subscribing to incoming requests (server-side)
+  - New types: `Nip46SignerHandlers`, `Nip46HandleOptions`, `Nip46HandleResult`, `Nip46UnwrapResult`
+- NIP-46 now covers both client and server/signer perspectives
+
+## [0.6.0] - 2026-03-04
+
+### Changed
+- **Noble 2.0 migration:** `@noble/curves` ^2.0.1, `@noble/hashes` ^2.0.1
+- **Vitest 4:** Upgraded test framework from vitest 3.x
+- **Pino 10:** Upgraded logger from pino 8.x (where applicable)
+- **No Buffer dependency:** All crypto functions accept `Uint8Array` keys — browser-safe without polyfills
+- **esbuild:** Replaced webpack with esbuild for browser bundling
+
+### Fixed
+- Removed `Buffer` dependency from all crypto paths
+- Memory zeroing for shared secrets and npub input rejection
+
 ## [0.5.1] - 2026-03-02
 
 ### Added
