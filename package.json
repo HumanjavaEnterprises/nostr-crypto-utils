@@ -1,6 +1,6 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Core cryptographic utilities for Nostr protocol",
   "type": "commonjs",
   "main": "./dist/cjs/index.js",
@@ -92,7 +92,7 @@
     "@typescript-eslint/parser": "^8.56.0",
     "@vitest/coverage-v8": "^4.0.18",
     "esbuild": "^0.27.3",
-    "eslint": "^10.0.0",
+    "eslint": "^10.0.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },
