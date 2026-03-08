@@ -8,7 +8,7 @@
  *
  * @see https://github.com/nostr-protocol/nips/blob/master/46.md
  */
-import type { BunkerURI, BunkerValidationResult, Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, SignedNostrEvent } from '../types';
+import type { BunkerURI, BunkerValidationResult, Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, SignedNostrEvent } from '../types';
 import { Nip46Method } from '../types';
 /**
  * Parse a bunker:// URI into its components
@@ -143,4 +143,46 @@ export declare function createResponseFilter(clientPubkey: string, since?: numbe
     '#p': string[];
     since?: number;
 };
+/**
+ * Create a Nostr filter for subscribing to NIP-46 request events (server-side)
+ * @param signerPubkey - The signer's public key (hex)
+ * @param since - Optional since timestamp
+ * @returns Filter object for kind 24133 events tagged to the signer
+ */
+export declare function createRequestFilter(signerPubkey: string, since?: number): {
+    kinds: number[];
+    '#p': string[];
+    since?: number;
+};
+/**
+ * Decrypt an incoming kind 24133 event using the signer's secret key.
+ * Returns the decrypted request, client pubkey, and conversation key.
+ *
+ * @param event - Signed kind 24133 event from a client
+ * @param signerSecretKey - Signer's private key (hex)
+ * @returns Decrypted request, client pubkey, and conversation key for reuse
+ */
+export declare function unwrapRequest(event: SignedNostrEvent, signerSecretKey: string): Nip46UnwrapResult;
+/**
+ * Encrypt and sign a NIP-46 response from the signer's perspective.
+ *
+ * @param response - JSON-RPC response to send
+ * @param signerSecretKey - Signer's private key (hex)
+ * @param signerPubkey - Signer's public key (hex)
+ * @param clientPubkey - Recipient client's public key (hex)
+ * @param conversationKey - Optional pre-computed NIP-44 conversation key (avoids re-deriving ECDH)
+ * @returns Signed kind 24133 event
+ */
+export declare function wrapResponse(response: Nip46Response, signerSecretKey: string, signerPubkey: string, clientPubkey: string, conversationKey?: Uint8Array): Promise<SignedNostrEvent>;
+/**
+ * Pure dispatch: validates auth, routes a NIP-46 method to the appropriate handler,
+ * and returns a response. No state mutation — caller manages authenticated clients.
+ *
+ * @param request - Parsed NIP-46 request
+ * @param clientPubkey - The requesting client's pubkey (hex)
+ * @param handlers - Consumer-provided crypto callbacks
+ * @param opts - Optional secret and authenticated client set
+ * @returns Response and optional newlyAuthenticated pubkey
+ */
+export declare function handleSignerRequest(request: Nip46Request, clientPubkey: string, handlers: Nip46SignerHandlers, opts?: Nip46HandleOptions): Promise<Nip46HandleResult>;
 //# sourceMappingURL=nip-46.d.ts.map

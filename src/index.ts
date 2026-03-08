@@ -24,6 +24,10 @@ export type {
   Nip46SessionInfo,
   BunkerURI,
   BunkerValidationResult,
+  Nip46SignerHandlers,
+  Nip46HandleOptions,
+  Nip46HandleResult,
+  Nip46UnwrapResult,
 } from './types';
 
 // Core crypto functions

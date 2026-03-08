@@ -79,3 +79,59 @@ export interface BunkerValidationResult {
   error?: string;
   uri?: BunkerURI;
 }
+
+// ─── Signer / Server Types ──────────────────────────────────────────────────
+
+/**
+ * Callback handlers the consumer provides to the signer.
+ * The signer dispatches incoming NIP-46 requests to these handlers.
+ * NIP-04 handlers are optional (legacy support).
+ */
+export interface Nip46SignerHandlers {
+  /** Return the signer's public key (hex) */
+  getPublicKey: () => string | Promise<string>;
+  /** Sign a stringified unsigned event, return the stringified signed event */
+  signEvent: (eventJson: string) => string | Promise<string>;
+  /** NIP-04 encrypt (legacy, optional) */
+  nip04Encrypt?: (pubkey: string, plaintext: string) => string | Promise<string>;
+  /** NIP-04 decrypt (legacy, optional) */
+  nip04Decrypt?: (pubkey: string, ciphertext: string) => string | Promise<string>;
+  /** NIP-44 encrypt */
+  nip44Encrypt?: (pubkey: string, plaintext: string) => string | Promise<string>;
+  /** NIP-44 decrypt */
+  nip44Decrypt?: (pubkey: string, ciphertext: string) => string | Promise<string>;
+  /** Return relay map as JSON string */
+  getRelays?: () => string | Promise<string>;
+}
+
+/**
+ * Options for handleSignerRequest
+ */
+export interface Nip46HandleOptions {
+  /** Expected connection secret (from bunker:// URI) */
+  secret?: string;
+  /** Set of authenticated client pubkeys. Not mutated — check newlyAuthenticated on result. */
+  authenticatedClients?: Set<string>;
+}
+
+/**
+ * Result of handleSignerRequest()
+ */
+export interface Nip46HandleResult {
+  /** The response to send back to the client */
+  response: Nip46Response;
+  /** If the connect handshake succeeded, this is the client pubkey to add to authenticated set */
+  newlyAuthenticated?: string;
+}
+
+/**
+ * Result of unwrapRequest()
+ */
+export interface Nip46UnwrapResult {
+  /** The decrypted request */
+  request: Nip46Request;
+  /** The client's pubkey (from event.pubkey) */
+  clientPubkey: string;
+  /** NIP-44 conversation key (reuse for wrapResponse) */
+  conversationKey: Uint8Array;
+}

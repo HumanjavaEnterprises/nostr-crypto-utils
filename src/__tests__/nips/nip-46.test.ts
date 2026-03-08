@@ -30,8 +30,13 @@ import {
   nip44DecryptRequest,
   getRelaysRequest,
   createResponseFilter,
+  createRequestFilter,
+  handleSignerRequest,
+  unwrapRequest,
+  wrapResponse,
 } from '../../nips/nip-46';
 import { Nip46Method } from '../../types';
+import type { Nip46SignerHandlers } from '../../types';
 
 // Helper: generate a keypair
 function generateTestKeypair(): { secretKey: string; pubkey: string } {
@@ -320,7 +325,7 @@ describe('NIP-46', () => {
     });
   });
 
-  // ─── Filter Helper ──────────────────────────────────────────────────
+  // ─── Filter Helpers ─────────────────────────────────────────────────
 
   describe('createResponseFilter', () => {
     it('should create a filter for kind 24133 with #p tag', () => {
@@ -334,6 +339,320 @@ describe('NIP-46', () => {
       const now = Math.floor(Date.now() / 1000);
       const filter = createResponseFilter(signer.pubkey, now);
       expect(filter.since).toBe(now);
+    });
+  });
+
+  describe('createRequestFilter', () => {
+    it('should create a filter for kind 24133 with #p tag', () => {
+      const filter = createRequestFilter(signer.pubkey);
+      expect(filter.kinds).toEqual([24133]);
+      expect(filter['#p']).toEqual([signer.pubkey]);
+      expect(filter.since).toBeUndefined();
+    });
+
+    it('should include since when provided', () => {
+      const now = Math.floor(Date.now() / 1000);
+      const filter = createRequestFilter(signer.pubkey, now);
+      expect(filter.since).toBe(now);
+    });
+  });
+
+  // ─── Signer / Server Helpers ──────────────────────────────────────
+
+  describe('handleSignerRequest', () => {
+    const testHandlers: Nip46SignerHandlers = {
+      getPublicKey: () => signer.pubkey,
+      signEvent: (eventJson: string) => {
+        const parsed = JSON.parse(eventJson);
+        return JSON.stringify({ ...parsed, id: '00'.repeat(32), sig: '00'.repeat(64) });
+      },
+      nip04Encrypt: (_pubkey: string, plaintext: string) => `encrypted:${plaintext}`,
+      nip04Decrypt: (_pubkey: string, ciphertext: string) => ciphertext.replace('encrypted:', ''),
+      nip44Encrypt: (_pubkey: string, plaintext: string) => `nip44:${plaintext}`,
+      nip44Decrypt: (_pubkey: string, ciphertext: string) => ciphertext.replace('nip44:', ''),
+      getRelays: () => JSON.stringify({ 'wss://relay.example.com': { read: true, write: true } }),
+    };
+    const client = generateTestKeypair();
+
+    it('should accept connect with valid secret', async () => {
+      const req = connectRequest(signer.pubkey, 'mysecret');
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { secret: 'mysecret' });
+      expect(result.response.result).toBe('ack');
+      expect(result.newlyAuthenticated).toBe(client.pubkey);
+    });
+
+    it('should reject connect with invalid secret', async () => {
+      const req = connectRequest(signer.pubkey, 'wrong');
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { secret: 'mysecret' });
+      expect(result.response.error).toBe('invalid secret');
+      expect(result.newlyAuthenticated).toBeUndefined();
+    });
+
+    it('should accept connect with no secret required', async () => {
+      const req = connectRequest(signer.pubkey);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers);
+      expect(result.response.result).toBe('ack');
+      expect(result.newlyAuthenticated).toBe(client.pubkey);
+    });
+
+    it('should respond to ping without authentication', async () => {
+      const req = pingRequest();
+      const authenticated = new Set<string>(); // empty — client not authenticated
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toBe('pong');
+    });
+
+    it('should reject unauthenticated get_public_key', async () => {
+      const req = getPublicKeyRequest();
+      const authenticated = new Set<string>(); // empty
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.error).toBe('unauthorized: call connect first');
+    });
+
+    it('should dispatch get_public_key when authenticated', async () => {
+      const req = getPublicKeyRequest();
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toBe(signer.pubkey);
+    });
+
+    it('should dispatch sign_event', async () => {
+      const eventJson = JSON.stringify({ kind: 1, content: 'test' });
+      const req = signEventRequest(eventJson);
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toBeDefined();
+      const signed = JSON.parse(result.response.result!);
+      expect(signed.content).toBe('test');
+      expect(signed.id).toBeDefined();
+      expect(signed.sig).toBeDefined();
+    });
+
+    it('should dispatch nip04_encrypt', async () => {
+      const req = nip04EncryptRequest(signer.pubkey, 'hello');
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toBe('encrypted:hello');
+    });
+
+    it('should dispatch nip04_decrypt', async () => {
+      const req = nip04DecryptRequest(signer.pubkey, 'encrypted:hello');
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toBe('hello');
+    });
+
+    it('should dispatch nip44_encrypt', async () => {
+      const req = nip44EncryptRequest(signer.pubkey, 'hello');
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toBe('nip44:hello');
+    });
+
+    it('should dispatch nip44_decrypt', async () => {
+      const req = nip44DecryptRequest(signer.pubkey, 'nip44:hello');
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toBe('hello');
+    });
+
+    it('should dispatch get_relays', async () => {
+      const req = getRelaysRequest();
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toContain('relay.example.com');
+    });
+
+    it('should return error for unsupported method', async () => {
+      const req = createRequest('unknown_method', []);
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.error).toBe('unsupported method: unknown_method');
+    });
+
+    it('should return error for missing optional handler', async () => {
+      const minimalHandlers: Nip46SignerHandlers = {
+        getPublicKey: () => signer.pubkey,
+        signEvent: () => '{}',
+      };
+      const req = nip04EncryptRequest(signer.pubkey, 'hello');
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, minimalHandlers, { authenticatedClients: authenticated });
+      expect(result.response.error).toBe('nip04_encrypt not supported');
+    });
+
+    it('should catch handler errors and return them as response errors', async () => {
+      const failingHandlers: Nip46SignerHandlers = {
+        getPublicKey: () => { throw new Error('key store locked'); },
+        signEvent: () => '{}',
+      };
+      const req = getPublicKeyRequest();
+      const authenticated = new Set([client.pubkey]);
+      const result = await handleSignerRequest(req, client.pubkey, failingHandlers, { authenticatedClients: authenticated });
+      expect(result.response.error).toBe('key store locked');
+    });
+
+    it('should allow all methods when no authenticatedClients set is provided', async () => {
+      const req = getPublicKeyRequest();
+      // No opts at all — no auth gating
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers);
+      expect(result.response.result).toBe(signer.pubkey);
+    });
+  });
+
+  // ─── unwrapRequest / wrapResponse ─────────────────────────────────
+
+  describe('unwrapRequest / wrapResponse', () => {
+    it('should unwrap a client request and wrap a signer response', async () => {
+      // Client side: create session and wrap a request
+      const clientSession = createSession(signer.pubkey);
+      const req = getPublicKeyRequest();
+      const wrappedReq = await wrapEvent(req, clientSession, signer.pubkey);
+
+      // Signer side: unwrap the request
+      const unwrapped = unwrapRequest(wrappedReq, signer.secretKey);
+      expect(unwrapped.clientPubkey).toBe(clientSession.clientPubkey);
+      expect(unwrapped.request.method).toBe('get_public_key');
+      expect(unwrapped.conversationKey).toBeInstanceOf(Uint8Array);
+
+      // Signer side: create and wrap a response
+      const resp = createResponse(unwrapped.request.id, signer.pubkey);
+      const wrappedResp = await wrapResponse(
+        resp,
+        signer.secretKey,
+        signer.pubkey,
+        unwrapped.clientPubkey,
+        unwrapped.conversationKey
+      );
+
+      expect(wrappedResp.kind).toBe(24133);
+      expect(wrappedResp.pubkey).toBe(signer.pubkey);
+      expect(wrappedResp.tags).toEqual([['p', clientSession.clientPubkey]]);
+
+      // Client side: unwrap the response
+      const decrypted = unwrapEvent(wrappedResp, clientSession);
+      expect(isResponse(decrypted)).toBe(true);
+      expect((decrypted as { result?: string }).result).toBe(signer.pubkey);
+    });
+
+    it('should reject non-24133 events in unwrapRequest', () => {
+      const fakeEvent = {
+        id: '00'.repeat(32),
+        sig: '00'.repeat(64),
+        kind: 1,
+        created_at: 0,
+        tags: [],
+        content: '',
+        pubkey: '00'.repeat(32),
+      };
+      expect(() => unwrapRequest(fakeEvent, signer.secretKey)).toThrow('expected kind 24133');
+    });
+  });
+
+  // ─── Full Client ↔ Server Round-Trip ──────────────────────────────
+
+  describe('full client ↔ server round-trip', () => {
+    it('should complete connect → get_public_key → sign_event flow', async () => {
+      const client = generateTestKeypair();
+      const secret = 'test-secret-42';
+
+      // Signer-side handlers
+      const handlers: Nip46SignerHandlers = {
+        getPublicKey: () => signer.pubkey,
+        signEvent: (eventJson: string) => {
+          const ev = JSON.parse(eventJson);
+          return JSON.stringify({ ...ev, id: '11'.repeat(32), sig: '22'.repeat(64), pubkey: signer.pubkey });
+        },
+      };
+
+      // Client creates session
+      const clientSession = createSession(signer.pubkey);
+
+      // ─── Step 1: connect ───
+      const connectReq = connectRequest(signer.pubkey, secret);
+      const wrappedConnect = await wrapEvent(connectReq, clientSession, signer.pubkey);
+
+      // Signer unwraps
+      const unwrappedConnect = unwrapRequest(wrappedConnect, signer.secretKey);
+      expect(unwrappedConnect.request.method).toBe('connect');
+
+      // Signer handles
+      const authenticatedClients = new Set<string>();
+      const connectResult = await handleSignerRequest(
+        unwrappedConnect.request,
+        unwrappedConnect.clientPubkey,
+        handlers,
+        { secret, authenticatedClients }
+      );
+      expect(connectResult.response.result).toBe('ack');
+      expect(connectResult.newlyAuthenticated).toBe(clientSession.clientPubkey);
+
+      // Consumer updates auth set
+      authenticatedClients.add(connectResult.newlyAuthenticated!);
+
+      // Signer wraps response
+      const wrappedConnectResp = await wrapResponse(
+        connectResult.response,
+        signer.secretKey,
+        signer.pubkey,
+        unwrappedConnect.clientPubkey,
+        unwrappedConnect.conversationKey
+      );
+
+      // Client unwraps response
+      const connectResp = unwrapEvent(wrappedConnectResp, clientSession);
+      expect(isResponse(connectResp)).toBe(true);
+      expect((connectResp as { result?: string }).result).toBe('ack');
+
+      // ─── Step 2: get_public_key ───
+      const gpkReq = getPublicKeyRequest();
+      const wrappedGpk = await wrapEvent(gpkReq, clientSession, signer.pubkey);
+      const unwrappedGpk = unwrapRequest(wrappedGpk, signer.secretKey);
+      const gpkResult = await handleSignerRequest(
+        unwrappedGpk.request,
+        unwrappedGpk.clientPubkey,
+        handlers,
+        { authenticatedClients }
+      );
+      expect(gpkResult.response.result).toBe(signer.pubkey);
+
+      const wrappedGpkResp = await wrapResponse(
+        gpkResult.response,
+        signer.secretKey,
+        signer.pubkey,
+        unwrappedGpk.clientPubkey,
+        unwrappedGpk.conversationKey
+      );
+      const gpkResp = unwrapEvent(wrappedGpkResp, clientSession);
+      expect((gpkResp as { result?: string }).result).toBe(signer.pubkey);
+
+      // ─── Step 3: sign_event ───
+      const eventJson = JSON.stringify({ kind: 1, content: 'hello nostr', created_at: 0, tags: [] });
+      const signReq = signEventRequest(eventJson);
+      const wrappedSign = await wrapEvent(signReq, clientSession, signer.pubkey);
+      const unwrappedSign = unwrapRequest(wrappedSign, signer.secretKey);
+      const signResult = await handleSignerRequest(
+        unwrappedSign.request,
+        unwrappedSign.clientPubkey,
+        handlers,
+        { authenticatedClients }
+      );
+      expect(signResult.response.result).toBeDefined();
+      const signedEvent = JSON.parse(signResult.response.result!);
+      expect(signedEvent.content).toBe('hello nostr');
+      expect(signedEvent.pubkey).toBe(signer.pubkey);
+
+      const wrappedSignResp = await wrapResponse(
+        signResult.response,
+        signer.secretKey,
+        signer.pubkey,
+        unwrappedSign.clientPubkey,
+        unwrappedSign.conversationKey
+      );
+      const signResp = unwrapEvent(wrappedSignResp, clientSession);
+      expect(isResponse(signResp)).toBe(true);
+      const clientSigned = JSON.parse((signResp as { result: string }).result);
+      expect(clientSigned.content).toBe('hello nostr');
     });
   });
 });

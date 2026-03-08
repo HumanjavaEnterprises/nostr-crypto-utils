@@ -288,7 +288,7 @@ export function nip44DecryptRequest(thirdPartyPubkey, ciphertext) {
 export function getRelaysRequest() {
     return createRequest(Nip46Method.GET_RELAYS, []);
 }
-// ─── 6. Filter Helper ──────────────────────────────────────────────────────
+// ─── 6. Filter Helpers ─────────────────────────────────────────────────────
 /**
  * Create a Nostr filter for subscribing to NIP-46 response events
  * @param clientPubkey - Our ephemeral public key (hex)
@@ -304,5 +304,191 @@ export function createResponseFilter(clientPubkey, since) {
         filter.since = since;
     }
     return filter;
+}
+/**
+ * Create a Nostr filter for subscribing to NIP-46 request events (server-side)
+ * @param signerPubkey - The signer's public key (hex)
+ * @param since - Optional since timestamp
+ * @returns Filter object for kind 24133 events tagged to the signer
+ */
+export function createRequestFilter(signerPubkey, since) {
+    const filter = {
+        kinds: [24133],
+        '#p': [signerPubkey],
+    };
+    if (since !== undefined) {
+        filter.since = since;
+    }
+    return filter;
+}
+// ─── 7. Signer / Server Helpers ────────────────────────────────────────────
+/**
+ * Decrypt an incoming kind 24133 event using the signer's secret key.
+ * Returns the decrypted request, client pubkey, and conversation key.
+ *
+ * @param event - Signed kind 24133 event from a client
+ * @param signerSecretKey - Signer's private key (hex)
+ * @returns Decrypted request, client pubkey, and conversation key for reuse
+ */
+export function unwrapRequest(event, signerSecretKey) {
+    if (event.kind !== 24133) {
+        throw new Error(`expected kind 24133, got ${event.kind}`);
+    }
+    const clientPubkey = event.pubkey;
+    const signerSecretKeyBytes = hexToBytes(signerSecretKey);
+    const conversationKey = nip44GetConversationKey(signerSecretKeyBytes, clientPubkey);
+    const json = nip44Decrypt(event.content, conversationKey);
+    const payload = parsePayload(json);
+    if (!isRequest(payload)) {
+        throw new Error('expected a NIP-46 request, got a response');
+    }
+    return {
+        request: payload,
+        clientPubkey,
+        conversationKey,
+    };
+}
+/**
+ * Encrypt and sign a NIP-46 response from the signer's perspective.
+ *
+ * @param response - JSON-RPC response to send
+ * @param signerSecretKey - Signer's private key (hex)
+ * @param signerPubkey - Signer's public key (hex)
+ * @param clientPubkey - Recipient client's public key (hex)
+ * @param conversationKey - Optional pre-computed NIP-44 conversation key (avoids re-deriving ECDH)
+ * @returns Signed kind 24133 event
+ */
+export async function wrapResponse(response, signerSecretKey, signerPubkey, clientPubkey, conversationKey) {
+    const signerSecretKeyBytes = hexToBytes(signerSecretKey);
+    const convKey = conversationKey || nip44GetConversationKey(signerSecretKeyBytes, clientPubkey);
+    const json = JSON.stringify(response);
+    const encrypted = nip44Encrypt(json, convKey);
+    const created_at = Math.floor(Date.now() / 1000);
+    const event = {
+        kind: 24133,
+        created_at,
+        tags: [['p', clientPubkey]],
+        content: encrypted,
+        pubkey: signerPubkey,
+    };
+    const serialized = JSON.stringify([
+        0,
+        event.pubkey,
+        event.created_at,
+        event.kind,
+        event.tags,
+        event.content,
+    ]);
+    const eventHash = sha256(new TextEncoder().encode(serialized));
+    const signatureBytes = schnorr.sign(eventHash, signerSecretKeyBytes);
+    return {
+        ...event,
+        id: bytesToHex(eventHash),
+        sig: bytesToHex(signatureBytes),
+    };
+}
+/**
+ * Pure dispatch: validates auth, routes a NIP-46 method to the appropriate handler,
+ * and returns a response. No state mutation — caller manages authenticated clients.
+ *
+ * @param request - Parsed NIP-46 request
+ * @param clientPubkey - The requesting client's pubkey (hex)
+ * @param handlers - Consumer-provided crypto callbacks
+ * @param opts - Optional secret and authenticated client set
+ * @returns Response and optional newlyAuthenticated pubkey
+ */
+export async function handleSignerRequest(request, clientPubkey, handlers, opts) {
+    const { method, params, id } = request;
+    const authenticated = opts?.authenticatedClients;
+    // connect is always allowed (it's the auth handshake)
+    if (method === Nip46Method.CONNECT || method === 'connect') {
+        // params[0] = remote pubkey, params[1] = secret (optional)
+        const clientSecret = params[1] || undefined;
+        if (opts?.secret && clientSecret !== opts.secret) {
+            return {
+                response: createResponse(id, undefined, 'invalid secret'),
+            };
+        }
+        return {
+            response: createResponse(id, 'ack'),
+            newlyAuthenticated: clientPubkey,
+        };
+    }
+    // ping is always allowed (even unauthenticated)
+    if (method === Nip46Method.PING || method === 'ping') {
+        return {
+            response: createResponse(id, 'pong'),
+        };
+    }
+    // All other methods require authentication
+    if (authenticated && !authenticated.has(clientPubkey)) {
+        return {
+            response: createResponse(id, undefined, 'unauthorized: call connect first'),
+        };
+    }
+    try {
+        switch (method) {
+            case Nip46Method.GET_PUBLIC_KEY:
+            case 'get_public_key': {
+                const pubkey = await handlers.getPublicKey();
+                return { response: createResponse(id, pubkey) };
+            }
+            case Nip46Method.SIGN_EVENT:
+            case 'sign_event': {
+                const signedEvent = await handlers.signEvent(params[0]);
+                return { response: createResponse(id, signedEvent) };
+            }
+            case Nip46Method.NIP04_ENCRYPT:
+            case 'nip04_encrypt': {
+                if (!handlers.nip04Encrypt) {
+                    return { response: createResponse(id, undefined, 'nip04_encrypt not supported') };
+                }
+                const result = await handlers.nip04Encrypt(params[0], params[1]);
+                return { response: createResponse(id, result) };
+            }
+            case Nip46Method.NIP04_DECRYPT:
+            case 'nip04_decrypt': {
+                if (!handlers.nip04Decrypt) {
+                    return { response: createResponse(id, undefined, 'nip04_decrypt not supported') };
+                }
+                const result = await handlers.nip04Decrypt(params[0], params[1]);
+                return { response: createResponse(id, result) };
+            }
+            case Nip46Method.NIP44_ENCRYPT:
+            case 'nip44_encrypt': {
+                if (!handlers.nip44Encrypt) {
+                    return { response: createResponse(id, undefined, 'nip44_encrypt not supported') };
+                }
+                const result = await handlers.nip44Encrypt(params[0], params[1]);
+                return { response: createResponse(id, result) };
+            }
+            case Nip46Method.NIP44_DECRYPT:
+            case 'nip44_decrypt': {
+                if (!handlers.nip44Decrypt) {
+                    return { response: createResponse(id, undefined, 'nip44_decrypt not supported') };
+                }
+                const result = await handlers.nip44Decrypt(params[0], params[1]);
+                return { response: createResponse(id, result) };
+            }
+            case Nip46Method.GET_RELAYS:
+            case 'get_relays': {
+                if (!handlers.getRelays) {
+                    return { response: createResponse(id, undefined, 'get_relays not supported') };
+                }
+                const relays = await handlers.getRelays();
+                return { response: createResponse(id, relays) };
+            }
+            default:
+                return {
+                    response: createResponse(id, undefined, `unsupported method: ${method}`),
+                };
+        }
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+            response: createResponse(id, undefined, message),
+        };
+    }
 }
 //# sourceMappingURL=nip-46.js.map

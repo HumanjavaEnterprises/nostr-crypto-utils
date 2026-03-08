@@ -4,7 +4,7 @@
  */
 export type { NostrEvent, UnsignedNostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, PublicKey, KeyPair, NostrMessageTuple, } from './types';
 export { NostrEventKind, NostrMessageType, Nip46Method } from './types';
-export type { Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, BunkerURI, BunkerValidationResult, } from './types';
+export type { Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, BunkerURI, BunkerValidationResult, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, } from './types';
 export { generateKeyPair, getPublicKey, getPublicKeySync, validateKeyPair, createEvent, signEvent, finalizeEvent, verifySignature, encrypt, decrypt, } from './crypto';
 export { validateEvent, validateEventId, validateEventSignature, validateSignedEvent, validateEventBase, validateFilter, validateSubscription, validateResponse, } from './validation';
 export { calculateEventId, } from './event';
