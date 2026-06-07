@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -6,23 +6,15 @@
 
 # Enumeration: NostrEventKind
 
-Enum defining all possible Nostr event kinds as specified in various NIPs
-
-## See
-
-https://github.com/nostr-protocol/nips
+Defined in: [types/index.ts:39](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L39)
 
 ## Enumeration Members
 
-### AUTH
+### APPLICATION\_SPECIFIC
 
-> **AUTH**: `22242`
+> **APPLICATION\_SPECIFIC**: `30078`
 
-NIP-42: Authentication
-
-#### Defined in
-
-[types/base.ts:73](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L73)
+Defined in: [types/index.ts:69](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L69)
 
 ***
 
@@ -30,11 +22,39 @@ NIP-42: Authentication
 
 > **AUTH\_RESPONSE**: `22243`
 
-NIP-42: Authentication response
+Defined in: [types/index.ts:62](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L62)
 
-#### Defined in
+***
 
-[types/base.ts:75](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L75)
+### BADGE\_AWARD
+
+> **BADGE\_AWARD**: `8`
+
+Defined in: [types/index.ts:48](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L48)
+
+***
+
+### BADGE\_DEFINITION
+
+> **BADGE\_DEFINITION**: `30009`
+
+Defined in: [types/index.ts:67](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L67)
+
+***
+
+### CATEGORIZED\_BOOKMARKS
+
+> **CATEGORIZED\_BOOKMARKS**: `30001`
+
+Defined in: [types/index.ts:65](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L65)
+
+***
+
+### CATEGORIZED\_PEOPLE
+
+> **CATEGORIZED\_PEOPLE**: `30000`
+
+Defined in: [types/index.ts:64](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L64)
 
 ***
 
@@ -42,11 +62,7 @@ NIP-42: Authentication response
 
 > **CHANNEL\_CREATE**: `40`
 
-NIP-28: Channel creation
-
-#### Defined in
-
-[types/base.ts:63](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L63)
+Defined in: [types/index.ts:49](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L49)
 
 ***
 
@@ -54,11 +70,7 @@ NIP-28: Channel creation
 
 > **CHANNEL\_HIDE\_MESSAGE**: `43`
 
-NIP-28: Hide message in channel
-
-#### Defined in
-
-[types/base.ts:69](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L69)
+Defined in: [types/index.ts:52](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L52)
 
 ***
 
@@ -66,11 +78,7 @@ NIP-28: Hide message in channel
 
 > **CHANNEL\_MESSAGE**: `42`
 
-NIP-28: Channel message
-
-#### Defined in
-
-[types/base.ts:67](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L67)
+Defined in: [types/index.ts:51](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L51)
 
 ***
 
@@ -78,11 +86,7 @@ NIP-28: Channel message
 
 > **CHANNEL\_METADATA**: `41`
 
-NIP-28: Channel metadata
-
-#### Defined in
-
-[types/base.ts:65](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L65)
+Defined in: [types/index.ts:50](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L50)
 
 ***
 
@@ -90,23 +94,39 @@ NIP-28: Channel metadata
 
 > **CHANNEL\_MUTE\_USER**: `44`
 
-NIP-28: Mute user in channel
-
-#### Defined in
-
-[types/base.ts:71](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L71)
+Defined in: [types/index.ts:53](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L53)
 
 ***
 
-### CONTACTS
+### CHANNEL\_RESERVE
 
-> **CONTACTS**: `3`
+> **CHANNEL\_RESERVE**: `45`
 
-NIP-02: Contact list and relay list metadata
+Defined in: [types/index.ts:54](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L54)
 
-#### Defined in
+***
 
-[types/base.ts:55](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L55)
+### CLIENT\_AUTH
+
+> **CLIENT\_AUTH**: `22242`
+
+Defined in: [types/index.ts:61](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L61)
+
+***
+
+### CONTACT\_LIST
+
+> **CONTACT\_LIST**: `3`
+
+Defined in: [types/index.ts:43](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L43)
+
+***
+
+### DELETE
+
+> **DELETE**: `5`
+
+Defined in: [types/index.ts:45](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L45)
 
 ***
 
@@ -114,23 +134,47 @@ NIP-02: Contact list and relay list metadata
 
 > **ENCRYPTED\_DIRECT\_MESSAGE**: `4`
 
-NIP-04: Encrypted direct message
-
-#### Defined in
-
-[types/base.ts:57](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L57)
+Defined in: [types/index.ts:44](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L44)
 
 ***
 
-### EVENT\_DELETION
+### LONG\_FORM
 
-> **EVENT\_DELETION**: `5`
+> **LONG\_FORM**: `30023`
 
-NIP-09: Event deletion
+Defined in: [types/index.ts:68](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L68)
 
-#### Defined in
+***
 
-[types/base.ts:59](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L59)
+### MUTE\_LIST
+
+> **MUTE\_LIST**: `10000`
+
+Defined in: [types/index.ts:58](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L58)
+
+***
+
+### NOSTR\_CONNECT
+
+> **NOSTR\_CONNECT**: `24133`
+
+Defined in: [types/index.ts:63](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L63)
+
+***
+
+### PIN\_LIST
+
+> **PIN\_LIST**: `10001`
+
+Defined in: [types/index.ts:59](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L59)
+
+***
+
+### PROFILE\_BADGES
+
+> **PROFILE\_BADGES**: `30008`
+
+Defined in: [types/index.ts:66](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L66)
 
 ***
 
@@ -138,11 +182,7 @@ NIP-09: Event deletion
 
 > **REACTION**: `7`
 
-NIP-25: Reactions to events
-
-#### Defined in
-
-[types/base.ts:61](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L61)
+Defined in: [types/index.ts:47](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L47)
 
 ***
 
@@ -150,11 +190,31 @@ NIP-25: Reactions to events
 
 > **RECOMMEND\_SERVER**: `2`
 
-NIP-01: Recommend relay to followers
+Defined in: [types/index.ts:42](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L42)
 
-#### Defined in
+***
 
-[types/base.ts:53](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L53)
+### RELAY\_LIST\_METADATA
+
+> **RELAY\_LIST\_METADATA**: `10002`
+
+Defined in: [types/index.ts:60](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L60)
+
+***
+
+### REPORTING
+
+> **REPORTING**: `1984`
+
+Defined in: [types/index.ts:55](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L55)
+
+***
+
+### REPOST
+
+> **REPOST**: `6`
+
+Defined in: [types/index.ts:46](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L46)
 
 ***
 
@@ -162,11 +222,7 @@ NIP-01: Recommend relay to followers
 
 > **SET\_METADATA**: `0`
 
-NIP-01: Set metadata about the user
-
-#### Defined in
-
-[types/base.ts:49](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L49)
+Defined in: [types/index.ts:40](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L40)
 
 ***
 
@@ -174,8 +230,20 @@ NIP-01: Set metadata about the user
 
 > **TEXT\_NOTE**: `1`
 
-NIP-01: Plain text note
+Defined in: [types/index.ts:41](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L41)
 
-#### Defined in
+***
 
-[types/base.ts:51](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L51)
+### ZAP
+
+> **ZAP**: `9735`
+
+Defined in: [types/index.ts:57](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L57)
+
+***
+
+### ZAP\_REQUEST
+
+> **ZAP\_REQUEST**: `9734`
+
+Defined in: [types/index.ts:56](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L56)

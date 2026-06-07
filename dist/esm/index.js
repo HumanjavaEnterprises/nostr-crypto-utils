@@ -20,6 +20,9 @@ export * as nip26 from './nips/nip-26';
 export * as nip44 from './nips/nip-44';
 export * as nip46 from './nips/nip-46';
 export * as nip49 from './nips/nip-49';
+export * as nip59 from './nips/nip-59';
+export * as nip17 from './nips/nip-17';
+export * as nip98 from './nips/nip-98';
 // Utils
 export { hexToBytes, bytesToHex, utf8ToBytes, bytesToUtf8, } from './utils/encoding';
 //# sourceMappingURL=index.js.map

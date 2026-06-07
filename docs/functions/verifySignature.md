@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -8,6 +8,8 @@
 
 > **verifySignature**(`event`): `Promise`\<`boolean`\>
 
+Defined in: [crypto.ts:295](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/crypto.ts#L295)
+
 Verifies an event signature
 
 ## Parameters
@@ -16,14 +18,6 @@ Verifies an event signature
 
 [`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)
 
-Signed event to verify
-
 ## Returns
 
 `Promise`\<`boolean`\>
-
-True if signature is valid
-
-## Defined in
-
-[crypto/index.ts:197](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L197)

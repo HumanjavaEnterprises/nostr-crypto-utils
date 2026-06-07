@@ -31,6 +31,9 @@ const entries = [
   { entry: 'src/nips/nip-44.ts',        name: 'nip-44',     globalName: 'NostrCryptoUtils.NIP44' },
   { entry: 'src/nips/nip-46.ts',        name: 'nip-46',     globalName: 'NostrCryptoUtils.NIP46' },
   { entry: 'src/nips/nip-49.ts',        name: 'nip-49',     globalName: 'NostrCryptoUtils.NIP49' },
+  { entry: 'src/nips/nip-59.ts',        name: 'nip-59',     globalName: 'NostrCryptoUtils.NIP59' },
+  { entry: 'src/nips/nip-17.ts',        name: 'nip-17',     globalName: 'NostrCryptoUtils.NIP17' },
+  { entry: 'src/nips/nip-98.ts',        name: 'nip-98',     globalName: 'NostrCryptoUtils.NIP98' },
 ];
 
 const sharedOptions = {

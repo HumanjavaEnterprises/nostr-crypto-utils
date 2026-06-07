@@ -1,6 +1,10 @@
 /**
  * NIP-26: Delegated Event Signing
  * Implements delegation of event signing capabilities
+ *
+ * @deprecated NIP-26 is `unrecommended` upstream ("adds unnecessary burden for
+ * little gain") and cannot revoke without time-bounding. Prefer NIP-46 remote
+ * signing for acting on behalf of a key. Retained for compatibility only.
  */
 import { sha256 } from '@noble/hashes/sha2.js';
 import { signSchnorr, verifySchnorrSignature } from '../crypto';

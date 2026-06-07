@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -7,6 +7,8 @@
 # Function: signEvent()
 
 > **signEvent**(`event`, `privateKey`): `Promise`\<[`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)\>
+
+Defined in: [crypto.ts:222](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/crypto.ts#L222)
 
 Signs an event
 
@@ -20,16 +22,10 @@ Event to sign
 
 ### privateKey
 
-`string`
+`string` \| `Uint8Array`\<`ArrayBufferLike`\>
 
-Private key to sign with
+Private key as hex string or Uint8Array
 
 ## Returns
 
 `Promise`\<[`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)\>
-
-Signed event
-
-## Defined in
-
-[crypto/index.ts:158](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L158)

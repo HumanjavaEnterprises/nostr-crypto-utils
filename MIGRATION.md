@@ -1,5 +1,31 @@
 # Migration Guide
 
+## Migrating to v0.9.0
+
+### New NIPs (additive — no breaking changes)
+- **NIP-98 HTTP Auth** — `import { nip98 } from 'nostr-crypto-utils'` (or `nostr-crypto-utils/nip98`).
+- **NIP-59 Gift Wrap** — `nip59` namespace / `nostr-crypto-utils/nip59`.
+- **NIP-17 Private Direct Messages** — `nip17` namespace / `nostr-crypto-utils/nip17`.
+
+### Deprecations
+- **NIP-04** and **NIP-26** are marked `@deprecated` (still functional). Prefer
+  **NIP-17** for DMs and **NIP-46** for acting on behalf of a key.
+
+## Migrating to v0.8.0 (edge-native)
+
+v0.8.0 made the package edge-native (Cloudflare Workers / Deno / browser) by removing
+`pino`, `buffer`, and Node polyfills (13 deps → 5). For nearly all consumers this is a
+**drop-in** upgrade — the crypto/event/NIP APIs are unchanged.
+
+The only behavioral change is the **logger**:
+- `pino` was replaced with a tiny zero-dependency logger. Standard calls are unaffected:
+  `logger.info('msg')`, `logger.error({ err }, 'msg')`, `logger.child(bindings)`, and
+  `LOG_LEVEL` gating all still work.
+- If you imported the `Logger` **type** from this package and relied on pino-specific
+  methods, note it is now a local interface (`trace`/`debug`/`info`/`warn`/`error`/
+  `fatal`/`child`).
+- Log **output format** changed from pino JSON to plain console lines.
+
 ## Migrating to v0.4.0
 
 ### Type System Changes

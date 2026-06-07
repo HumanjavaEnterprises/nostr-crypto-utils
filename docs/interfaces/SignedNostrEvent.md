@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -6,11 +6,7 @@
 
 # Interface: SignedNostrEvent
 
-Signed Nostr event interface, extends NostrEvent with signature
-
-## See
-
-https://github.com/nostr-protocol/nips/blob/master/01.md
+Defined in: [types/index.ts:24](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L24)
 
 ## Extends
 
@@ -22,15 +18,11 @@ https://github.com/nostr-protocol/nips/blob/master/01.md
 
 > **content**: `string`
 
-Content of the event
+Defined in: [types/index.ts:20](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L20)
 
 #### Inherited from
 
 [`NostrEvent`](NostrEvent.md).[`content`](NostrEvent.md#content)
-
-#### Defined in
-
-[types/base.ts:86](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L86)
 
 ***
 
@@ -38,15 +30,11 @@ Content of the event
 
 > **created\_at**: `number`
 
-Unix timestamp in seconds
+Defined in: [types/index.ts:18](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L18)
 
 #### Inherited from
 
 [`NostrEvent`](NostrEvent.md).[`created_at`](NostrEvent.md#created_at)
-
-#### Defined in
-
-[types/base.ts:90](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L90)
 
 ***
 
@@ -54,27 +42,19 @@ Unix timestamp in seconds
 
 > **id**: `string`
 
-Event ID (32-bytes sha256 of the serialized event data)
-
-#### Defined in
-
-[types/base.ts:101](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L101)
+Defined in: [types/index.ts:25](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L25)
 
 ***
 
 ### kind
 
-> **kind**: [`NostrEventKind`](../enumerations/NostrEventKind.md)
+> **kind**: `number`
 
-Event kind as defined in NIPs
+Defined in: [types/index.ts:17](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L17)
 
 #### Inherited from
 
 [`NostrEvent`](NostrEvent.md).[`kind`](NostrEvent.md#kind)
-
-#### Defined in
-
-[types/base.ts:84](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L84)
 
 ***
 
@@ -82,15 +62,11 @@ Event kind as defined in NIPs
 
 > **pubkey**: `string`
 
-Public key of the event creator in hex format
+Defined in: [types/index.ts:21](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L21)
 
 #### Inherited from
 
 [`NostrEvent`](NostrEvent.md).[`pubkey`](NostrEvent.md#pubkey)
-
-#### Defined in
-
-[types/base.ts:92](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L92)
 
 ***
 
@@ -98,11 +74,7 @@ Public key of the event creator in hex format
 
 > **sig**: `string`
 
-Schnorr signature of the event ID
-
-#### Defined in
-
-[types/base.ts:103](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L103)
+Defined in: [types/index.ts:26](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L26)
 
 ***
 
@@ -110,12 +82,8 @@ Schnorr signature of the event ID
 
 > **tags**: `string`[][]
 
-Array of tags associated with the event
+Defined in: [types/index.ts:19](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L19)
 
 #### Inherited from
 
 [`NostrEvent`](NostrEvent.md).[`tags`](NostrEvent.md#tags)
-
-#### Defined in
-
-[types/base.ts:88](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L88)

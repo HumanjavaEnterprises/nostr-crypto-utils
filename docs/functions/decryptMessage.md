@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -6,9 +6,11 @@
 
 # Function: decryptMessage()
 
-> **decryptMessage**(`encryptedMessage`, `privateKey`, `senderPubKey`): `Promise`\<`string`\>
+> **decryptMessage**(`encryptedMessage`, `recipientPrivKey`, `senderPubKey`): `Promise`\<`string`\>
 
-Decrypts a message
+Defined in: [nips/nip-04.ts:157](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/nips/nip-04.ts#L157)
+
+Decrypts a message using NIP-04 decryption
 
 ## Parameters
 
@@ -16,9 +18,9 @@ Decrypts a message
 
 `string`
 
-Encrypted message
+Encrypted message string
 
-### privateKey
+### recipientPrivKey
 
 `string`
 
@@ -28,18 +30,10 @@ Recipient's private key
 
 `string`
 
-Sender's public key hex
+Sender's public key
 
 ## Returns
 
 `Promise`\<`string`\>
 
-Decrypted message
-
-## Throws
-
-Error if decryption fails
-
-## Defined in
-
-[crypto/index.ts:304](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L304)
+Decrypted message string

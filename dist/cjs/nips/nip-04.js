@@ -3,6 +3,10 @@
  * @module nips/nip-04
  * @description Implementation of NIP-04 (Encrypted Direct Messages)
  * @see https://github.com/nostr-protocol/nips/blob/master/04.md
+ *
+ * @deprecated NIP-04 is `unrecommended` upstream — it leaks metadata and uses a
+ * weaker scheme. Prefer NIP-17 Private Direct Messages (NIP-44 encryption +
+ * NIP-59 gift wrap). Retained for compatibility with legacy events only.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;

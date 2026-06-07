@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -6,9 +6,11 @@
 
 # Function: encryptMessage()
 
-> **encryptMessage**(`message`, `privateKey`, `recipientPubKey`): `Promise`\<`string`\>
+> **encryptMessage**(`message`, `senderPrivKey`, `recipientPubKey`): `Promise`\<`string`\>
 
-Encrypts a message
+Defined in: [nips/nip-04.ts:91](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/nips/nip-04.ts#L91)
+
+Encrypts a message using NIP-04 encryption
 
 ## Parameters
 
@@ -18,7 +20,7 @@ Encrypts a message
 
 Message to encrypt
 
-### privateKey
+### senderPrivKey
 
 `string`
 
@@ -28,14 +30,10 @@ Sender's private key
 
 `string`
 
-Recipient's public key hex
+Recipient's public key
 
 ## Returns
 
 `Promise`\<`string`\>
 
-Encrypted message
-
-## Defined in
-
-[crypto/index.ts:240](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L240)
+Encrypted message string

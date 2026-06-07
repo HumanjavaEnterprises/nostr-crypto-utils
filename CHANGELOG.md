@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-07
+
+### Added
+- **NIP-98 HTTP Auth** (`nostr-crypto-utils/nip98`): `createAuthEvent`,
+  `validateAuthEvent`, `toAuthHeader`/`fromAuthHeader`, `hashPayload`. Builds and
+  verifies the `kind 27235` event and the `Authorization: Nostr <base64>` header.
+  **No HTTP is performed** — the caller issues the request (keeps the package
+  edge-native).
+- **NIP-59 Gift Wrap** (`nostr-crypto-utils/nip59`): `createRumor`, `createSeal`,
+  `createGiftWrap`, `wrapEvent`, `unwrapEvent`. Rumor → seal (`kind 13`) → gift
+  wrap (`kind 1059`, or ephemeral `kind 21059`) over NIP-44. Unwrap verifies the
+  seal signature and enforces the seal-author = rumor-author binding.
+- **NIP-17 Private Direct Messages** (`nostr-crypto-utils/nip17`):
+  `createChatRumor`, `createDirectMessage` (wraps per recipient + a sender
+  self-copy), `readDirectMessage`. Builds `kind 14` chat rumors on the 44+59 stack.
+- Subpath exports `./nip59`, `./nip17`, `./nip98`; browser IIFE bundles for each.
+
+### Changed
+- **NIP-04** and **NIP-26** are marked `@deprecated` to match upstream
+  (`unrecommended`). They remain functional for legacy compatibility; prefer
+  NIP-17 (DMs) and NIP-46 (acting on behalf of a key) respectively.
+
+### Notes
+- 161 tests pass (was 143): +8 NIP-98, +5 NIP-59, +5 NIP-17, all round-trip
+  and negative-path covered. Still 5 runtime deps, still edge-native.
+
 ## [0.8.0] - 2026-06-07
 
 ### Changed

@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -8,6 +8,8 @@
 
 > **createEvent**(`event`): [`NostrEvent`](../interfaces/NostrEvent.md)
 
+Defined in: [crypto.ts:195](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/crypto.ts#L195)
+
 Creates a new event
 
 ## Parameters
@@ -16,14 +18,6 @@ Creates a new event
 
 `Partial`\<[`NostrEvent`](../interfaces/NostrEvent.md)\>
 
-Event data
-
 ## Returns
 
 [`NostrEvent`](../interfaces/NostrEvent.md)
-
-Created event
-
-## Defined in
-
-[crypto/index.ts:142](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/crypto/index.ts#L142)

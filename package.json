@@ -1,6 +1,6 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Core cryptographic utilities for Nostr protocol — edge-native (Cloudflare Workers / Deno / browser), zero non-crypto dependencies",
   "type": "commonjs",
   "main": "./dist/cjs/index.js",
@@ -30,6 +30,24 @@
       "import": "./dist/esm/nips/nip-49.js",
       "require": "./dist/cjs/nips/nip-49.js",
       "default": "./dist/cjs/nips/nip-49.js"
+    },
+    "./nip59": {
+      "types": "./dist/types/nips/nip-59.d.ts",
+      "import": "./dist/esm/nips/nip-59.js",
+      "require": "./dist/cjs/nips/nip-59.js",
+      "default": "./dist/cjs/nips/nip-59.js"
+    },
+    "./nip17": {
+      "types": "./dist/types/nips/nip-17.d.ts",
+      "import": "./dist/esm/nips/nip-17.js",
+      "require": "./dist/cjs/nips/nip-17.js",
+      "default": "./dist/cjs/nips/nip-17.js"
+    },
+    "./nip98": {
+      "types": "./dist/types/nips/nip-98.d.ts",
+      "import": "./dist/esm/nips/nip-98.js",
+      "require": "./dist/cjs/nips/nip-98.js",
+      "default": "./dist/cjs/nips/nip-98.js"
     }
   },
   "files": [
@@ -37,6 +55,9 @@
     "src",
     "examples/**/*",
     "README.md",
+    "AGENTS.md",
+    "SKILL.md",
+    "llms.txt",
     "LICENSE"
   ],
   "scripts": {
@@ -45,6 +66,8 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:browser": "node esbuild.browser.mjs",
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -63,7 +86,13 @@
     "edge",
     "deno",
     "browser",
-    "zero-dependency"
+    "zero-dependency",
+    "ai-agent",
+    "agentic",
+    "sovereign-identity",
+    "nip-98",
+    "nip-17",
+    "nip-59"
   ],
   "author": "vveerrgg",
   "license": "MIT",
@@ -90,6 +119,8 @@
     "@vitest/coverage-v8": "^4.0.18",
     "esbuild": "^0.27.3",
     "eslint": "^10.0.3",
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },

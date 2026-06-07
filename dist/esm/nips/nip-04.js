@@ -2,6 +2,10 @@
  * @module nips/nip-04
  * @description Implementation of NIP-04 (Encrypted Direct Messages)
  * @see https://github.com/nostr-protocol/nips/blob/master/04.md
+ *
+ * @deprecated NIP-04 is `unrecommended` upstream — it leaks metadata and uses a
+ * weaker scheme. Prefer NIP-17 Private Direct Messages (NIP-44 encryption +
+ * NIP-59 gift wrap). Retained for compatibility with legacy events only.
  */
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hexToBytes } from '@noble/hashes/utils.js';

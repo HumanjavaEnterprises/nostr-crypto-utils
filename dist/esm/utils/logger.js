@@ -56,7 +56,7 @@ class EdgeLogger {
         if (this.level === 'silent' || rank(method) < rank(this.level))
             return;
         let context;
-        let message = '';
+        let message;
         if (args.length && typeof args[0] === 'object' && args[0] !== null) {
             // pino-style: (mergingObject, message)
             context = {};
