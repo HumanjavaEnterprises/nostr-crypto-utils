@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-07
+
+### Changed
+- **Edge-native: zero non-crypto dependencies.** Runtime deps cut from 13 → 5
+  (`@noble/ciphers`, `@noble/curves`, `@noble/hashes`, `@scure/base`, `bech32` —
+  all audited, browser/Workers-native). The package now runs unmodified on
+  Cloudflare Workers / Deno / browsers with no Node polyfills.
+- **Logger no longer depends on `pino`/`pino-pretty`.** Replaced with a tiny
+  zero-dependency, edge-safe logger. Public API is preserved for common usage:
+  level gating via `LOG_LEVEL`, `logger.info('msg')` and `logger.error({ err }, 'msg')`
+  call signatures, and `logger.child(bindings)`.
+- **NIP-19 no longer uses the `buffer` polyfill.** All hex/utf8/uint32 conversions
+  now use `@noble/hashes/utils` + `TextEncoder`/`TextDecoder` + `DataView`,
+  completing the "no Buffer dependency" goal started in 0.6.0.
+
+### Removed
+- Dependencies: `pino`, `pino-pretty`, `buffer`, `assert`, `util`,
+  `vm-browserify`, `stream-browserify`, `path-browserify`.
+
+### Notes
+- All 143 tests pass unchanged. NIP-19 round-trips (npub/nsec/note/nprofile/
+  nevent/naddr/nrelay) verified, including `naddr` uint32 kind encoding.
+- **Migration:** if you imported the `Logger` *type* from this package and relied
+  on pino-specific methods, note it's now a local interface (trace/debug/info/
+  warn/error/fatal/child). Standard logging calls are unaffected.
+
 ## [0.7.0] - 2026-03-06
 
 ### Added
