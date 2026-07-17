@@ -3,7 +3,7 @@
  * Implements delegation of event signing capabilities
  */
 import { sha256 } from '@noble/hashes/sha2.js';
-import { signSchnorr, verifySchnorrSignature } from '../crypto';
+import { signSchnorr, verifySchnorrSignature } from '../crypto.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { schnorr } from '@noble/curves/secp256k1.js';
 /**

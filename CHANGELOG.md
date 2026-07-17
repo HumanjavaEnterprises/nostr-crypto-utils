@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.7.2] - 2026-07-16
+
+### Fixed
+- Ship valid dual ESM/CJS package — `type: module` + `dist/cjs/package.json` `{"type":"commonjs"}` shim + explicit `.js` import extensions in source; fixes native ESM named-export resolution for `tsx`/native-ESM consumers (bundlers previously masked the broken `exports` map). The `esm` build now uses `moduleResolution: NodeNext` to enforce explicit extensions at compile time.
+
 ## [0.7.0] - 2026-03-06
 
 ### Added

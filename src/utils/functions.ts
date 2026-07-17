@@ -3,8 +3,8 @@
  * @description General utility functions for Nostr operations
  */
 
-import { NostrEvent } from '../types';
-import { logger } from './logger';
+import { NostrEvent } from '../types/index.js';
+import { logger } from './logger.js';
 
 /**
  * Formats an event for relay transmission

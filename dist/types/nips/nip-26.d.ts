@@ -2,7 +2,7 @@
  * NIP-26: Delegated Event Signing
  * Implements delegation of event signing capabilities
  */
-import { NostrEvent } from '../types';
+import { NostrEvent } from '../types/index.js';
 export interface DelegationConditions {
     kind?: number;
     since?: number;

@@ -1,4 +1,4 @@
-import { NostrEventKind, NostrMessageType } from '../types/base';
+import { NostrEventKind, NostrMessageType } from '../types/base.js';
 /**
  * Format event for relay transmission
  */

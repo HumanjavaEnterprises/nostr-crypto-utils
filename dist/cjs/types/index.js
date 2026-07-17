@@ -56,13 +56,13 @@ var NostrEventKind;
  * Re-export all types from base module
  * @packageDocumentation
  */
-__exportStar(require("./base"), exports);
+__exportStar(require("./base.js"), exports);
 /** Re-export protocol types */
-__exportStar(require("./protocol"), exports);
+__exportStar(require("./protocol.js"), exports);
 /** Re-export message types */
-__exportStar(require("./messages"), exports);
+__exportStar(require("./messages.js"), exports);
 /** Re-export type guards */
-__exportStar(require("./guards"), exports);
+__exportStar(require("./guards.js"), exports);
 /** Re-export NIP-46 types */
-__exportStar(require("./nip46"), exports);
+__exportStar(require("./nip46.js"), exports);
 //# sourceMappingURL=index.js.map

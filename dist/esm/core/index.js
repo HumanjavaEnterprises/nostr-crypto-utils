@@ -2,7 +2,7 @@
  * Core functionality for Nostr
  * @module core
  */
-export * from './constants';
-export * from './errors';
-export * from './types';
+export * from './constants.js';
+export * from './errors.js';
+export * from './types/index.js';
 //# sourceMappingURL=index.js.map

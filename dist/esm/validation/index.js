@@ -3,8 +3,8 @@
  * @description Validation utilities for Nostr events, messages, and related data structures.
  * Provides functions to validate events, signatures, filters, and subscriptions according to the Nostr protocol.
  */
-import { NostrMessageType } from '../types/index';
-import { logger } from '../utils/logger';
+import { NostrMessageType } from '../types/index.js';
+import { logger } from '../utils/logger.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 import { schnorr } from '@noble/curves/secp256k1.js';

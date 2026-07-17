@@ -15,7 +15,7 @@ exports.validateEvent = validateEvent;
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
-const logger_1 = require("../utils/logger");
+const logger_js_1 = require("../utils/logger.js");
 /**
  * Creates a new Nostr event with the specified parameters (NIP-01)
  * @param params - Event parameters
@@ -58,7 +58,7 @@ async function getEventHash(event) {
         return (0, utils_js_1.bytesToHex)(hash);
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to get event hash');
+        logger_js_1.logger.error({ error }, 'Failed to get event hash');
         throw error;
     }
 }
@@ -79,7 +79,7 @@ async function signEvent(event, privateKey) {
         };
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to sign event');
+        logger_js_1.logger.error({ error }, 'Failed to sign event');
         throw error;
     }
 }
@@ -99,7 +99,7 @@ function verifySignature(event) {
         return secp256k1_js_1.schnorr.verify((0, utils_js_1.hexToBytes)(event.sig), (0, utils_js_1.hexToBytes)(event.id), (0, utils_js_1.hexToBytes)(event.pubkey));
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to verify signature');
+        logger_js_1.logger.error({ error }, 'Failed to verify signature');
         return false;
     }
 }
@@ -142,7 +142,7 @@ function validateEvent(event) {
         return true;
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to validate event');
+        logger_js_1.logger.error({ error }, 'Failed to validate event');
         return false;
     }
 }

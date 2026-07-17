@@ -9,7 +9,7 @@ exports.serializeEvent = serializeEvent;
 exports.getEventHash = getEventHash;
 const sha2_js_1 = require("@noble/hashes/sha2.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
-const logger_1 = require("../utils/logger");
+const logger_js_1 = require("../utils/logger.js");
 /**
  * Creates a new Nostr event with the specified parameters
  * @param params - Event parameters
@@ -52,7 +52,7 @@ async function getEventHash(event) {
         return (0, utils_js_1.bytesToHex)(hash);
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to get event hash');
+        logger_js_1.logger.error({ error }, 'Failed to get event hash');
         throw error;
     }
 }

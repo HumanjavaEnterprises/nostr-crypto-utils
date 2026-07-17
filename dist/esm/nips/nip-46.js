@@ -11,8 +11,8 @@
 import { schnorr } from '@noble/curves/secp256k1.js';
 import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';
-import { getConversationKey as nip44GetConversationKey, encrypt as nip44Encrypt, decrypt as nip44Decrypt, } from './nip-44';
-import { Nip46Method } from '../types';
+import { getConversationKey as nip44GetConversationKey, encrypt as nip44Encrypt, decrypt as nip44Decrypt, } from './nip-44.js';
+import { Nip46Method } from '../types/index.js';
 // ─── 1. Bunker URI ─────────────────────────────────────────────────────────
 /**
  * Parse a bunker:// URI into its components

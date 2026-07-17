@@ -8,8 +8,8 @@ exports.createTextNoteEvent = createTextNoteEvent;
 exports.createMetadataEvent = createMetadataEvent;
 exports.createChannelMessageEvent = createChannelMessageEvent;
 exports.createDirectMessageEvent = createDirectMessageEvent;
-const types_1 = require("../types");
-const crypto_1 = require("../crypto");
+const index_js_1 = require("../types/index.js");
+const crypto_js_1 = require("../crypto.js");
 /**
  * Creates a text note event
  * @param content - Text content
@@ -17,8 +17,8 @@ const crypto_1 = require("../crypto");
  * @returns Created event
  */
 function createTextNoteEvent(content, pubkey) {
-    return (0, crypto_1.createEvent)({
-        kind: types_1.NostrEventKind.TEXT_NOTE,
+    return (0, crypto_js_1.createEvent)({
+        kind: index_js_1.NostrEventKind.TEXT_NOTE,
         content,
         pubkey
     });
@@ -30,8 +30,8 @@ function createTextNoteEvent(content, pubkey) {
  * @returns Created event
  */
 function createMetadataEvent(metadata, pubkey) {
-    return (0, crypto_1.createEvent)({
-        kind: types_1.NostrEventKind.SET_METADATA,
+    return (0, crypto_js_1.createEvent)({
+        kind: index_js_1.NostrEventKind.SET_METADATA,
         content: JSON.stringify(metadata),
         pubkey
     });
@@ -44,8 +44,8 @@ function createMetadataEvent(metadata, pubkey) {
  * @returns Created event
  */
 function createChannelMessageEvent(content, channelId, pubkey) {
-    return (0, crypto_1.createEvent)({
-        kind: types_1.NostrEventKind.CHANNEL_MESSAGE,
+    return (0, crypto_js_1.createEvent)({
+        kind: index_js_1.NostrEventKind.CHANNEL_MESSAGE,
         content,
         pubkey,
         tags: [['e', channelId]]
@@ -59,8 +59,8 @@ function createChannelMessageEvent(content, channelId, pubkey) {
  * @returns Created event
  */
 function createDirectMessageEvent(content, recipientPubKey, pubkey) {
-    return (0, crypto_1.createEvent)({
-        kind: types_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
+    return (0, crypto_js_1.createEvent)({
+        kind: index_js_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
         content,
         pubkey,
         tags: [['p', recipientPubKey]]

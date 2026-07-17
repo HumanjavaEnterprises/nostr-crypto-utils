@@ -5,8 +5,8 @@
  */
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hexToBytes } from '@noble/hashes/utils.js';
-import { logger } from '../utils/logger';
-import { bytesToBase64, base64ToBytes } from '../encoding/base64';
+import { logger } from '../utils/logger.js';
+import { bytesToBase64, base64ToBytes } from '../encoding/base64.js';
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
         return window.crypto;

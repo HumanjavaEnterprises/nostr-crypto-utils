@@ -2,8 +2,8 @@
  * @module utils/events
  * @description Event creation utility functions
  */
-import { NostrEventKind } from '../types';
-import { createEvent } from '../crypto';
+import { NostrEventKind } from '../types/index.js';
+import { createEvent } from '../crypto.js';
 /**
  * Creates a text note event
  * @param content - Text content

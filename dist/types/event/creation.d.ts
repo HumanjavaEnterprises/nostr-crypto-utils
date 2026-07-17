@@ -2,7 +2,7 @@
  * @module event/creation
  * @description Event creation and serialization utilities for Nostr
  */
-import type { NostrEvent, NostrEventKind } from '../types/index';
+import type { NostrEvent, NostrEventKind } from '../types/index.js';
 /**
  * Creates a new Nostr event with the specified parameters
  * @param params - Event parameters

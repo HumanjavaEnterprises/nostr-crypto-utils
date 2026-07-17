@@ -3,7 +3,7 @@
  * @description Implementation of NIP-04 (Encrypted Direct Messages)
  * @see https://github.com/nostr-protocol/nips/blob/master/04.md
  */
-import type { CryptoSubtle } from '../crypto';
+import type { CryptoSubtle } from '../crypto.js';
 declare global {
     interface Window {
         crypto: CryptoSubtle;

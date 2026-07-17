@@ -1,4 +1,4 @@
-import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent } from '../types';
+import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent } from '../types/index.js';
 export interface ValidationResult {
     isValid: boolean;
     error: string | undefined;

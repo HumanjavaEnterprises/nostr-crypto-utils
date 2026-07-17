@@ -2,7 +2,7 @@
  * @module utils/events
  * @description Event creation utility functions
  */
-import { NostrEvent } from '../types';
+import { NostrEvent } from '../types/index.js';
 /**
  * Creates a text note event
  * @param content - Text content

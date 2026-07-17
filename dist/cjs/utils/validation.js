@@ -6,7 +6,7 @@ exports.validateSignedEvent = validateSignedEvent;
 exports.validatePublicKey = validatePublicKey;
 exports.validateFilter = validateFilter;
 exports.validateSubscription = validateSubscription;
-const guards_1 = require("../types/guards");
+const guards_js_1 = require("../types/guards.js");
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
@@ -30,7 +30,7 @@ const sha2_js_1 = require("@noble/hashes/sha2.js");
 function validateEvent(event) {
     const errors = [];
     // Check if the event matches the NostrEvent type structure
-    if (!(0, guards_1.isNostrEvent)(event)) {
+    if (!(0, guards_js_1.isNostrEvent)(event)) {
         errors.push('Invalid event structure');
     }
     // Check kind
@@ -90,7 +90,7 @@ function getPublicKeyHex(pubkey) {
 function validateSignedEvent(event) {
     const errors = [];
     // Check if the event matches the SignedNostrEvent type structure
-    if (!(0, guards_1.isSignedNostrEvent)(event)) {
+    if (!(0, guards_js_1.isSignedNostrEvent)(event)) {
         errors.push('Invalid signed event structure');
     }
     const baseValidation = validateEvent(event);
@@ -182,7 +182,7 @@ function validatePublicKey(pubkey) {
  */
 function validateFilter(filter) {
     // Check if the filter matches the NostrFilter type structure
-    if (!(0, guards_1.isNostrFilter)(filter)) {
+    if (!(0, guards_js_1.isNostrFilter)(filter)) {
         return {
             isValid: false,
             error: 'Filter kinds must be non-negative integers'

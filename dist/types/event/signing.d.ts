@@ -2,7 +2,7 @@
  * @module event/signing
  * @description Event signing and verification utilities for Nostr
  */
-import type { NostrEvent, SignedNostrEvent } from '../types';
+import type { NostrEvent, SignedNostrEvent } from '../types/index.js';
 /**
  * Signs a Nostr event with a private key (NIP-01)
  * @param event - Event to sign

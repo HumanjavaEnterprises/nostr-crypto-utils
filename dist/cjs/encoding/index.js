@@ -23,9 +23,9 @@ exports.bytesToHex = bytesToHex;
 /**
  * Utility functions for encoding and decoding data
  */
-__exportStar(require("./hex"), exports);
-__exportStar(require("./base64"), exports);
-__exportStar(require("./binary"), exports);
+__exportStar(require("./hex.js"), exports);
+__exportStar(require("./base64.js"), exports);
+__exportStar(require("./binary.js"), exports);
 /**
  * Convert a hex string to Uint8Array
  * @param hex Hex string to convert

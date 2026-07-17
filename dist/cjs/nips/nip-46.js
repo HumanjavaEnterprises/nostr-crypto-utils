@@ -40,8 +40,8 @@ exports.handleSignerRequest = handleSignerRequest;
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
-const nip_44_1 = require("./nip-44");
-const types_1 = require("../types");
+const nip_44_js_1 = require("./nip-44.js");
+const index_js_1 = require("../types/index.js");
 // ─── 1. Bunker URI ─────────────────────────────────────────────────────────
 /**
  * Parse a bunker:// URI into its components
@@ -110,7 +110,7 @@ function createSession(remotePubkey) {
     const clientSecretKey = (0, utils_js_1.bytesToHex)(clientSecretKeyBytes);
     const clientPubkeyBytes = secp256k1_js_1.schnorr.getPublicKey(clientSecretKeyBytes);
     const clientPubkey = (0, utils_js_1.bytesToHex)(clientPubkeyBytes);
-    const conversationKey = (0, nip_44_1.getConversationKey)(clientSecretKeyBytes, remotePubkey);
+    const conversationKey = (0, nip_44_js_1.getConversationKey)(clientSecretKeyBytes, remotePubkey);
     return {
         clientSecretKey,
         clientPubkey,
@@ -128,7 +128,7 @@ function restoreSession(clientSecretKey, remotePubkey) {
     const clientSecretKeyBytes = (0, utils_js_1.hexToBytes)(clientSecretKey);
     const clientPubkeyBytes = secp256k1_js_1.schnorr.getPublicKey(clientSecretKeyBytes);
     const clientPubkey = (0, utils_js_1.bytesToHex)(clientPubkeyBytes);
-    const conversationKey = (0, nip_44_1.getConversationKey)(clientSecretKeyBytes, remotePubkey);
+    const conversationKey = (0, nip_44_js_1.getConversationKey)(clientSecretKeyBytes, remotePubkey);
     return {
         clientSecretKey,
         clientPubkey,
@@ -209,7 +209,7 @@ function isResponse(payload) {
  */
 async function wrapEvent(payload, session, recipientPubkey) {
     const json = JSON.stringify(payload);
-    const encrypted = (0, nip_44_1.encrypt)(json, session.conversationKey);
+    const encrypted = (0, nip_44_js_1.encrypt)(json, session.conversationKey);
     const created_at = Math.floor(Date.now() / 1000);
     const event = {
         kind: 24133,
@@ -246,7 +246,7 @@ function unwrapEvent(event, session) {
     if (event.kind !== 24133) {
         throw new Error(`expected kind 24133, got ${event.kind}`);
     }
-    const json = (0, nip_44_1.decrypt)(event.content, session.conversationKey);
+    const json = (0, nip_44_js_1.decrypt)(event.content, session.conversationKey);
     return parsePayload(json);
 }
 // ─── 5. Convenience Request Creators ────────────────────────────────────────
@@ -264,22 +264,22 @@ function connectRequest(remotePubkey, secret, permissions) {
         params.push('');
     if (permissions)
         params.push(permissions);
-    return createRequest(types_1.Nip46Method.CONNECT, params);
+    return createRequest(index_js_1.Nip46Method.CONNECT, params);
 }
 /** Create a 'ping' request */
 function pingRequest() {
-    return createRequest(types_1.Nip46Method.PING, []);
+    return createRequest(index_js_1.Nip46Method.PING, []);
 }
 /** Create a 'get_public_key' request */
 function getPublicKeyRequest() {
-    return createRequest(types_1.Nip46Method.GET_PUBLIC_KEY, []);
+    return createRequest(index_js_1.Nip46Method.GET_PUBLIC_KEY, []);
 }
 /**
  * Create a 'sign_event' request
  * @param eventJson - JSON-stringified unsigned event
  */
 function signEventRequest(eventJson) {
-    return createRequest(types_1.Nip46Method.SIGN_EVENT, [eventJson]);
+    return createRequest(index_js_1.Nip46Method.SIGN_EVENT, [eventJson]);
 }
 /**
  * Create a 'nip04_encrypt' request
@@ -287,7 +287,7 @@ function signEventRequest(eventJson) {
  * @param plaintext - Message to encrypt
  */
 function nip04EncryptRequest(thirdPartyPubkey, plaintext) {
-    return createRequest(types_1.Nip46Method.NIP04_ENCRYPT, [thirdPartyPubkey, plaintext]);
+    return createRequest(index_js_1.Nip46Method.NIP04_ENCRYPT, [thirdPartyPubkey, plaintext]);
 }
 /**
  * Create a 'nip04_decrypt' request
@@ -295,7 +295,7 @@ function nip04EncryptRequest(thirdPartyPubkey, plaintext) {
  * @param ciphertext - Encrypted message to decrypt
  */
 function nip04DecryptRequest(thirdPartyPubkey, ciphertext) {
-    return createRequest(types_1.Nip46Method.NIP04_DECRYPT, [thirdPartyPubkey, ciphertext]);
+    return createRequest(index_js_1.Nip46Method.NIP04_DECRYPT, [thirdPartyPubkey, ciphertext]);
 }
 /**
  * Create a 'nip44_encrypt' request
@@ -303,7 +303,7 @@ function nip04DecryptRequest(thirdPartyPubkey, ciphertext) {
  * @param plaintext - Message to encrypt
  */
 function nip44EncryptRequest(thirdPartyPubkey, plaintext) {
-    return createRequest(types_1.Nip46Method.NIP44_ENCRYPT, [thirdPartyPubkey, plaintext]);
+    return createRequest(index_js_1.Nip46Method.NIP44_ENCRYPT, [thirdPartyPubkey, plaintext]);
 }
 /**
  * Create a 'nip44_decrypt' request
@@ -311,11 +311,11 @@ function nip44EncryptRequest(thirdPartyPubkey, plaintext) {
  * @param ciphertext - Encrypted message to decrypt
  */
 function nip44DecryptRequest(thirdPartyPubkey, ciphertext) {
-    return createRequest(types_1.Nip46Method.NIP44_DECRYPT, [thirdPartyPubkey, ciphertext]);
+    return createRequest(index_js_1.Nip46Method.NIP44_DECRYPT, [thirdPartyPubkey, ciphertext]);
 }
 /** Create a 'get_relays' request */
 function getRelaysRequest() {
-    return createRequest(types_1.Nip46Method.GET_RELAYS, []);
+    return createRequest(index_js_1.Nip46Method.GET_RELAYS, []);
 }
 // ─── 6. Filter Helpers ─────────────────────────────────────────────────────
 /**
@@ -365,8 +365,8 @@ function unwrapRequest(event, signerSecretKey) {
     }
     const clientPubkey = event.pubkey;
     const signerSecretKeyBytes = (0, utils_js_1.hexToBytes)(signerSecretKey);
-    const conversationKey = (0, nip_44_1.getConversationKey)(signerSecretKeyBytes, clientPubkey);
-    const json = (0, nip_44_1.decrypt)(event.content, conversationKey);
+    const conversationKey = (0, nip_44_js_1.getConversationKey)(signerSecretKeyBytes, clientPubkey);
+    const json = (0, nip_44_js_1.decrypt)(event.content, conversationKey);
     const payload = parsePayload(json);
     if (!isRequest(payload)) {
         throw new Error('expected a NIP-46 request, got a response');
@@ -389,9 +389,9 @@ function unwrapRequest(event, signerSecretKey) {
  */
 async function wrapResponse(response, signerSecretKey, signerPubkey, clientPubkey, conversationKey) {
     const signerSecretKeyBytes = (0, utils_js_1.hexToBytes)(signerSecretKey);
-    const convKey = conversationKey || (0, nip_44_1.getConversationKey)(signerSecretKeyBytes, clientPubkey);
+    const convKey = conversationKey || (0, nip_44_js_1.getConversationKey)(signerSecretKeyBytes, clientPubkey);
     const json = JSON.stringify(response);
-    const encrypted = (0, nip_44_1.encrypt)(json, convKey);
+    const encrypted = (0, nip_44_js_1.encrypt)(json, convKey);
     const created_at = Math.floor(Date.now() / 1000);
     const event = {
         kind: 24133,
@@ -430,7 +430,7 @@ async function handleSignerRequest(request, clientPubkey, handlers, opts) {
     const { method, params, id } = request;
     const authenticated = opts?.authenticatedClients;
     // connect is always allowed (it's the auth handshake)
-    if (method === types_1.Nip46Method.CONNECT || method === 'connect') {
+    if (method === index_js_1.Nip46Method.CONNECT || method === 'connect') {
         // params[0] = remote pubkey, params[1] = secret (optional)
         const clientSecret = params[1] || undefined;
         if (opts?.secret && clientSecret !== opts.secret) {
@@ -444,7 +444,7 @@ async function handleSignerRequest(request, clientPubkey, handlers, opts) {
         };
     }
     // ping is always allowed (even unauthenticated)
-    if (method === types_1.Nip46Method.PING || method === 'ping') {
+    if (method === index_js_1.Nip46Method.PING || method === 'ping') {
         return {
             response: createResponse(id, 'pong'),
         };
@@ -457,17 +457,17 @@ async function handleSignerRequest(request, clientPubkey, handlers, opts) {
     }
     try {
         switch (method) {
-            case types_1.Nip46Method.GET_PUBLIC_KEY:
+            case index_js_1.Nip46Method.GET_PUBLIC_KEY:
             case 'get_public_key': {
                 const pubkey = await handlers.getPublicKey();
                 return { response: createResponse(id, pubkey) };
             }
-            case types_1.Nip46Method.SIGN_EVENT:
+            case index_js_1.Nip46Method.SIGN_EVENT:
             case 'sign_event': {
                 const signedEvent = await handlers.signEvent(params[0]);
                 return { response: createResponse(id, signedEvent) };
             }
-            case types_1.Nip46Method.NIP04_ENCRYPT:
+            case index_js_1.Nip46Method.NIP04_ENCRYPT:
             case 'nip04_encrypt': {
                 if (!handlers.nip04Encrypt) {
                     return { response: createResponse(id, undefined, 'nip04_encrypt not supported') };
@@ -475,7 +475,7 @@ async function handleSignerRequest(request, clientPubkey, handlers, opts) {
                 const result = await handlers.nip04Encrypt(params[0], params[1]);
                 return { response: createResponse(id, result) };
             }
-            case types_1.Nip46Method.NIP04_DECRYPT:
+            case index_js_1.Nip46Method.NIP04_DECRYPT:
             case 'nip04_decrypt': {
                 if (!handlers.nip04Decrypt) {
                     return { response: createResponse(id, undefined, 'nip04_decrypt not supported') };
@@ -483,7 +483,7 @@ async function handleSignerRequest(request, clientPubkey, handlers, opts) {
                 const result = await handlers.nip04Decrypt(params[0], params[1]);
                 return { response: createResponse(id, result) };
             }
-            case types_1.Nip46Method.NIP44_ENCRYPT:
+            case index_js_1.Nip46Method.NIP44_ENCRYPT:
             case 'nip44_encrypt': {
                 if (!handlers.nip44Encrypt) {
                     return { response: createResponse(id, undefined, 'nip44_encrypt not supported') };
@@ -491,7 +491,7 @@ async function handleSignerRequest(request, clientPubkey, handlers, opts) {
                 const result = await handlers.nip44Encrypt(params[0], params[1]);
                 return { response: createResponse(id, result) };
             }
-            case types_1.Nip46Method.NIP44_DECRYPT:
+            case index_js_1.Nip46Method.NIP44_DECRYPT:
             case 'nip44_decrypt': {
                 if (!handlers.nip44Decrypt) {
                     return { response: createResponse(id, undefined, 'nip44_decrypt not supported') };
@@ -499,7 +499,7 @@ async function handleSignerRequest(request, clientPubkey, handlers, opts) {
                 const result = await handlers.nip44Decrypt(params[0], params[1]);
                 return { response: createResponse(id, result) };
             }
-            case types_1.Nip46Method.GET_RELAYS:
+            case index_js_1.Nip46Method.GET_RELAYS:
             case 'get_relays': {
                 if (!handlers.getRelays) {
                     return { response: createResponse(id, undefined, 'get_relays not supported') };

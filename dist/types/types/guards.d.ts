@@ -2,7 +2,7 @@
  * @module types/guards
  * @description Type guard functions for Nostr types
  */
-import { NostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, NostrResponse, NostrError } from './base';
+import { NostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, NostrResponse, NostrError } from './base.js';
 /**
  * Type guard for NostrEvent
  */

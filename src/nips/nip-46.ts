@@ -16,7 +16,7 @@ import {
   getConversationKey as nip44GetConversationKey,
   encrypt as nip44Encrypt,
   decrypt as nip44Decrypt,
-} from './nip-44';
+} from './nip-44.js';
 import type {
   BunkerURI,
   BunkerValidationResult,
@@ -29,8 +29,8 @@ import type {
   Nip46HandleResult,
   Nip46UnwrapResult,
   SignedNostrEvent,
-} from '../types';
-import { Nip46Method } from '../types';
+} from '../types/index.js';
+import { Nip46Method } from '../types/index.js';
 
 // ─── 1. Bunker URI ─────────────────────────────────────────────────────────
 

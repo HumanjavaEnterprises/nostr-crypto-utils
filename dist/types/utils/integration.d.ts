@@ -1,4 +1,4 @@
-import { NostrEvent, NostrFilter, NostrEventKind, SignedNostrEvent, NostrMessage, UnsignedEvent } from '../types/base';
+import { NostrEvent, NostrFilter, NostrEventKind, SignedNostrEvent, NostrMessage, UnsignedEvent } from '../types/base.js';
 /**
  * Format event for relay transmission
  */

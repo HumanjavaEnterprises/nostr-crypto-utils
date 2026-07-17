@@ -6,9 +6,9 @@
 
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hexToBytes } from '@noble/hashes/utils.js';
-import { logger } from '../utils/logger';
-import { bytesToBase64, base64ToBytes } from '../encoding/base64';
-import type { CryptoSubtle } from '../crypto';
+import { logger } from '../utils/logger.js';
+import { bytesToBase64, base64ToBytes } from '../encoding/base64.js';
+import type { CryptoSubtle } from '../crypto.js';
 
 
 // Configure crypto for Node.js and test environments

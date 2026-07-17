@@ -19,7 +19,7 @@ exports.createKindFilter = createKindFilter;
 exports.createAuthorFilter = createAuthorFilter;
 exports.createReplyFilter = createReplyFilter;
 exports.createFilter = createFilter;
-const base_1 = require("../types/base");
+const base_js_1 = require("../types/base.js");
 /**
  * Formats an event for relay transmission according to NIP-01
  * @category Message Handling
@@ -72,30 +72,30 @@ function parseMessage(message) {
         switch (type) {
             case 'EVENT':
                 return {
-                    type: base_1.NostrMessageType.EVENT,
+                    type: base_js_1.NostrMessageType.EVENT,
                     event: payload[0]
                 };
             case 'REQ':
                 return {
-                    type: base_1.NostrMessageType.REQ,
+                    type: base_js_1.NostrMessageType.REQ,
                     subscriptionId: payload[0],
                     filters: payload.slice(1)
                 };
             case 'CLOSE':
                 return {
-                    type: base_1.NostrMessageType.CLOSE,
+                    type: base_js_1.NostrMessageType.CLOSE,
                     subscriptionId: payload[0]
                 };
             case 'OK':
                 return {
-                    type: base_1.NostrMessageType.OK,
+                    type: base_js_1.NostrMessageType.OK,
                     eventId: payload[0],
                     accepted: payload[1],
                     message: payload[2]
                 };
             case 'EOSE':
                 return {
-                    type: base_1.NostrMessageType.EOSE,
+                    type: base_js_1.NostrMessageType.EOSE,
                     subscriptionId: payload[0]
                 };
             default:
@@ -117,7 +117,7 @@ function parseMessage(message) {
 function createMetadataEvent(metadata, pubkey) {
     const pubkeyValue = typeof pubkey === 'string' ? pubkey : pubkey.hex;
     return {
-        kind: base_1.NostrEventKind.SET_METADATA,
+        kind: base_js_1.NostrEventKind.SET_METADATA,
         content: JSON.stringify(metadata),
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
@@ -145,7 +145,7 @@ function createTextNoteEvent(content, pubkey, replyTo, mentions) {
         });
     }
     return {
-        kind: base_1.NostrEventKind.TEXT_NOTE,
+        kind: base_js_1.NostrEventKind.TEXT_NOTE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags,
@@ -164,7 +164,7 @@ function createDirectMessageEvent(recipientPubkey, content, senderPubkey) {
     const recipientKey = typeof recipientPubkey === 'string' ? recipientPubkey : recipientPubkey.hex;
     const senderKey = typeof senderPubkey === 'string' ? senderPubkey : senderPubkey.hex;
     return {
-        kind: base_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
+        kind: base_js_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags: [['p', recipientKey]],
@@ -187,7 +187,7 @@ function createChannelMessageEvent(channelId, content, authorPubkey, replyTo) {
         tags.push(['e', replyTo, '', 'reply']);
     }
     return {
-        kind: base_1.NostrEventKind.CHANNEL_MESSAGE,
+        kind: base_js_1.NostrEventKind.CHANNEL_MESSAGE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags,
@@ -268,8 +268,8 @@ function createFilter(pubkey) {
     return {
         authors: [pubkey],
         kinds: [
-            base_1.NostrEventKind.TEXT_NOTE,
-            base_1.NostrEventKind.CHANNEL_MESSAGE
+            base_js_1.NostrEventKind.TEXT_NOTE,
+            base_js_1.NostrEventKind.CHANNEL_MESSAGE
         ]
     };
 }

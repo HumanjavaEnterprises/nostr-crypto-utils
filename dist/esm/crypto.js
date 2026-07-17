@@ -23,8 +23,8 @@
 import { schnorr, secp256k1 } from '@noble/curves/secp256k1.js';
 import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';
-import { logger } from './utils/logger';
-import { bytesToBase64, base64ToBytes } from './encoding/base64';
+import { logger } from './utils/logger.js';
+import { bytesToBase64, base64ToBytes } from './encoding/base64.js';
 // Get the appropriate crypto implementation
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {

@@ -12,9 +12,9 @@ import {
   ValidationResult, 
   PublicKey,
   NostrMessageType
-} from '../types/index';
+} from '../types/index.js';
 
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';

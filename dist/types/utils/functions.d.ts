@@ -2,7 +2,7 @@
  * @module utils/functions
  * @description General utility functions for Nostr operations
  */
-import { NostrEvent } from '../types';
+import { NostrEvent } from '../types/index.js';
 /**
  * Formats an event for relay transmission
  */

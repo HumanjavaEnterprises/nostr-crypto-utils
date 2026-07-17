@@ -8,8 +8,8 @@
  *
  * @see https://github.com/nostr-protocol/nips/blob/master/46.md
  */
-import type { BunkerURI, BunkerValidationResult, Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, SignedNostrEvent } from '../types';
-import { Nip46Method } from '../types';
+import type { BunkerURI, BunkerValidationResult, Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, SignedNostrEvent } from '../types/index.js';
+import { Nip46Method } from '../types/index.js';
 /**
  * Parse a bunker:// URI into its components
  * @param uri - bunker://&lt;remote-pubkey&gt;?relay=...&secret=...

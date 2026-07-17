@@ -2,7 +2,7 @@
  * @module protocol
  * @description Core Nostr protocol implementation
  */
-import { NostrEventKind, NostrMessageType } from '../types/base';
+import { NostrEventKind, NostrMessageType } from '../types/base.js';
 /**
  * Formats an event for relay transmission according to NIP-01
  * @category Message Handling

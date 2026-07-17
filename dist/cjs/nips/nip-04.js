@@ -44,8 +44,8 @@ exports.generateSharedSecret = generateSharedSecret;
 exports.computeSharedSecret = generateSharedSecret;
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
-const logger_1 = require("../utils/logger");
-const base64_1 = require("../encoding/base64");
+const logger_js_1 = require("../utils/logger.js");
+const base64_js_1 = require("../encoding/base64.js");
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
         return window.crypto;
@@ -60,7 +60,7 @@ const getCrypto = async () => {
         }
     }
     catch {
-        logger_1.logger.debug('Node crypto not available');
+        logger_js_1.logger.debug('Node crypto not available');
     }
     throw new Error('No WebCrypto implementation available');
 };
@@ -124,12 +124,12 @@ async function encryptMessage(message, senderPrivKey, recipientPubKey) {
         const encoded = new TextEncoder().encode(message);
         const encrypted = await (await cryptoImpl.getSubtle()).encrypt({ name: 'AES-CBC', iv }, sharedKey, encoded.buffer);
         // NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
-        const ciphertextBase64 = (0, base64_1.bytesToBase64)(new Uint8Array(encrypted));
-        const ivBase64 = (0, base64_1.bytesToBase64)(iv);
+        const ciphertextBase64 = (0, base64_js_1.bytesToBase64)(new Uint8Array(encrypted));
+        const ivBase64 = (0, base64_js_1.bytesToBase64)(iv);
         return ciphertextBase64 + '?iv=' + ivBase64;
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to encrypt message');
+        logger_js_1.logger.error({ error }, 'Failed to encrypt message');
         throw error;
     }
 }
@@ -168,8 +168,8 @@ async function decryptMessage(encryptedMessage, recipientPrivKey, senderPubKey) 
         if (encryptedMessage.includes('?iv=')) {
             // NIP-04 standard format
             const [ciphertextBase64, ivBase64] = encryptedMessage.split('?iv=');
-            ciphertext = (0, base64_1.base64ToBytes)(ciphertextBase64);
-            iv = (0, base64_1.base64ToBytes)(ivBase64);
+            ciphertext = (0, base64_js_1.base64ToBytes)(ciphertextBase64);
+            iv = (0, base64_js_1.base64ToBytes)(ivBase64);
         }
         else {
             // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
@@ -182,7 +182,7 @@ async function decryptMessage(encryptedMessage, recipientPrivKey, senderPubKey) 
         return new TextDecoder().decode(decrypted);
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to decrypt message');
+        logger_js_1.logger.error({ error }, 'Failed to decrypt message');
         throw error;
     }
 }
@@ -210,7 +210,7 @@ function generateSharedSecret(privateKey, publicKey) {
         return { sharedSecret: sharedPoint.slice(1, 33) }; // Return only x-coordinate
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to generate shared secret');
+        logger_js_1.logger.error({ error }, 'Failed to generate shared secret');
         throw error;
     }
 }

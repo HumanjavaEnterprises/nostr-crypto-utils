@@ -2,7 +2,7 @@
  * @module transport
  * @description Functions for handling Nostr protocol messages and transport layer operations
  */
-import { NostrMessageType } from '../types/base';
+import { NostrMessageType } from '../types/base.js';
 /**
  * Parses a Nostr message from a relay
  */

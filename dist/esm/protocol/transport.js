@@ -1,5 +1,5 @@
-import { NostrMessageType } from '../types/base';
-import { hexToBytes } from '../utils/encoding';
+import { NostrMessageType } from '../types/base.js';
+import { hexToBytes } from '../utils/encoding.js';
 /**
  * Creates a properly formatted Nostr EVENT message
  * @param event The signed event to create a message from

@@ -4,8 +4,8 @@
  */
 import { schnorr } from '@noble/curves/secp256k1.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
-import { logger } from '../utils/logger';
-import { getEventHash } from './creation';
+import { logger } from '../utils/logger.js';
+import { getEventHash } from './creation.js';
 /**
  * Signs a Nostr event with a private key (NIP-01)
  * @param event - Event to sign

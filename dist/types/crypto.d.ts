@@ -20,7 +20,7 @@
  * scheme has specific requirements for key and signature formats that aren't guaranteed
  * when using the lower-level secp256k1 functions directly.
  */
-import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent, PublicKey } from './types/index';
+import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent, PublicKey } from './types/index.js';
 /**
  * Custom crypto interface for cross-platform compatibility
  */

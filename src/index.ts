@@ -13,10 +13,10 @@ export type {
   PublicKey,
   KeyPair,
   NostrMessageTuple,
-} from './types';
+} from './types/index.js';
 
 // Event kinds, message types, and NIP-46 types
-export { NostrEventKind, NostrMessageType, Nip46Method } from './types';
+export { NostrEventKind, NostrMessageType, Nip46Method } from './types/index.js';
 export type {
   Nip46Request,
   Nip46Response,
@@ -28,7 +28,7 @@ export type {
   Nip46HandleOptions,
   Nip46HandleResult,
   Nip46UnwrapResult,
-} from './types';
+} from './types/index.js';
 
 // Core crypto functions
 export {
@@ -42,7 +42,7 @@ export {
   verifySignature,
   encrypt,
   decrypt,
-} from './crypto';
+} from './crypto.js';
 
 // Validation functions
 export {
@@ -54,28 +54,28 @@ export {
   validateFilter,
   validateSubscription,
   validateResponse,
-} from './validation';
+} from './validation/index.js';
 
 // Event functions
 export {
   calculateEventId,
-} from './event';
+} from './event/index.js';
 
 // NIP-04 encryption
 export {
   computeSharedSecret,
   encryptMessage,
   decryptMessage,
-} from './nips/nip-04';
+} from './nips/nip-04.js';
 
 // Re-export NIPs
-export * as nip01 from './nips/nip-01';
-export * as nip04 from './nips/nip-04';
-export * as nip19 from './nips/nip-19';
-export * as nip26 from './nips/nip-26';
-export * as nip44 from './nips/nip-44';
-export * as nip46 from './nips/nip-46';
-export * as nip49 from './nips/nip-49';
+export * as nip01 from './nips/nip-01.js';
+export * as nip04 from './nips/nip-04.js';
+export * as nip19 from './nips/nip-19.js';
+export * as nip26 from './nips/nip-26.js';
+export * as nip44 from './nips/nip-44.js';
+export * as nip46 from './nips/nip-46.js';
+export * as nip49 from './nips/nip-49.js';
 
 // Utils
 export {
@@ -83,4 +83,4 @@ export {
   bytesToHex,
   utf8ToBytes,
   bytesToUtf8,
-} from './utils/encoding';
+} from './utils/encoding.js';

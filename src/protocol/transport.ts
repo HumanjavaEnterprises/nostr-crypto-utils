@@ -1,6 +1,6 @@
-import type { SignedNostrEvent } from '../types/base';
-import { NostrMessageType } from '../types/base';
-import { hexToBytes } from '../utils/encoding';
+import type { SignedNostrEvent } from '../types/base.js';
+import { NostrMessageType } from '../types/base.js';
+import { hexToBytes } from '../utils/encoding.js';
 
 /**
  * Creates a properly formatted Nostr EVENT message

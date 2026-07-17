@@ -1,5 +1,5 @@
-import type { SignedNostrEvent } from '../types/base';
-import { NostrMessageType } from '../types/base';
+import type { SignedNostrEvent } from '../types/base.js';
+import { NostrMessageType } from '../types/base.js';
 /**
  * Creates a properly formatted Nostr EVENT message
  * @param event The signed event to create a message from
