@@ -24,10 +24,8 @@
 import { schnorr, secp256k1 } from '@noble/curves/secp256k1.js';
 import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';
-import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent, PublicKey } from './types/index.js';
+import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent } from './types/index.js';
 import { logger } from './utils/logger.js';
-import { encryptMessage, decryptMessage } from './nips/nip-04.js';
-import { asPrivateKey, asPublicKey } from './types/keys.js';
 
 
 /**
@@ -325,40 +323,4 @@ export async function verifySignature(event: SignedNostrEvent): Promise<boolean>
     logger.error({ error }, 'Failed to verify signature');
     return false;
   }
-}
-
-/**
- * Encrypts a message using NIP-04.
- *
- * @deprecated Prefer the canonical {@link encryptMessage} (from `nostr-crypto-utils`
- * or the `nip04` namespace), whose argument order is
- * `(message, senderPrivkey, recipientPubkey)` with branded key types. This
- * wrapper keeps the historical `(message, recipientPubKey, senderPrivKey)` order
- * for backward compatibility and routes through the single canonical impl, so it
- * now correctly accepts 32-byte x-only Nostr pubkeys.
- */
-export async function encrypt(
-  message: string,
-  recipientPubKey: PublicKey | string,
-  senderPrivKey: string
-): Promise<string> {
-  const recipientPubKeyHex = typeof recipientPubKey === 'string' ? recipientPubKey : recipientPubKey.hex;
-  return encryptMessage(message, asPrivateKey(senderPrivKey), asPublicKey(recipientPubKeyHex));
-}
-
-/**
- * Decrypts a message using NIP-04.
- *
- * @deprecated Prefer the canonical {@link decryptMessage} (argument order
- * `(ciphertext, recipientPrivkey, senderPubkey)` with branded key types). This
- * wrapper keeps the historical `(ciphertext, senderPubKey, recipientPrivKey)`
- * order and routes through the single canonical impl.
- */
-export async function decrypt(
-  encryptedMessage: string,
-  senderPubKey: PublicKey | string,
-  recipientPrivKey: string
-): Promise<string> {
-  const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
-  return decryptMessage(encryptedMessage, asPrivateKey(recipientPrivKey), asPublicKey(senderPubKeyHex));
 }

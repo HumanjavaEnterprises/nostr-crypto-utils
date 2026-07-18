@@ -20,7 +20,7 @@ import { cbc } from '@noble/ciphers/aes.js';
 import { hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { logger } from '../utils/logger.js';
 import { bytesToBase64, base64ToBytes } from '../encoding/base64.js';
-import { asPrivateKey, asPublicKey, type PrivateKey, type PublicKey } from '../types/keys.js';
+import { asPrivateKey, type PrivateKey, type PublicKey } from '../types/keys.js';
 
 const utf8Encoder = new TextEncoder();
 const utf8Decoder = new TextDecoder();

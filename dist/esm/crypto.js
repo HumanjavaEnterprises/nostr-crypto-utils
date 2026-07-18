@@ -24,8 +24,6 @@ import { schnorr, secp256k1 } from '@noble/curves/secp256k1.js';
 import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { logger } from './utils/logger.js';
-import { encryptMessage, decryptMessage } from './nips/nip-04.js';
-import { asPrivateKey, asPublicKey } from './types/keys.js';
 // Get the appropriate crypto implementation
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
@@ -251,31 +249,5 @@ export async function verifySignature(event) {
         logger.error({ error }, 'Failed to verify signature');
         return false;
     }
-}
-/**
- * Encrypts a message using NIP-04.
- *
- * @deprecated Prefer the canonical {@link encryptMessage} (from `nostr-crypto-utils`
- * or the `nip04` namespace), whose argument order is
- * `(message, senderPrivkey, recipientPubkey)` with branded key types. This
- * wrapper keeps the historical `(message, recipientPubKey, senderPrivKey)` order
- * for backward compatibility and routes through the single canonical impl, so it
- * now correctly accepts 32-byte x-only Nostr pubkeys.
- */
-export async function encrypt(message, recipientPubKey, senderPrivKey) {
-    const recipientPubKeyHex = typeof recipientPubKey === 'string' ? recipientPubKey : recipientPubKey.hex;
-    return encryptMessage(message, asPrivateKey(senderPrivKey), asPublicKey(recipientPubKeyHex));
-}
-/**
- * Decrypts a message using NIP-04.
- *
- * @deprecated Prefer the canonical {@link decryptMessage} (argument order
- * `(ciphertext, recipientPrivkey, senderPubkey)` with branded key types). This
- * wrapper keeps the historical `(ciphertext, senderPubKey, recipientPrivKey)`
- * order and routes through the single canonical impl.
- */
-export async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
-    const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
-    return decryptMessage(encryptedMessage, asPrivateKey(recipientPrivKey), asPublicKey(senderPubKeyHex));
 }
 //# sourceMappingURL=crypto.js.map

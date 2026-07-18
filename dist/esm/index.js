@@ -6,7 +6,7 @@ export { asPrivateKey, asPublicKey, isPrivateKeyHex, isPublicKeyHex, } from './t
 // Event kinds, message types, and NIP-46 types
 export { NostrEventKind, NostrMessageType, Nip46Method } from './types/index.js';
 // Core crypto functions
-export { generateKeyPair, getPublicKey, getPublicKeySync, validateKeyPair, createEvent, signEvent, finalizeEvent, verifySignature, encrypt, decrypt, } from './crypto.js';
+export { generateKeyPair, getPublicKey, getPublicKeySync, validateKeyPair, createEvent, signEvent, finalizeEvent, verifySignature, } from './crypto.js';
 // Validation functions
 export { validateEvent, validateEventId, validateEventSignature, validateSignedEvent, validateEventBase, validateFilter, validateSubscription, validateResponse, } from './validation/index.js';
 // Event functions

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateEvent, validateFilter, validateSubscription } from '../validation';
+import { validateEvent, validateEventBase, validateFilter, validateSubscription } from '../validation';
 import { SignedNostrEvent, NostrEventKind } from '../types/base';
 import { NostrFilter, NostrSubscription } from '../types/protocol';
 import { bytesToHex } from '@noble/hashes/utils.js';
@@ -61,6 +61,50 @@ describe('Validation Functions', () => {
       const result = validateEvent(event);
       expect(result.isValid).toBe(false);
       expect(result.error).toBe('Event timestamp cannot be in the future');
+    });
+  });
+
+  describe('validateEventBase — legal kind 0 / empty content', () => {
+    const pubkeyHex = bytesToHex(new Uint8Array(32).fill(1));
+    const baseEvent = (overrides: Partial<SignedNostrEvent> = {}): SignedNostrEvent => ({
+      kind: NostrEventKind.TEXT_NOTE,
+      content: 'hi',
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [],
+      pubkey: pubkeyHex,
+      id: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      sig: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      ...overrides,
+    });
+
+    it('accepts kind 0 (metadata) as legal', () => {
+      const result = validateEventBase(baseEvent({ kind: 0 }));
+      expect(result.isValid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it('accepts an empty-string content as legal', () => {
+      const result = validateEventBase(baseEvent({ content: '' }));
+      expect(result.isValid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it('accepts kind 0 with empty content together', () => {
+      const result = validateEventBase(baseEvent({ kind: 0, content: '' }));
+      expect(result.isValid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it('rejects a non-integer kind', () => {
+      const result = validateEventBase(baseEvent({ kind: 1.5 }));
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Event kind must be a non-negative integer');
+    });
+
+    it('rejects a non-string content', () => {
+      const result = validateEventBase(baseEvent({ content: 123 as unknown as string }));
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Event content must be a string');
     });
   });
 

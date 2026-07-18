@@ -568,7 +568,6 @@ describe('NIP-46', () => {
 
   describe('full client ↔ server round-trip', () => {
     it('should complete connect → get_public_key → sign_event flow', async () => {
-      const client = generateTestKeypair();
       const secret = 'test-secret-42';
 
       // Signer-side handlers

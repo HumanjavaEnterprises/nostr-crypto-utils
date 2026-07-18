@@ -21,10 +21,12 @@ Crypto-correctness release addressing the 2026-07-17 release audit. **BREAKING**
   `asPrivateKey(hex)`/`asPublicKey(hex)` (64-char hex / 32-byte x-only) make an
   argument-order mistake a **compile error**. `encryptMessage`/`decryptMessage`
   are now **synchronous** (return `string`, not `Promise<string>`). The legacy
-  top-level `encrypt`/`decrypt` remain as thin, deprecated back-compat wrappers
-  that route through the canonical impl (and therefore now work with real x-only
-  keys). The top-level exported `PublicKey` type is now the branded key type, not
-  the former `{ hex; bytes? }` object interface.
+  top-level `encrypt`/`decrypt` wrappers — with the historical
+  `(message, recipientPubKey, senderPrivKey)` order that was the root cause of
+  downstream argument-swap bugs — have been **removed**. Use the canonical
+  `encryptMessage`/`decryptMessage` (from the package root or the `nip04`
+  namespace). The top-level exported `PublicKey` type is now the branded key type,
+  not the former `{ hex; bytes? }` object interface.
 - **NIP-46 signer dispatcher is now FAIL-CLOSED.** Privileged methods
   (`get_public_key`, `sign_event`, `nip04/nip44_*`, `get_relays`) are denied
   unless `authenticatedClients` is provided **and** contains the client's pubkey.
@@ -38,9 +40,18 @@ Crypto-correctness release addressing the 2026-07-17 release audit. **BREAKING**
   reads spec-compliant `naddr`s (which previously threw).
 
 ### Fixed
-- **NIP-04 top-level `encrypt`/`decrypt` no longer throw on real Nostr keys.** The
-  ECDH now accepts 32-byte x-only pubkeys (prepends `02`) instead of passing a
-  bare 32-byte value to `getSharedSecret` (which threw for every real pubkey).
+- **`validateEventBase` accepts legal `kind 0` and empty-string content.** Kind and
+  content are validated with explicit type checks
+  (`typeof kind === 'number' && Number.isInteger(kind) && kind >= 0`;
+  `typeof content === 'string'`) instead of truthiness, so metadata (kind-0) events
+  and events with empty content are no longer rejected. Non-integer kinds are now
+  also rejected.
+- **NIP-04 ECDH accepts real Nostr keys.** The canonical `encryptMessage`/
+  `decryptMessage` accept 32-byte x-only pubkeys (prepends `02`) instead of passing
+  a bare 32-byte value to `getSharedSecret` (which threw for every real pubkey).
+- **Lint clean.** Removed a dead `asPublicKey` top-level import in `nips/nip-04.ts`
+  (it is re-exported separately) and an unused `client` binding in the NIP-46
+  round-trip test; `npm run lint` now reports 0 errors.
 - **`kind 0` survives `finalizeEvent`/`createEvent`.** Replaced `event.kind || 1`
   with `event.kind ?? 1`, so metadata (kind-0) events are no longer silently
   emitted as kind-1 text notes.

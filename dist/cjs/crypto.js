@@ -66,14 +66,10 @@ exports.signEvent = signEvent;
 exports.getPublicKeySync = getPublicKeySync;
 exports.finalizeEvent = finalizeEvent;
 exports.verifySignature = verifySignature;
-exports.encrypt = encrypt;
-exports.decrypt = decrypt;
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
 const logger_js_1 = require("./utils/logger.js");
-const nip_04_js_1 = require("./nips/nip-04.js");
-const keys_js_1 = require("./types/keys.js");
 // Get the appropriate crypto implementation
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
@@ -299,31 +295,5 @@ async function verifySignature(event) {
         logger_js_1.logger.error({ error }, 'Failed to verify signature');
         return false;
     }
-}
-/**
- * Encrypts a message using NIP-04.
- *
- * @deprecated Prefer the canonical {@link encryptMessage} (from `nostr-crypto-utils`
- * or the `nip04` namespace), whose argument order is
- * `(message, senderPrivkey, recipientPubkey)` with branded key types. This
- * wrapper keeps the historical `(message, recipientPubKey, senderPrivKey)` order
- * for backward compatibility and routes through the single canonical impl, so it
- * now correctly accepts 32-byte x-only Nostr pubkeys.
- */
-async function encrypt(message, recipientPubKey, senderPrivKey) {
-    const recipientPubKeyHex = typeof recipientPubKey === 'string' ? recipientPubKey : recipientPubKey.hex;
-    return (0, nip_04_js_1.encryptMessage)(message, (0, keys_js_1.asPrivateKey)(senderPrivKey), (0, keys_js_1.asPublicKey)(recipientPubKeyHex));
-}
-/**
- * Decrypts a message using NIP-04.
- *
- * @deprecated Prefer the canonical {@link decryptMessage} (argument order
- * `(ciphertext, recipientPrivkey, senderPubkey)` with branded key types). This
- * wrapper keeps the historical `(ciphertext, senderPubKey, recipientPrivKey)`
- * order and routes through the single canonical impl.
- */
-async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
-    const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
-    return (0, nip_04_js_1.decryptMessage)(encryptedMessage, (0, keys_js_1.asPrivateKey)(recipientPrivKey), (0, keys_js_1.asPublicKey)(senderPubKeyHex));
 }
 //# sourceMappingURL=crypto.js.map

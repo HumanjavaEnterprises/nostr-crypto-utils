@@ -9,7 +9,9 @@ import { schnorr } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 
-import { createEvent, finalizeEvent, getPublicKeySync, signEvent, encrypt, decrypt } from '../crypto';
+import { createEvent, finalizeEvent, getPublicKeySync, signEvent } from '../crypto';
+import { encryptMessage, decryptMessage } from '../nips/nip-04';
+import { asPrivateKey, asPublicKey } from '../types/keys';
 import { verifySignature } from '../event/signing';
 import { validateResponse } from '../validation/index';
 import { createDelegation, verifyDelegation, addDelegationTag, extractDelegation, type Delegation } from '../nips/nip-26';
@@ -40,12 +42,13 @@ describe('finding: kind 0 coerced to kind 1 via `|| 1`', () => {
   });
 });
 
-describe('finding: top-level NIP-04 encrypt/decrypt throw on x-only pubkeys', () => {
-  it('back-compat encrypt/decrypt round-trip with a real 64-hex x-only pubkey', async () => {
+describe('finding: canonical NIP-04 encryptMessage/decryptMessage accept x-only pubkeys', () => {
+  it('canonical encrypt/decrypt round-trip with a real 64-hex x-only pubkey', () => {
     const msg = 'no more Point of length 32 was invalid';
-    // legacy arg order: (message, recipientPubKey, senderPrivKey)
-    const ct = await encrypt(msg, bobPub, alicePriv);
-    const pt = await decrypt(ct, alicePub, bobPriv);
+    // canonical arg order: encryptMessage(message, senderPriv, recipientPub)
+    const ct = encryptMessage(msg, asPrivateKey(alicePriv), asPublicKey(bobPub));
+    // canonical arg order: decryptMessage(ciphertext, recipientPriv, senderPub)
+    const pt = decryptMessage(ct, asPrivateKey(bobPriv), asPublicKey(alicePub));
     expect(pt).toBe(msg);
   });
 });

@@ -185,8 +185,8 @@ export function validateEventBase(event) {
     if (!event || typeof event !== 'object') {
         return { isValid: false, error: 'Invalid event structure' };
     }
-    // Validate kind
-    if (typeof event.kind !== 'number' || event.kind < 0) {
+    // Validate kind — kind 0 (metadata) is legal; reject only non-integers / negatives.
+    if (!(typeof event.kind === 'number' && Number.isInteger(event.kind) && event.kind >= 0)) {
         return { isValid: false, error: 'Event kind must be a non-negative integer' };
     }
     // Validate timestamp

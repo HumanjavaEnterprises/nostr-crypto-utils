@@ -50,8 +50,6 @@ export {
   signEvent,
   finalizeEvent,
   verifySignature,
-  encrypt,
-  decrypt,
 } from './crypto.js';
 
 // Validation functions
