@@ -414,50 +414,50 @@ These examples demonstrate the library's type-safe approach to Schnorr signature
 
 ### Encrypted Direct Messages (NIP-04)
 
-The library provides robust support for encrypted direct messages following the NIP-04 specification:
+> **Breaking change in 0.8.0.** NIP-04 has a single canonical, **synchronous** API
+> with **branded key types**. The argument order is fixed, and passing keys in the
+> wrong order (or as plain strings) is a **compile error**:
+>
+> - `encryptMessage(message, senderPrivkey: PrivateKey, recipientPubkey: PublicKey): string`
+> - `decryptMessage(ciphertext, recipientPrivkey: PrivateKey, senderPubkey: PublicKey): string`
+>
+> Build the branded keys with `asPrivateKey(hex)` / `asPublicKey(hex)` (64-char hex /
+> 32-byte x-only). Real x-only Nostr pubkeys are accepted (no more "Point of length 32
+> was invalid"). The legacy `encrypt`/`decrypt` remain as deprecated back-compat wrappers.
 
 ```typescript
-import { encryptMessage, decryptMessage } from 'nostr-crypto-utils';
+import { encryptMessage, decryptMessage, asPrivateKey, asPublicKey } from 'nostr-crypto-utils';
 
-// Encrypting a direct message
-async function createEncryptedDM(
+// Encrypting a direct message: (message, senderPrivkey, recipientPubkey)
+function createEncryptedDM(
   content: string,
   recipientPubkey: string,
   senderPrivkey: string
 ) {
-  try {
-    const encryptedContent = await encryptMessage(
-      content, 
-      recipientPubkey, 
-      senderPrivkey
-    );
-    
-    return {
-      kind: 4, // NIP-04 Encrypted Direct Message
-      content: encryptedContent,
-      tags: [['p', recipientPubkey]]
-    };
-  } catch (error) {
-    throw new Error(`Failed to create encrypted DM: ${error}`);
-  }
+  const encryptedContent = encryptMessage(
+    content,
+    asPrivateKey(senderPrivkey),
+    asPublicKey(recipientPubkey),
+  );
+
+  return {
+    kind: 4, // NIP-04 Encrypted Direct Message
+    content: encryptedContent,
+    tags: [['p', recipientPubkey]],
+  };
 }
 
-// Decrypting a received message
-async function decryptDM(
+// Decrypting a received message: (ciphertext, recipientPrivkey, senderPubkey)
+function decryptDM(
   encryptedContent: string,
   senderPubkey: string,
   recipientPrivkey: string
 ) {
-  try {
-    const decryptedContent = await decryptMessage(
-      encryptedContent,
-      senderPubkey,
-      recipientPrivkey
-    );
-    return decryptedContent;
-  } catch (error) {
-    throw new Error(`Failed to decrypt DM: ${error}`);
-  }
+  return decryptMessage(
+    encryptedContent,
+    asPrivateKey(recipientPrivkey),
+    asPublicKey(senderPubkey),
+  );
 }
 ```
 
