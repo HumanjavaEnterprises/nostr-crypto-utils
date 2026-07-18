@@ -3,9 +3,10 @@
  * @description Event signing and verification utilities for Nostr
  */
 import { schnorr } from '@noble/curves/secp256k1.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { logger } from '../utils/logger.js';
-import { getEventHash } from './creation.js';
+import { getEventHash, serializeEvent } from './creation.js';
 /**
  * Signs a Nostr event with a private key (NIP-01)
  * @param event - Event to sign
@@ -34,6 +35,15 @@ export async function signEvent(event, privateKey) {
  */
 export function verifySignature(event) {
     try {
+        // Recompute the id from the serialized event and require it to match the
+        // claimed id BEFORE verifying the signature. Without this, an event whose
+        // content/tags were swapped but whose (id, sig) remain a valid pair would
+        // pass verification, letting forged content read as authentic.
+        const computedId = bytesToHex(sha256(new TextEncoder().encode(serializeEvent(event))));
+        if (computedId !== event.id) {
+            logger.error('Event id does not match hash of content');
+            return false;
+        }
         return schnorr.verify(hexToBytes(event.sig), hexToBytes(event.id), hexToBytes(event.pubkey));
     }
     catch (error) {

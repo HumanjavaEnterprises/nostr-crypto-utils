@@ -5,13 +5,14 @@
 import { bech32 } from 'bech32';
 import { Buffer } from 'buffer';
 const VALID_PREFIXES = ['npub', 'nsec', 'note', 'nprofile', 'nevent', 'naddr', 'nrelay'];
-// TLV type constants
+// TLV type constants (NIP-19). SPECIAL is the primary value: a 32-byte hex
+// pubkey/id for nprofile/nevent, or the UTF-8 d-tag identifier for naddr.
+// NIP-19 defines no TLV type 4.
 const TLV_TYPES = {
-    SPECIAL: 0, // Main data (hex)
+    SPECIAL: 0, // Primary value (hex for nprofile/nevent; UTF-8 identifier for naddr)
     RELAY: 1, // Relay URL (utf8)
-    AUTHOR: 2, // Author pubkey (hex)
-    KIND: 3, // Event kind (uint8)
-    IDENTIFIER: 4 // Identifier (utf8)
+    AUTHOR: 2, // Author pubkey (32-byte hex)
+    KIND: 3 // Event kind (uint32 big-endian)
 };
 /**
  * Encode a public key as an npub
@@ -117,11 +118,14 @@ export function naddrEncode(pubkey, kind, identifier, relays) {
     if (relays) {
         relays.forEach(validateRelayUrl);
     }
+    // NIP-19 naddr TLV: SPECIAL(0) = d-tag identifier (UTF-8), AUTHOR(2) = 32-byte
+    // pubkey, KIND(3) = uint32 BE, RELAY(1) = relays. The identifier is the SPECIAL
+    // value; the pubkey is the AUTHOR (there is no TLV type 4).
     const data = encodeTLV({
         type: 'naddr',
-        data: pubkey,
+        data: identifier,
+        author: pubkey,
         kind,
-        identifier,
         relays
     });
     return bech32.encode('naddr', data, 1000);
@@ -213,11 +217,21 @@ function validateRelayUrl(url) {
 }
 function encodeTLV(data) {
     const result = [];
-    // Special (type 0): main data
-    const bytes = Buffer.from(data.data, 'hex');
-    result.push(TLV_TYPES.SPECIAL, bytes.length);
-    result.push(...bytes);
-    // Relay (type 1): relay URLs
+    const isNaddr = data.type === 'naddr';
+    // Kind (type 3): event kind as uint32 big-endian
+    if (data.kind !== undefined) {
+        const kindBytes = Buffer.alloc(4);
+        kindBytes.writeUInt32BE(data.kind);
+        result.push(TLV_TYPES.KIND, kindBytes.length);
+        result.push(...kindBytes);
+    }
+    // Author (type 2): author pubkey (32-byte hex)
+    if (data.author) {
+        const authorBytes = Buffer.from(data.author, 'hex');
+        result.push(TLV_TYPES.AUTHOR, authorBytes.length);
+        result.push(...authorBytes);
+    }
+    // Relay (type 1): relay URLs (utf8)
     if (data.relays?.length) {
         for (const relay of data.relays) {
             const relayBytes = Buffer.from(relay, 'utf8');
@@ -225,28 +239,17 @@ function encodeTLV(data) {
             result.push(...relayBytes);
         }
     }
-    // Author (type 2): author pubkey
-    if (data.author) {
-        const authorBytes = Buffer.from(data.author, 'hex');
-        result.push(TLV_TYPES.AUTHOR, authorBytes.length);
-        result.push(...authorBytes);
-    }
-    // Kind (type 3): event kind
-    if (data.kind !== undefined) {
-        const kindBytes = Buffer.alloc(4);
-        kindBytes.writeUInt32BE(data.kind);
-        result.push(TLV_TYPES.KIND, kindBytes.length);
-        result.push(...kindBytes);
-    }
-    // Identifier (type 4): for naddr
-    if (data.identifier) {
-        const identifierBytes = Buffer.from(data.identifier, 'utf8');
-        result.push(TLV_TYPES.IDENTIFIER, identifierBytes.length);
-        result.push(...identifierBytes);
-    }
+    // Special (type 0), emitted last: UTF-8 identifier for naddr, 32-byte hex
+    // pubkey/id for nprofile/nevent.
+    const specialBytes = isNaddr
+        ? Buffer.from(data.data, 'utf8')
+        : Buffer.from(data.data, 'hex');
+    result.push(TLV_TYPES.SPECIAL, specialBytes.length);
+    result.push(...specialBytes);
     return bech32.toWords(Buffer.from(result));
 }
 function decodeTLV(prefix, data) {
+    const isNaddr = prefix === 'naddr';
     const result = {
         type: prefix,
         data: '',
@@ -264,8 +267,15 @@ function decodeTLV(prefix, data) {
         const value = data.slice(i + 2, i + 2 + length);
         switch (type) {
             case TLV_TYPES.SPECIAL:
-                result.data = value.toString('hex');
-                validateHexString(result.data, 64);
+                if (isNaddr) {
+                    // For naddr, SPECIAL is the UTF-8 d-tag identifier, not hex.
+                    result.data = value.toString('utf8');
+                    result.identifier = result.data;
+                }
+                else {
+                    result.data = value.toString('hex');
+                    validateHexString(result.data, 64);
+                }
                 break;
             case TLV_TYPES.RELAY:
                 relay = value.toString('utf8');
@@ -280,14 +290,15 @@ function decodeTLV(prefix, data) {
             case TLV_TYPES.KIND:
                 result.kind = value.readUInt32BE();
                 break;
-            case TLV_TYPES.IDENTIFIER:
-                result.identifier = value.toString('utf8');
-                break;
             default:
                 // Skip unknown TLV types
                 break;
         }
         i += 2 + length;
+    }
+    // naddr requires an author (pubkey) and kind per NIP-19.
+    if (isNaddr && (!result.author || result.kind === undefined)) {
+        throw new Error('Invalid naddr: missing author or kind');
     }
     return result;
 }

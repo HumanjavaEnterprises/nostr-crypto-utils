@@ -22,7 +22,8 @@ export function createDelegation(delegatorPrivateKey, delegatee, conditions) {
         delegator: delegatorPublicKey,
         delegatee,
         conditions,
-        token
+        token,
+        conditionsString
     };
 }
 /**
@@ -31,7 +32,10 @@ export function createDelegation(delegatorPrivateKey, delegatee, conditions) {
  * @returns True if valid, false otherwise
  */
 export async function verifyDelegation(delegation) {
-    const conditionsString = serializeConditions(delegation.conditions);
+    // Use the exact signed conditions string when available (preserves the
+    // delegator's byte-for-byte ordering); only fall back to re-serialization
+    // for delegations constructed without a raw string.
+    const conditionsString = delegation.conditionsString ?? serializeConditions(delegation.conditions);
     return await verifyDelegationSignature(delegation.delegator, delegation.delegatee, conditionsString, delegation.token);
 }
 /**
@@ -62,7 +66,7 @@ export function addDelegationTag(event, delegation) {
     const tag = [
         'delegation',
         delegation.delegator,
-        serializeConditions(delegation.conditions),
+        delegation.conditionsString ?? serializeConditions(delegation.conditions),
         delegation.token
     ];
     return {
@@ -84,7 +88,9 @@ export function extractDelegation(event) {
         delegator: tag[1],
         delegatee: event.pubkey,
         conditions: parseConditions(tag[2]),
-        token: tag[3]
+        token: tag[3],
+        // Preserve the original conditions string exactly as signed by the delegator.
+        conditionsString: tag[2]
     };
 }
 // Helper functions

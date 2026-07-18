@@ -449,8 +449,9 @@ async function handleSignerRequest(request, clientPubkey, handlers, opts) {
             response: createResponse(id, 'pong'),
         };
     }
-    // All other methods require authentication
-    if (authenticated && !authenticated.has(clientPubkey)) {
+    // All other methods require authentication. FAIL-CLOSED: deny unless the client
+    // is explicitly authenticated, or the consumer has opted into no gating.
+    if (!opts?.allowUnauthenticated && (!authenticated || !authenticated.has(clientPubkey))) {
         return {
             response: createResponse(id, undefined, 'unauthorized: call connect first'),
         };

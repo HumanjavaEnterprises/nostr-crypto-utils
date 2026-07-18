@@ -492,10 +492,25 @@ describe('NIP-46', () => {
       expect(result.response.error).toBe('key store locked');
     });
 
-    it('should allow all methods when no authenticatedClients set is provided', async () => {
+    it('should FAIL-CLOSED: deny privileged methods when no authenticatedClients set is provided', async () => {
       const req = getPublicKeyRequest();
-      // No opts at all — no auth gating
+      // No opts at all — must deny (fail-closed), not fall through to signing
       const result = await handleSignerRequest(req, client.pubkey, testHandlers);
+      expect(result.response.result).toBeUndefined();
+      expect(result.response.error).toBe('unauthorized: call connect first');
+    });
+
+    it('should FAIL-CLOSED: deny an unknown client even when an auth set is provided', async () => {
+      const req = signEventRequest(JSON.stringify({ kind: 1, content: 'x' }));
+      const authenticated = new Set(['deadbeef']); // some other client
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { authenticatedClients: authenticated });
+      expect(result.response.result).toBeUndefined();
+      expect(result.response.error).toBe('unauthorized: call connect first');
+    });
+
+    it('should serve privileged methods only when allowUnauthenticated is explicitly set', async () => {
+      const req = getPublicKeyRequest();
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { allowUnauthenticated: true });
       expect(result.response.result).toBe(signer.pubkey);
     });
   });

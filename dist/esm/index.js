@@ -2,6 +2,7 @@
  * @module nostr-crypto-utils
  * @description Core cryptographic utilities for Nostr protocol
  */
+export { asPrivateKey, asPublicKey, isPrivateKeyHex, isPublicKeyHex, } from './types/keys.js';
 // Event kinds, message types, and NIP-46 types
 export { NostrEventKind, NostrMessageType, Nip46Method } from './types/index.js';
 // Core crypto functions

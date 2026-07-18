@@ -2,7 +2,9 @@
  * @module nostr-crypto-utils
  * @description Core cryptographic utilities for Nostr protocol
  */
-export type { NostrEvent, UnsignedNostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, PublicKey, KeyPair, NostrMessageTuple, } from './types/index.js';
+export type { NostrEvent, UnsignedNostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, KeyPair, NostrMessageTuple, } from './types/index.js';
+export type { PrivateKey, PublicKey } from './types/keys.js';
+export { asPrivateKey, asPublicKey, isPrivateKeyHex, isPublicKeyHex, } from './types/keys.js';
 export { NostrEventKind, NostrMessageType, Nip46Method } from './types/index.js';
 export type { Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, BunkerURI, BunkerValidationResult, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, } from './types/index.js';
 export { generateKeyPair, getPublicKey, getPublicKeySync, validateKeyPair, createEvent, signEvent, finalizeEvent, verifySignature, encrypt, decrypt, } from './crypto.js';

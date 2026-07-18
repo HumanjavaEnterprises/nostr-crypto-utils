@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-17
+
+Crypto-correctness release addressing the 2026-07-17 release audit. **BREAKING** — see below.
+
+### Breaking
+- **Canonical NIP-04 + branded key types.** There is now a single blessed NIP-04
+  implementation with one argument convention:
+  - `encryptMessage(message, senderPrivkey: PrivateKey, recipientPubkey: PublicKey): string`
+  - `decryptMessage(ciphertext, recipientPrivkey: PrivateKey, senderPubkey: PublicKey): string`
+
+  New branded types `PrivateKey`/`PublicKey` with validating constructors
+  `asPrivateKey(hex)`/`asPublicKey(hex)` (64-char hex / 32-byte x-only) make an
+  argument-order mistake a **compile error**. `encryptMessage`/`decryptMessage`
+  are now **synchronous** (return `string`, not `Promise<string>`). The legacy
+  top-level `encrypt`/`decrypt` remain as thin, deprecated back-compat wrappers
+  that route through the canonical impl (and therefore now work with real x-only
+  keys). The top-level exported `PublicKey` type is now the branded key type, not
+  the former `{ hex; bytes? }` object interface.
+- **NIP-46 signer dispatcher is now FAIL-CLOSED.** Privileged methods
+  (`get_public_key`, `sign_event`, `nip04/nip44_*`, `get_relays`) are denied
+  unless `authenticatedClients` is provided **and** contains the client's pubkey.
+  Omitting the set no longer serves privileged methods; set the new
+  `allowUnauthenticated: true` option to opt into the old no-gating behavior.
+- **NIP-19 `naddr` TLV layout corrected** to the NIP-19 spec: `SPECIAL(0)` = UTF-8
+  d-tag identifier, `AUTHOR(2)` = 32-byte pubkey, `KIND(3)` = uint32 BE,
+  `RELAY(1)` = relays (no TLV type 4). Previous output put the pubkey in SPECIAL
+  and the identifier in an undefined type-4, producing addresses no other client
+  could read. Encode output is now byte-for-byte identical to nostr-tools; decode
+  reads spec-compliant `naddr`s (which previously threw).
+
+### Fixed
+- **NIP-04 top-level `encrypt`/`decrypt` no longer throw on real Nostr keys.** The
+  ECDH now accepts 32-byte x-only pubkeys (prepends `02`) instead of passing a
+  bare 32-byte value to `getSharedSecret` (which threw for every real pubkey).
+- **`kind 0` survives `finalizeEvent`/`createEvent`.** Replaced `event.kind || 1`
+  with `event.kind ?? 1`, so metadata (kind-0) events are no longer silently
+  emitted as kind-1 text notes.
+- **`validateResponse` now verifies signatures.** `EVENT`/`AUTH` messages are
+  validated with full `validateEvent` (recompute id + schnorr verify) instead of
+  format-only length checks, so forged relay events are rejected.
+- **NIP-26 `verifyDelegation` preserves the exact signed conditions string.**
+  Delegations store the raw conditions string and hash it byte-for-byte rather
+  than re-serializing parsed conditions in a fixed order, fixing verification of
+  cross-implementation delegations with a different condition ordering.
+- **`event/signing.ts` `verifySignature` recomputes the event id** before schnorr
+  verification, rejecting events whose content/tags were swapped while keeping a
+  valid `(id, sig)` pair.
+
+### Added
+- **Shared KAT vector spine.** `test/vectors/nostr-vectors.json` (mirrored into
+  `src/__tests__/vectors/`) gains official known-answer vectors: NIP-44 v2
+  (conversation key / fixed-nonce payloads / padding table, from
+  nostr-protocol/nips), NIP-49 (ncryptsec reference decrypt), NIP-19 TLV
+  (nprofile/nevent/naddr, cross-checked against nostr-tools), and a deterministic
+  BIP-340 sign/verify KAT. Tests now assert against these vectors — not just
+  self-round-trips — so a symmetric encode/decode bug can no longer pass CI.
+
 ## [0.7.2] - 2026-07-16
 
 ### Fixed

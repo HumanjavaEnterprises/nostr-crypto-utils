@@ -20,6 +20,13 @@ export interface Delegation {
   delegatee: string;
   conditions: DelegationConditions;
   token: string;
+  /**
+   * The EXACT conditions query string that was signed (e.g. from the delegation
+   * tag). Verification hashes this byte-for-byte rather than re-serializing the
+   * parsed conditions, so delegations created by other clients (with a different
+   * condition ordering) verify correctly.
+   */
+  conditionsString?: string;
 }
 
 /**
@@ -44,7 +51,8 @@ export function createDelegation(
     delegator: delegatorPublicKey,
     delegatee,
     conditions,
-    token
+    token,
+    conditionsString
   };
 }
 
@@ -54,7 +62,10 @@ export function createDelegation(
  * @returns True if valid, false otherwise
  */
 export async function verifyDelegation(delegation: Delegation): Promise<boolean> {
-  const conditionsString = serializeConditions(delegation.conditions);
+  // Use the exact signed conditions string when available (preserves the
+  // delegator's byte-for-byte ordering); only fall back to re-serialization
+  // for delegations constructed without a raw string.
+  const conditionsString = delegation.conditionsString ?? serializeConditions(delegation.conditions);
   return await verifyDelegationSignature(
     delegation.delegator,
     delegation.delegatee,
@@ -101,7 +112,7 @@ export function addDelegationTag(
   const tag = [
     'delegation',
     delegation.delegator,
-    serializeConditions(delegation.conditions),
+    delegation.conditionsString ?? serializeConditions(delegation.conditions),
     delegation.token
   ];
 
@@ -126,7 +137,9 @@ export function extractDelegation(event: NostrEvent): Delegation | null {
     delegator: tag[1],
     delegatee: event.pubkey,
     conditions: parseConditions(tag[2]),
-    token: tag[3]
+    token: tag[3],
+    // Preserve the original conditions string exactly as signed by the delegator.
+    conditionsString: tag[2]
   };
 }
 

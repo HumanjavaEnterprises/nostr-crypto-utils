@@ -37,7 +37,12 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip49 = exports.nip46 = exports.nip44 = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.decrypt = exports.encrypt = exports.verifySignature = exports.finalizeEvent = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKeySync = exports.getPublicKey = exports.generateKeyPair = exports.Nip46Method = exports.NostrMessageType = exports.NostrEventKind = void 0;
+exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip49 = exports.nip46 = exports.nip44 = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.decrypt = exports.encrypt = exports.verifySignature = exports.finalizeEvent = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKeySync = exports.getPublicKey = exports.generateKeyPair = exports.Nip46Method = exports.NostrMessageType = exports.NostrEventKind = exports.isPublicKeyHex = exports.isPrivateKeyHex = exports.asPublicKey = exports.asPrivateKey = void 0;
+var keys_js_1 = require("./types/keys.js");
+Object.defineProperty(exports, "asPrivateKey", { enumerable: true, get: function () { return keys_js_1.asPrivateKey; } });
+Object.defineProperty(exports, "asPublicKey", { enumerable: true, get: function () { return keys_js_1.asPublicKey; } });
+Object.defineProperty(exports, "isPrivateKeyHex", { enumerable: true, get: function () { return keys_js_1.isPrivateKeyHex; } });
+Object.defineProperty(exports, "isPublicKeyHex", { enumerable: true, get: function () { return keys_js_1.isPublicKeyHex; } });
 // Event kinds, message types, and NIP-46 types
 var index_js_1 = require("./types/index.js");
 Object.defineProperty(exports, "NostrEventKind", { enumerable: true, get: function () { return index_js_1.NostrEventKind; } });

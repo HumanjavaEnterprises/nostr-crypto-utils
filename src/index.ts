@@ -10,10 +10,20 @@ export type {
   SignedNostrEvent,
   NostrFilter,
   NostrSubscription,
-  PublicKey,
   KeyPair,
   NostrMessageTuple,
 } from './types/index.js';
+
+// Branded key types + validating constructors (the canonical NIP-04 API).
+// NOTE (0.8.0 BREAKING): the top-level `PublicKey` is now the branded x-only key
+// type from ./types/keys, not the legacy `{ hex; bytes? }` object interface.
+export type { PrivateKey, PublicKey } from './types/keys.js';
+export {
+  asPrivateKey,
+  asPublicKey,
+  isPrivateKeyHex,
+  isPublicKeyHex,
+} from './types/keys.js';
 
 // Event kinds, message types, and NIP-46 types
 export { NostrEventKind, NostrMessageType, Nip46Method } from './types/index.js';

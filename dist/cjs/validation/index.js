@@ -378,7 +378,9 @@ function validateResponse(message) {
                     error: 'EVENT message must have exactly 2 elements'
                 };
             }
-            return validateSignedEvent(message[1]);
+            // Full verification: recompute the id and verify the schnorr signature,
+            // so a relay cannot smuggle a well-formed-but-forged event through.
+            return validateEvent(message[1]);
         case index_js_1.NostrMessageType.NOTICE:
             if (message.length !== 2 || typeof message[1] !== 'string') {
                 return {
@@ -442,7 +444,8 @@ function validateResponse(message) {
                     error: 'AUTH message must have exactly 2 elements'
                 };
             }
-            return validateSignedEvent(message[1]);
+            // Full verification (recompute id + verify signature), same as EVENT.
+            return validateEvent(message[1]);
         default:
             return {
                 isValid: false,

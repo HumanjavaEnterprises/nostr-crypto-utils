@@ -72,7 +72,8 @@ const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
 const logger_js_1 = require("./utils/logger.js");
-const base64_js_1 = require("./encoding/base64.js");
+const nip_04_js_1 = require("./nips/nip-04.js");
+const keys_js_1 = require("./types/keys.js");
 // Get the appropriate crypto implementation
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
@@ -190,7 +191,7 @@ function createEvent(event) {
         created_at: event.created_at || timestamp,
         tags: event.tags || [],
         content: event.content || '',
-        kind: event.kind || 1
+        kind: event.kind ?? 1
     };
 }
 /**
@@ -258,7 +259,7 @@ async function finalizeEvent(event, privateKey) {
     const pubkey = event.pubkey || getPublicKeySync(privateKey);
     const timestamp = event.created_at || Math.floor(Date.now() / 1000);
     const fullEvent = {
-        kind: event.kind || 1,
+        kind: event.kind ?? 1,
         created_at: timestamp,
         tags: event.tags || [],
         content: event.content || '',
@@ -300,66 +301,29 @@ async function verifySignature(event) {
     }
 }
 /**
- * Encrypts a message using NIP-04
+ * Encrypts a message using NIP-04.
+ *
+ * @deprecated Prefer the canonical {@link encryptMessage} (from `nostr-crypto-utils`
+ * or the `nip04` namespace), whose argument order is
+ * `(message, senderPrivkey, recipientPubkey)` with branded key types. This
+ * wrapper keeps the historical `(message, recipientPubKey, senderPrivKey)` order
+ * for backward compatibility and routes through the single canonical impl, so it
+ * now correctly accepts 32-byte x-only Nostr pubkeys.
  */
 async function encrypt(message, recipientPubKey, senderPrivKey) {
-    try {
-        const recipientPubKeyHex = typeof recipientPubKey === 'string' ? recipientPubKey : recipientPubKey.hex;
-        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(senderPrivKey), (0, utils_js_1.hexToBytes)(recipientPubKeyHex));
-        const sharedX = sharedPoint.slice(1, 33);
-        // Generate random IV
-        const iv = (0, utils_js_1.randomBytes)(16);
-        const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['encrypt']));
-        // Zero shared secret material now that AES key is imported
-        sharedX.fill(0);
-        sharedPoint.fill(0);
-        // Encrypt the message
-        const data = new TextEncoder().encode(message);
-        const encrypted = await exports.customCrypto.getSubtle().then((subtle) => subtle.encrypt({ name: 'AES-CBC', iv }, key, data.buffer));
-        // NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
-        const ciphertextBase64 = (0, base64_js_1.bytesToBase64)(new Uint8Array(encrypted));
-        const ivBase64 = (0, base64_js_1.bytesToBase64)(iv);
-        return ciphertextBase64 + '?iv=' + ivBase64;
-    }
-    catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to encrypt message');
-        throw error;
-    }
+    const recipientPubKeyHex = typeof recipientPubKey === 'string' ? recipientPubKey : recipientPubKey.hex;
+    return (0, nip_04_js_1.encryptMessage)(message, (0, keys_js_1.asPrivateKey)(senderPrivKey), (0, keys_js_1.asPublicKey)(recipientPubKeyHex));
 }
 /**
- * Decrypts a message using NIP-04
+ * Decrypts a message using NIP-04.
+ *
+ * @deprecated Prefer the canonical {@link decryptMessage} (argument order
+ * `(ciphertext, recipientPrivkey, senderPubkey)` with branded key types). This
+ * wrapper keeps the historical `(ciphertext, senderPubKey, recipientPrivKey)`
+ * order and routes through the single canonical impl.
  */
 async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
-    try {
-        const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
-        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(recipientPrivKey), (0, utils_js_1.hexToBytes)(senderPubKeyHex));
-        const sharedX = sharedPoint.slice(1, 33);
-        // Parse NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
-        // Also support legacy hex format (iv + ciphertext concatenated) as fallback
-        let iv;
-        let ciphertext;
-        if (encryptedMessage.includes('?iv=')) {
-            // NIP-04 standard format
-            const [ciphertextBase64, ivBase64] = encryptedMessage.split('?iv=');
-            ciphertext = (0, base64_js_1.base64ToBytes)(ciphertextBase64);
-            iv = (0, base64_js_1.base64ToBytes)(ivBase64);
-        }
-        else {
-            // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
-            const encrypted = (0, utils_js_1.hexToBytes)(encryptedMessage);
-            iv = encrypted.slice(0, 16);
-            ciphertext = encrypted.slice(16);
-        }
-        const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['decrypt']));
-        // Zero shared secret material now that AES key is imported
-        sharedX.fill(0);
-        sharedPoint.fill(0);
-        const decrypted = await exports.customCrypto.getSubtle().then((subtle) => subtle.decrypt({ name: 'AES-CBC', iv }, key, ciphertext.buffer));
-        return new TextDecoder().decode(decrypted);
-    }
-    catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to decrypt message');
-        throw error;
-    }
+    const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
+    return (0, nip_04_js_1.decryptMessage)(encryptedMessage, (0, keys_js_1.asPrivateKey)(recipientPrivKey), (0, keys_js_1.asPublicKey)(senderPubKeyHex));
 }
 //# sourceMappingURL=crypto.js.map
