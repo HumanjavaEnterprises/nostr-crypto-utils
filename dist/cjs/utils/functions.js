@@ -12,7 +12,7 @@ exports.hexToBytes = hexToBytes;
 exports.valueToString = valueToString;
 exports.getTagValue = getTagValue;
 exports.getTagValues = getTagValues;
-const logger_1 = require("./logger");
+const logger_js_1 = require("./logger.js");
 /**
  * Formats an event for relay transmission
  */
@@ -21,7 +21,7 @@ function formatEventForRelay(event) {
         return JSON.stringify(['EVENT', event]);
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to format event for relay');
+        logger_js_1.logger.error({ error }, 'Failed to format event for relay');
         throw error;
     }
 }
@@ -33,7 +33,7 @@ function parseNostrMessage(message) {
         return JSON.parse(message);
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to parse Nostr message');
+        logger_js_1.logger.error({ error }, 'Failed to parse Nostr message');
         throw error;
     }
 }
@@ -92,7 +92,7 @@ function valueToString(value) {
             return JSON.stringify(value);
         }
         catch (error) {
-            logger_1.logger.error({ error }, 'Failed to stringify object');
+            logger_js_1.logger.error({ error }, 'Failed to stringify object');
             return String(value);
         }
     }

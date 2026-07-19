@@ -2,7 +2,7 @@
  * NIP-26: Delegated Event Signing
  * Implements delegation of event signing capabilities
  */
-import { NostrEvent } from '../types';
+import { NostrEvent } from '../types/index.js';
 export interface DelegationConditions {
     kind?: number;
     since?: number;
@@ -13,6 +13,13 @@ export interface Delegation {
     delegatee: string;
     conditions: DelegationConditions;
     token: string;
+    /**
+     * The EXACT conditions query string that was signed (e.g. from the delegation
+     * tag). Verification hashes this byte-for-byte rather than re-serializing the
+     * parsed conditions, so delegations created by other clients (with a different
+     * condition ordering) verify correctly.
+     */
+    conditionsString?: string;
 }
 /**
  * Create a delegation token

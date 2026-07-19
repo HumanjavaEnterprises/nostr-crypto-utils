@@ -3,7 +3,7 @@
  * @description Implementation of NIP-01: Basic Protocol Flow Description
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
-import type { NostrEvent, SignedNostrEvent } from '../types';
+import type { NostrEvent, SignedNostrEvent } from '../types/index.js';
 /**
  * Creates a new Nostr event with the specified parameters (NIP-01)
  * @param params - Event parameters

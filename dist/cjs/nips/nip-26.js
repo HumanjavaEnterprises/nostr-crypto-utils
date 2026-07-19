@@ -10,7 +10,7 @@ exports.checkDelegationConditions = checkDelegationConditions;
 exports.addDelegationTag = addDelegationTag;
 exports.extractDelegation = extractDelegation;
 const sha2_js_1 = require("@noble/hashes/sha2.js");
-const crypto_1 = require("../crypto");
+const crypto_js_1 = require("../crypto.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 /**
@@ -29,7 +29,8 @@ function createDelegation(delegatorPrivateKey, delegatee, conditions) {
         delegator: delegatorPublicKey,
         delegatee,
         conditions,
-        token
+        token,
+        conditionsString
     };
 }
 /**
@@ -38,7 +39,10 @@ function createDelegation(delegatorPrivateKey, delegatee, conditions) {
  * @returns True if valid, false otherwise
  */
 async function verifyDelegation(delegation) {
-    const conditionsString = serializeConditions(delegation.conditions);
+    // Use the exact signed conditions string when available (preserves the
+    // delegator's byte-for-byte ordering); only fall back to re-serialization
+    // for delegations constructed without a raw string.
+    const conditionsString = delegation.conditionsString ?? serializeConditions(delegation.conditions);
     return await verifyDelegationSignature(delegation.delegator, delegation.delegatee, conditionsString, delegation.token);
 }
 /**
@@ -69,7 +73,7 @@ function addDelegationTag(event, delegation) {
     const tag = [
         'delegation',
         delegation.delegator,
-        serializeConditions(delegation.conditions),
+        delegation.conditionsString ?? serializeConditions(delegation.conditions),
         delegation.token
     ];
     return {
@@ -91,7 +95,9 @@ function extractDelegation(event) {
         delegator: tag[1],
         delegatee: event.pubkey,
         conditions: parseConditions(tag[2]),
-        token: tag[3]
+        token: tag[3],
+        // Preserve the original conditions string exactly as signed by the delegator.
+        conditionsString: tag[2]
     };
 }
 // Helper functions
@@ -127,11 +133,11 @@ function parseConditions(conditionsString) {
 function signDelegation(delegator, delegatee, conditions) {
     const message = `nostr:delegation:${delegatee}:${conditions}`;
     const hash = (0, sha2_js_1.sha256)(new TextEncoder().encode(message));
-    const signature = (0, crypto_1.signSchnorr)(hash, (0, utils_js_1.hexToBytes)(delegator));
+    const signature = (0, crypto_js_1.signSchnorr)(hash, (0, utils_js_1.hexToBytes)(delegator));
     return (0, utils_js_1.bytesToHex)(signature);
 }
 async function verifyDelegationSignature(delegator, delegatee, conditions, signature) {
     const msgHash = (0, sha2_js_1.sha256)(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
-    return (0, crypto_1.verifySchnorrSignature)((0, utils_js_1.hexToBytes)(signature), msgHash, (0, utils_js_1.hexToBytes)(delegator));
+    return (0, crypto_js_1.verifySchnorrSignature)((0, utils_js_1.hexToBytes)(signature), msgHash, (0, utils_js_1.hexToBytes)(delegator));
 }
 //# sourceMappingURL=nip-26.js.map

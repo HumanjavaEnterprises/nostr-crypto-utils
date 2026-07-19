@@ -13,8 +13,8 @@ exports.validateEventBase = validateEventBase;
 exports.validateFilter = validateFilter;
 exports.validateSubscription = validateSubscription;
 exports.validateResponse = validateResponse;
-const index_1 = require("../types/index");
-const logger_1 = require("../utils/logger");
+const index_js_1 = require("../types/index.js");
+const logger_js_1 = require("../utils/logger.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
@@ -57,7 +57,7 @@ function validateEventId(event) {
         };
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to validate event ID');
+        logger_js_1.logger.error({ error }, 'Failed to validate event ID');
         return {
             isValid: false,
             error: 'Failed to validate event ID'
@@ -98,7 +98,7 @@ function validateEventSignature(event) {
         };
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to validate event signature');
+        logger_js_1.logger.error({ error }, 'Failed to validate event signature');
         return {
             isValid: false,
             error: 'Failed to validate event signature'
@@ -178,7 +178,7 @@ function validateSignedEvent(event) {
         return { isValid: true };
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to validate signed event');
+        logger_js_1.logger.error({ error }, 'Failed to validate signed event');
         return {
             isValid: false,
             error: 'Failed to validate signed event'
@@ -195,8 +195,8 @@ function validateEventBase(event) {
     if (!event || typeof event !== 'object') {
         return { isValid: false, error: 'Invalid event structure' };
     }
-    // Validate kind
-    if (typeof event.kind !== 'number' || event.kind < 0) {
+    // Validate kind — kind 0 (metadata) is legal; reject only non-integers / negatives.
+    if (!(typeof event.kind === 'number' && Number.isInteger(event.kind) && event.kind >= 0)) {
         return { isValid: false, error: 'Event kind must be a non-negative integer' };
     }
     // Validate timestamp
@@ -288,7 +288,7 @@ function validateFilter(filter) {
         return { isValid: true };
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to validate filter');
+        logger_js_1.logger.error({ error }, 'Failed to validate filter');
         return { isValid: false, error: 'Failed to validate filter' };
     }
 }
@@ -329,7 +329,7 @@ function validateSubscription(subscription) {
         return { isValid: true };
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to validate subscription');
+        logger_js_1.logger.error({ error }, 'Failed to validate subscription');
         return { isValid: false, error: 'Failed to validate subscription' };
     }
 }
@@ -363,7 +363,7 @@ function validateResponse(message) {
     }
     // Check if first element is a valid message type
     const type = message[0];
-    if (!Object.values(index_1.NostrMessageType).includes(type)) {
+    if (!Object.values(index_js_1.NostrMessageType).includes(type)) {
         return {
             isValid: false,
             error: `Invalid message type: ${type}`
@@ -371,15 +371,17 @@ function validateResponse(message) {
     }
     // Type-specific validation
     switch (type) {
-        case index_1.NostrMessageType.EVENT:
+        case index_js_1.NostrMessageType.EVENT:
             if (message.length !== 2) {
                 return {
                     isValid: false,
                     error: 'EVENT message must have exactly 2 elements'
                 };
             }
-            return validateSignedEvent(message[1]);
-        case index_1.NostrMessageType.NOTICE:
+            // Full verification: recompute the id and verify the schnorr signature,
+            // so a relay cannot smuggle a well-formed-but-forged event through.
+            return validateEvent(message[1]);
+        case index_js_1.NostrMessageType.NOTICE:
             if (message.length !== 2 || typeof message[1] !== 'string') {
                 return {
                     isValid: false,
@@ -387,7 +389,7 @@ function validateResponse(message) {
                 };
             }
             return { isValid: true };
-        case index_1.NostrMessageType.OK:
+        case index_js_1.NostrMessageType.OK:
             if (message.length !== 4 ||
                 typeof message[1] !== 'string' ||
                 typeof message[2] !== 'boolean' ||
@@ -398,7 +400,7 @@ function validateResponse(message) {
                 };
             }
             return { isValid: true };
-        case index_1.NostrMessageType.EOSE:
+        case index_js_1.NostrMessageType.EOSE:
             if (message.length !== 2 || typeof message[1] !== 'string') {
                 return {
                     isValid: false,
@@ -406,7 +408,7 @@ function validateResponse(message) {
                 };
             }
             return { isValid: true };
-        case index_1.NostrMessageType.REQ:
+        case index_js_1.NostrMessageType.REQ:
             if (message.length < 2) {
                 return {
                     isValid: false,
@@ -427,7 +429,7 @@ function validateResponse(message) {
                 }
             }
             return { isValid: true };
-        case index_1.NostrMessageType.CLOSE:
+        case index_js_1.NostrMessageType.CLOSE:
             if (message.length !== 2 || typeof message[1] !== 'string') {
                 return {
                     isValid: false,
@@ -435,14 +437,15 @@ function validateResponse(message) {
                 };
             }
             return { isValid: true };
-        case index_1.NostrMessageType.AUTH:
+        case index_js_1.NostrMessageType.AUTH:
             if (message.length !== 2) {
                 return {
                     isValid: false,
                     error: 'AUTH message must have exactly 2 elements'
                 };
             }
-            return validateSignedEvent(message[1]);
+            // Full verification (recompute id + verify signature), same as EVENT.
+            return validateEvent(message[1]);
         default:
             return {
                 isValid: false,

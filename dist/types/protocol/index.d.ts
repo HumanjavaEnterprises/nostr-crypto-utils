@@ -2,7 +2,7 @@
  * @module protocol
  * @description Core Nostr protocol implementation
  */
-import { NostrEvent, NostrFilter, SignedNostrEvent, UnsignedEvent, PublicKey, NostrResponse, NostrSubscription } from '../types/base';
+import { NostrEvent, NostrFilter, SignedNostrEvent, UnsignedEvent, PublicKey, NostrResponse, NostrSubscription } from '../types/base.js';
 /**
  * Formats an event for relay transmission according to NIP-01
  * @category Message Handling

@@ -66,13 +66,10 @@ exports.signEvent = signEvent;
 exports.getPublicKeySync = getPublicKeySync;
 exports.finalizeEvent = finalizeEvent;
 exports.verifySignature = verifySignature;
-exports.encrypt = encrypt;
-exports.decrypt = decrypt;
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
-const logger_1 = require("./utils/logger");
-const base64_1 = require("./encoding/base64");
+const logger_js_1 = require("./utils/logger.js");
 // Get the appropriate crypto implementation
 const getCrypto = async () => {
     if (typeof window !== 'undefined' && window.crypto) {
@@ -88,7 +85,7 @@ const getCrypto = async () => {
         }
     }
     catch {
-        logger_1.logger.debug('Node crypto not available');
+        logger_js_1.logger.debug('Node crypto not available');
     }
     throw new Error('No WebCrypto implementation available');
 };
@@ -163,7 +160,7 @@ async function getPublicKey(privateKey) {
         };
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to get public key');
+        logger_js_1.logger.error({ error }, 'Failed to get public key');
         throw error;
     }
 }
@@ -176,7 +173,7 @@ async function validateKeyPair(keyPair) {
         return derivedPubKey.hex === keyPair.publicKey.hex;
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to validate key pair');
+        logger_js_1.logger.error({ error }, 'Failed to validate key pair');
         return false;
     }
 }
@@ -190,7 +187,7 @@ function createEvent(event) {
         created_at: event.created_at || timestamp,
         tags: event.tags || [],
         content: event.content || '',
-        kind: event.kind || 1
+        kind: event.kind ?? 1
     };
 }
 /**
@@ -232,7 +229,7 @@ async function signEvent(event, privateKey) {
         };
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to sign event');
+        logger_js_1.logger.error({ error }, 'Failed to sign event');
         throw error;
     }
 }
@@ -258,7 +255,7 @@ async function finalizeEvent(event, privateKey) {
     const pubkey = event.pubkey || getPublicKeySync(privateKey);
     const timestamp = event.created_at || Math.floor(Date.now() / 1000);
     const fullEvent = {
-        kind: event.kind || 1,
+        kind: event.kind ?? 1,
         created_at: timestamp,
         tags: event.tags || [],
         content: event.content || '',
@@ -285,7 +282,7 @@ async function verifySignature(event) {
         // Verify event ID
         const calculatedId = (0, utils_js_1.bytesToHex)(eventHash);
         if (calculatedId !== event.id) {
-            logger_1.logger.error('Event ID mismatch');
+            logger_js_1.logger.error('Event ID mismatch');
             return false;
         }
         // Convert hex strings to bytes
@@ -295,71 +292,8 @@ async function verifySignature(event) {
         return secp256k1_js_1.schnorr.verify(signatureBytes, eventHash, pubkeyBytes);
     }
     catch (error) {
-        logger_1.logger.error({ error }, 'Failed to verify signature');
+        logger_js_1.logger.error({ error }, 'Failed to verify signature');
         return false;
-    }
-}
-/**
- * Encrypts a message using NIP-04
- */
-async function encrypt(message, recipientPubKey, senderPrivKey) {
-    try {
-        const recipientPubKeyHex = typeof recipientPubKey === 'string' ? recipientPubKey : recipientPubKey.hex;
-        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(senderPrivKey), (0, utils_js_1.hexToBytes)(recipientPubKeyHex));
-        const sharedX = sharedPoint.slice(1, 33);
-        // Generate random IV
-        const iv = (0, utils_js_1.randomBytes)(16);
-        const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['encrypt']));
-        // Zero shared secret material now that AES key is imported
-        sharedX.fill(0);
-        sharedPoint.fill(0);
-        // Encrypt the message
-        const data = new TextEncoder().encode(message);
-        const encrypted = await exports.customCrypto.getSubtle().then((subtle) => subtle.encrypt({ name: 'AES-CBC', iv }, key, data.buffer));
-        // NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
-        const ciphertextBase64 = (0, base64_1.bytesToBase64)(new Uint8Array(encrypted));
-        const ivBase64 = (0, base64_1.bytesToBase64)(iv);
-        return ciphertextBase64 + '?iv=' + ivBase64;
-    }
-    catch (error) {
-        logger_1.logger.error({ error }, 'Failed to encrypt message');
-        throw error;
-    }
-}
-/**
- * Decrypts a message using NIP-04
- */
-async function decrypt(encryptedMessage, senderPubKey, recipientPrivKey) {
-    try {
-        const senderPubKeyHex = typeof senderPubKey === 'string' ? senderPubKey : senderPubKey.hex;
-        const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(recipientPrivKey), (0, utils_js_1.hexToBytes)(senderPubKeyHex));
-        const sharedX = sharedPoint.slice(1, 33);
-        // Parse NIP-04 standard format: base64(ciphertext) + "?iv=" + base64(iv)
-        // Also support legacy hex format (iv + ciphertext concatenated) as fallback
-        let iv;
-        let ciphertext;
-        if (encryptedMessage.includes('?iv=')) {
-            // NIP-04 standard format
-            const [ciphertextBase64, ivBase64] = encryptedMessage.split('?iv=');
-            ciphertext = (0, base64_1.base64ToBytes)(ciphertextBase64);
-            iv = (0, base64_1.base64ToBytes)(ivBase64);
-        }
-        else {
-            // Legacy hex format fallback: first 16 bytes are IV, rest is ciphertext
-            const encrypted = (0, utils_js_1.hexToBytes)(encryptedMessage);
-            iv = encrypted.slice(0, 16);
-            ciphertext = encrypted.slice(16);
-        }
-        const key = await exports.customCrypto.getSubtle().then((subtle) => subtle.importKey('raw', sharedX.buffer, { name: 'AES-CBC', length: 256 }, false, ['decrypt']));
-        // Zero shared secret material now that AES key is imported
-        sharedX.fill(0);
-        sharedPoint.fill(0);
-        const decrypted = await exports.customCrypto.getSubtle().then((subtle) => subtle.decrypt({ name: 'AES-CBC', iv }, key, ciphertext.buffer));
-        return new TextDecoder().decode(decrypted);
-    }
-    catch (error) {
-        logger_1.logger.error({ error }, 'Failed to decrypt message');
-        throw error;
     }
 }
 //# sourceMappingURL=crypto.js.map

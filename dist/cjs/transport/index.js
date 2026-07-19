@@ -8,7 +8,7 @@ exports.parseNostrMessage = parseNostrMessage;
 exports.formatEventForRelay = formatEventForRelay;
 exports.formatSubscriptionForRelay = formatSubscriptionForRelay;
 exports.formatCloseForRelay = formatCloseForRelay;
-const base_1 = require("../types/base");
+const base_js_1 = require("../types/base.js");
 /**
  * Parses a Nostr message from a relay
  */
@@ -25,16 +25,16 @@ function parseNostrMessage(message) {
     }
     const messageType = message[0];
     switch (messageType) {
-        case base_1.NostrMessageType.EVENT:
-            return { type: base_1.NostrMessageType.EVENT, payload: message[1] };
-        case base_1.NostrMessageType.REQ:
-            return { type: base_1.NostrMessageType.REQ, payload: { id: message[1], filter: message[2] } };
-        case base_1.NostrMessageType.CLOSE:
-            return { type: base_1.NostrMessageType.CLOSE, payload: message[1] };
-        case base_1.NostrMessageType.EOSE:
-            return { type: base_1.NostrMessageType.EOSE, payload: message[1] };
-        case base_1.NostrMessageType.OK:
-            return { type: base_1.NostrMessageType.OK, payload: { id: message[1], success: message[2], message: message[3] } };
+        case base_js_1.NostrMessageType.EVENT:
+            return { type: base_js_1.NostrMessageType.EVENT, payload: message[1] };
+        case base_js_1.NostrMessageType.REQ:
+            return { type: base_js_1.NostrMessageType.REQ, payload: { id: message[1], filter: message[2] } };
+        case base_js_1.NostrMessageType.CLOSE:
+            return { type: base_js_1.NostrMessageType.CLOSE, payload: message[1] };
+        case base_js_1.NostrMessageType.EOSE:
+            return { type: base_js_1.NostrMessageType.EOSE, payload: message[1] };
+        case base_js_1.NostrMessageType.OK:
+            return { type: base_js_1.NostrMessageType.OK, payload: { id: message[1], success: message[2], message: message[3] } };
         default:
             throw new Error(`Unknown message type: ${messageType}`);
     }

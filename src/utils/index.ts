@@ -4,8 +4,8 @@
  */
 
 // Export basic functions
-export * from './functions';
-export * from './validation';
+export * from './functions.js';
+export * from './validation.js';
 
 // Export integration utilities
 export {
@@ -23,8 +23,8 @@ export {
   createTextNoteEvent,
   createDirectMessageEvent,
   createChannelMessageEvent
-} from './integration';
+} from './integration.js';
 
 // Export logger
-import { createLogger } from './logger';
+import { createLogger } from './logger.js';
 export const logger = createLogger('default');

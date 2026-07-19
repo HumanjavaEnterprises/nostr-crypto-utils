@@ -5,9 +5,9 @@
 /**
  * Utility functions for encoding and decoding data
  */
-export * from './hex';
-export * from './base64';
-export * from './binary';
+export * from './hex.js';
+export * from './base64.js';
+export * from './binary.js';
 /**
  * Convert a hex string to Uint8Array
  * @param hex Hex string to convert

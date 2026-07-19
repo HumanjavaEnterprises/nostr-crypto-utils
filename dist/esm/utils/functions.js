@@ -2,7 +2,7 @@
  * @module utils/functions
  * @description General utility functions for Nostr operations
  */
-import { logger } from './logger';
+import { logger } from './logger.js';
 /**
  * Formats an event for relay transmission
  */

@@ -7,8 +7,8 @@
 import { schnorr } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
-import { logger } from '../utils/logger';
-import type { NostrEvent, SignedNostrEvent } from '../types';
+import { logger } from '../utils/logger.js';
+import type { NostrEvent, SignedNostrEvent } from '../types/index.js';
 
 /**
  * Creates a new Nostr event with the specified parameters (NIP-01)

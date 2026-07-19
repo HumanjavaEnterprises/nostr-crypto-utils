@@ -2,7 +2,7 @@
  * Core protocol types for Nostr
  * @module core/types/protocol
  */
-import { NostrEvent, SignedNostrEvent } from './events';
+import { NostrEvent, SignedNostrEvent } from './events.js';
 /**
  * Filter for querying events
  */

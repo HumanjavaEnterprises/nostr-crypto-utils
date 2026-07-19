@@ -13,7 +13,7 @@ import {
   PublicKey,
   NostrResponse,
   NostrSubscription
-} from '../types/base';
+} from '../types/base.js';
 
 /**
  * Formats an event for relay transmission according to NIP-01

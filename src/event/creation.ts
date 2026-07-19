@@ -5,8 +5,8 @@
 
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
-import { logger } from '../utils/logger';
-import type { NostrEvent, NostrEventKind } from '../types/index';
+import { logger } from '../utils/logger.js';
+import type { NostrEvent, NostrEventKind } from '../types/index.js';
 
 /**
  * Creates a new Nostr event with the specified parameters

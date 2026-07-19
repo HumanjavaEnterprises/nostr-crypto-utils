@@ -5,6 +5,7 @@ import {
   noteEncode,
   nprofileEncode,
   neventEncode,
+  naddrEncode,
   decode
 } from '../../nips/nip-19';
 
@@ -65,6 +66,22 @@ describe('NIP-19: Bech32 Entities', () => {
     expect(decoded.relays).toEqual(relays);
     expect(decoded.author).toBe(author);
     expect(decoded.kind).toBe(kind);
+  });
+
+  it('should encode and decode naddr (NIP-19 TLV: identifier in SPECIAL, pubkey in AUTHOR)', () => {
+    const relays = ['wss://relay.example.com'];
+    const kind = 30023;
+    const identifier = 'my-article';
+
+    const encoded = naddrEncode(samplePubkey, kind, identifier, relays);
+    expect(encoded).toMatch(/^naddr1/);
+
+    const decoded = decode(encoded);
+    expect(decoded.type).toBe('naddr');
+    expect(decoded.identifier).toBe(identifier);
+    expect(decoded.author).toBe(samplePubkey);
+    expect(decoded.kind).toBe(kind);
+    expect(decoded.relays).toEqual(relays);
   });
 
   it('should throw error for invalid bech32 string', () => {

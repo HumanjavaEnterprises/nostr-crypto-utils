@@ -3,8 +3,8 @@
  * @description Event creation utility functions
  */
 
-import { NostrEvent, NostrEventKind } from '../types';
-import { createEvent } from '../crypto';
+import { NostrEvent, NostrEventKind } from '../types/index.js';
+import { createEvent } from '../crypto.js';
 
 /**
  * Creates a text note event

@@ -14,7 +14,7 @@ export {
   decode,
   type Nip19Data,
   type Nip19DataType
-} from './nip-19';
+} from './nip-19.js';
 
 /**
  * @module nips
@@ -32,7 +32,7 @@ export {
  * Or via subpath: import * as nip46 from 'nostr-crypto-utils/nip46'
  */
 
-export * from './nip-01';
-export * from './nip-04';
-export * from './nip-19';
-export * from './nip-26';
+export * from './nip-01.js';
+export * from './nip-04.js';
+export * from './nip-19.js';
+export * from './nip-26.js';

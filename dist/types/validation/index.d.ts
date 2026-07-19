@@ -3,7 +3,7 @@
  * @description Validation utilities for Nostr events, messages, and related data structures.
  * Provides functions to validate events, signatures, filters, and subscriptions according to the Nostr protocol.
  */
-import { NostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, ValidationResult } from '../types/index';
+import { NostrEvent, SignedNostrEvent, NostrFilter, NostrSubscription, ValidationResult } from '../types/index.js';
 /**
  * Validates a Nostr event ID by checking if it matches the SHA-256 hash of the canonical event serialization.
  *

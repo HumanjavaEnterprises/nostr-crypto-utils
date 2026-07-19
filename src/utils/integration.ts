@@ -6,7 +6,7 @@ import {
   NostrMessageType,
   NostrMessage,
   UnsignedEvent
-} from '../types/base';
+} from '../types/base.js';
 
 /**
  * Format event for relay transmission

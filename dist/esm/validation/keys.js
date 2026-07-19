@@ -1,5 +1,5 @@
-import { validatePublicKey } from '../utils/validation';
-import { logger } from '../utils/logger';
+import { validatePublicKey } from '../utils/validation.js';
+import { logger } from '../utils/logger.js';
 /**
  * Validates a Nostr public key
  * @param pubkey - Public key in hex format

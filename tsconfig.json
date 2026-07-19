@@ -18,9 +18,6 @@
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
-    "paths": {
-      "*": ["src/*"]
-    },
     "preserveSymlinks": true
   },
   "include": ["src/**/*"],

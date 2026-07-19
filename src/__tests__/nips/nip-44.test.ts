@@ -4,9 +4,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { bytesToHex, randomBytes } from '@noble/hashes/utils.js';
+import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { schnorr } from '@noble/curves/secp256k1.js';
 import { getConversationKey, encrypt, decrypt, calcPaddedLen } from '../../nips/nip-44';
+import vectors from '../vectors/nostr-vectors.json';
 
 describe('NIP-44', () => {
   // Generate two keypairs for testing
@@ -98,6 +99,25 @@ describe('NIP-44', () => {
       const encrypted = encrypt(plaintext, conversationKey);
       const wrongKey = randomBytes(32);
       expect(() => decrypt(encrypted, wrongKey)).toThrow();
+    });
+  });
+
+  // Official known-answer vectors (nostr-protocol/nips nip44.vectors.json), imported
+  // from the shared vector spine. These catch any wrong-HKDF-info / MAC-over-wrong-bytes
+  // regression that self round-trips would silently pass.
+  describe('official vectors (KAT)', () => {
+    it('get_conversation_key matches', () => {
+      for (const row of vectors.nip44.get_conversation_key) {
+        expect(bytesToHex(getConversationKey(hexToBytes(row.sec1), row.pub2))).toBe(row.conversation_key);
+      }
+    });
+
+    it('encrypt reproduces the exact payload with the fixed nonce', () => {
+      for (const row of vectors.nip44.encrypt_decrypt) {
+        const ck = hexToBytes(row.conversation_key);
+        expect(encrypt(row.plaintext, ck, hexToBytes(row.nonce))).toBe(row.payload);
+        expect(decrypt(row.payload, ck)).toBe(row.plaintext);
+      }
     });
   });
 });

@@ -12,9 +12,9 @@ import {
   ValidationResult, 
   PublicKey,
   NostrMessageType
-} from '../types/index';
+} from '../types/index.js';
 
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
@@ -209,8 +209,8 @@ export function validateEventBase(event: NostrEvent | SignedNostrEvent): Validat
     return { isValid: false, error: 'Invalid event structure' };
   }
 
-  // Validate kind
-  if (typeof event.kind !== 'number' || event.kind < 0) {
+  // Validate kind — kind 0 (metadata) is legal; reject only non-integers / negatives.
+  if (!(typeof event.kind === 'number' && Number.isInteger(event.kind) && event.kind >= 0)) {
     return { isValid: false, error: 'Event kind must be a non-negative integer' };
   }
 
@@ -414,7 +414,9 @@ export function validateResponse(message: unknown): ValidationResult {
           error: 'EVENT message must have exactly 2 elements'
         };
       }
-      return validateSignedEvent(message[1] as SignedNostrEvent);
+      // Full verification: recompute the id and verify the schnorr signature,
+      // so a relay cannot smuggle a well-formed-but-forged event through.
+      return validateEvent(message[1] as SignedNostrEvent);
 
     case NostrMessageType.NOTICE:
       if (message.length !== 2 || typeof message[1] !== 'string') {
@@ -484,7 +486,8 @@ export function validateResponse(message: unknown): ValidationResult {
           error: 'AUTH message must have exactly 2 elements'
         };
       }
-      return validateSignedEvent(message[1] as SignedNostrEvent);
+      // Full verification (recompute id + verify signature), same as EVENT.
+      return validateEvent(message[1] as SignedNostrEvent);
 
     default:
       return {

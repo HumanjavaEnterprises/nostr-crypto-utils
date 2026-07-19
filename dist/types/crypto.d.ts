@@ -20,7 +20,7 @@
  * scheme has specific requirements for key and signature formats that aren't guaranteed
  * when using the lower-level secp256k1 functions directly.
  */
-import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent, PublicKey } from './types/index';
+import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent } from './types/index.js';
 /**
  * Custom crypto interface for cross-platform compatibility
  */
@@ -109,13 +109,5 @@ export declare function finalizeEvent(event: Partial<NostrEvent>, privateKey: st
  * Verifies an event signature
  */
 export declare function verifySignature(event: SignedNostrEvent): Promise<boolean>;
-/**
- * Encrypts a message using NIP-04
- */
-export declare function encrypt(message: string, recipientPubKey: PublicKey | string, senderPrivKey: string): Promise<string>;
-/**
- * Decrypts a message using NIP-04
- */
-export declare function decrypt(encryptedMessage: string, senderPubKey: PublicKey | string, recipientPrivKey: string): Promise<string>;
 export {};
 //# sourceMappingURL=crypto.d.ts.map

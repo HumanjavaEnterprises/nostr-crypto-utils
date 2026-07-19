@@ -4,7 +4,7 @@
  */
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 /**
  * Creates a new Nostr event with the specified parameters
  * @param params - Event parameters

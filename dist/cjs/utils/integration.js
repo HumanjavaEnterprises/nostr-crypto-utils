@@ -18,7 +18,7 @@ exports.createMockTextNote = createMockTextNote;
 exports.createMockMetadataEvent = createMockMetadataEvent;
 exports.createMockDirectMessage = createMockDirectMessage;
 exports.createMockChannelMessage = createMockChannelMessage;
-const base_1 = require("../types/base");
+const base_js_1 = require("../types/base.js");
 /**
  * Format event for relay transmission
  */
@@ -76,15 +76,15 @@ function parseNostrMessage(message) {
         if (typeof type !== 'string') {
             throw new Error('Invalid relay message: first element not a string');
         }
-        if (!Object.values(base_1.NostrMessageType).includes(type)) {
-            throw new Error(`Unknown message type: ${type}. Supported types are: ${Object.values(base_1.NostrMessageType).join(', ')}`);
+        if (!Object.values(base_js_1.NostrMessageType).includes(type)) {
+            throw new Error(`Unknown message type: ${type}. Supported types are: ${Object.values(base_js_1.NostrMessageType).join(', ')}`);
         }
         const nostrMessage = {
             type: type,
             payload: [] // Initialize with empty array
         };
         switch (type) {
-            case base_1.NostrMessageType.EVENT: {
+            case base_js_1.NostrMessageType.EVENT: {
                 if (payload.length < 1) {
                     throw new Error('EVENT message missing event data');
                 }
@@ -95,13 +95,13 @@ function parseNostrMessage(message) {
                 nostrMessage.payload = eventData;
                 break;
             }
-            case base_1.NostrMessageType.NOTICE:
+            case base_js_1.NostrMessageType.NOTICE:
                 if (payload.length < 1) {
                     throw new Error('NOTICE message missing message text');
                 }
                 nostrMessage.payload = String(payload[0]);
                 break;
-            case base_1.NostrMessageType.OK:
+            case base_js_1.NostrMessageType.OK:
                 if (payload.length < 1) {
                     throw new Error('OK message missing event ID');
                 }
@@ -117,7 +117,7 @@ function parseNostrMessage(message) {
                     return String(item);
                 });
                 break;
-            case base_1.NostrMessageType.REQ: {
+            case base_js_1.NostrMessageType.REQ: {
                 if (payload.length < 2) {
                     throw new Error('REQ message missing subscription ID or filters');
                 }
@@ -129,14 +129,14 @@ function parseNostrMessage(message) {
                 nostrMessage.payload = [String(payload[0]), ...filters.map(f => JSON.stringify(f))];
                 break;
             }
-            case base_1.NostrMessageType.CLOSE:
+            case base_js_1.NostrMessageType.CLOSE:
                 if (payload.length < 1) {
                     throw new Error('CLOSE message missing subscription ID');
                 }
                 nostrMessage.subscriptionId = String(payload[0]);
                 nostrMessage.payload = String(payload[0]);
                 break;
-            case base_1.NostrMessageType.AUTH:
+            case base_js_1.NostrMessageType.AUTH:
                 if (payload.length < 1) {
                     throw new Error('AUTH message missing challenge');
                 }
@@ -157,7 +157,7 @@ function parseNostrMessage(message) {
  */
 function createMetadataEvent(metadata) {
     return {
-        kind: base_1.NostrEventKind.SET_METADATA,
+        kind: base_js_1.NostrEventKind.SET_METADATA,
         content: JSON.stringify(metadata),
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
@@ -178,7 +178,7 @@ function createTextNoteEvent(content, replyTo, mentions) {
         });
     }
     return {
-        kind: base_1.NostrEventKind.TEXT_NOTE,
+        kind: base_js_1.NostrEventKind.TEXT_NOTE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags,
@@ -190,7 +190,7 @@ function createTextNoteEvent(content, replyTo, mentions) {
  */
 function createDirectMessageEvent(recipientPubkey, content) {
     return {
-        kind: base_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
+        kind: base_js_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags: [['p', recipientPubkey]],
@@ -206,7 +206,7 @@ function createChannelMessageEvent(channelId, content, replyTo) {
         tags.push(['e', replyTo, '', 'reply']);
     }
     return {
-        kind: base_1.NostrEventKind.CHANNEL_MESSAGE,
+        kind: base_js_1.NostrEventKind.CHANNEL_MESSAGE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags,
@@ -257,7 +257,7 @@ function createAuthorFilter(pubkey, kinds, limit) {
  */
 function createReplyFilter(eventId, limit) {
     const filter = {
-        kinds: [base_1.NostrEventKind.TEXT_NOTE, base_1.NostrEventKind.CHANNEL_MESSAGE],
+        kinds: [base_js_1.NostrEventKind.TEXT_NOTE, base_js_1.NostrEventKind.CHANNEL_MESSAGE],
         '#e': [eventId]
     };
     if (limit) {
@@ -270,7 +270,7 @@ function createReplyFilter(eventId, limit) {
  */
 function createMockTextNote(content = 'Hello, Nostr!') {
     return {
-        kind: base_1.NostrEventKind.TEXT_NOTE,
+        kind: base_js_1.NostrEventKind.TEXT_NOTE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
@@ -282,7 +282,7 @@ function createMockTextNote(content = 'Hello, Nostr!') {
  */
 function createMockMetadataEvent(metadata = {}) {
     return {
-        kind: base_1.NostrEventKind.SET_METADATA,
+        kind: base_js_1.NostrEventKind.SET_METADATA,
         content: JSON.stringify(metadata),
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
@@ -294,7 +294,7 @@ function createMockMetadataEvent(metadata = {}) {
  */
 function createMockDirectMessage(content = 'Hello!') {
     return {
-        kind: base_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
+        kind: base_js_1.NostrEventKind.ENCRYPTED_DIRECT_MESSAGE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],
@@ -306,7 +306,7 @@ function createMockDirectMessage(content = 'Hello!') {
  */
 function createMockChannelMessage(content = 'Hello, channel!') {
     return {
-        kind: base_1.NostrEventKind.CHANNEL_MESSAGE,
+        kind: base_js_1.NostrEventKind.CHANNEL_MESSAGE,
         content,
         created_at: Math.floor(Date.now() / 1000),
         tags: [],

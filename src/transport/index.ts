@@ -3,7 +3,7 @@
  * @description Functions for handling Nostr protocol messages and transport layer operations
  */
 
-import { NostrEvent, NostrFilter, NostrMessageType } from '../types/base';
+import { NostrEvent, NostrFilter, NostrMessageType } from '../types/base.js';
 
 export interface NostrMessage {
   messageType: NostrMessageType;

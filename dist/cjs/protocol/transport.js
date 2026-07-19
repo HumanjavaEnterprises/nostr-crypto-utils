@@ -2,15 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createEventMessage = createEventMessage;
 exports.parseNostrMessage = parseNostrMessage;
-const base_1 = require("../types/base");
-const encoding_1 = require("../utils/encoding");
+const base_js_1 = require("../types/base.js");
+const encoding_js_1 = require("../utils/encoding.js");
 /**
  * Creates a properly formatted Nostr EVENT message
  * @param event The signed event to create a message from
  * @returns A properly formatted Nostr EVENT message array
  */
 function createEventMessage(event) {
-    return [base_1.NostrMessageType.EVENT, event];
+    return [base_js_1.NostrMessageType.EVENT, event];
 }
 /**
  * Parses a raw Nostr message
@@ -27,8 +27,8 @@ function parseNostrMessage(message) {
         throw new Error('Invalid message type');
     }
     // Handle Uint8Array reconstruction for events
-    if (messageType === base_1.NostrMessageType.EVENT && rest[0]?.pubkey?.hex) {
-        rest[0].pubkey.bytes = (0, encoding_1.hexToBytes)(rest[0].pubkey.hex);
+    if (messageType === base_js_1.NostrMessageType.EVENT && rest[0]?.pubkey?.hex) {
+        rest[0].pubkey.bytes = (0, encoding_js_1.hexToBytes)(rest[0].pubkey.hex);
     }
     return [messageType, ...rest];
 }

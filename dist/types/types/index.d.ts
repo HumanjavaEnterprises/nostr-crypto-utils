@@ -65,14 +65,14 @@ export declare enum NostrEventKind {
  * Re-export all types from base module
  * @packageDocumentation
  */
-export * from './base';
+export * from './base.js';
 /** Re-export protocol types */
-export * from './protocol';
+export * from './protocol.js';
 /** Re-export message types */
-export * from './messages';
+export * from './messages.js';
 /** Re-export type guards */
-export * from './guards';
-export type { Nip19DataType } from '../nips/nip-19';
+export * from './guards.js';
+export type { Nip19DataType } from '../nips/nip-19.js';
 /** Re-export NIP-46 types */
-export * from './nip46';
+export * from './nip46.js';
 //# sourceMappingURL=index.d.ts.map

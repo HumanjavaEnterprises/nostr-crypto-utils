@@ -99,8 +99,19 @@ export interface Nip46SignerHandlers {
 export interface Nip46HandleOptions {
     /** Expected connection secret (from bunker:// URI) */
     secret?: string;
-    /** Set of authenticated client pubkeys. Not mutated — check newlyAuthenticated on result. */
+    /**
+     * Set of authenticated client pubkeys. Not mutated — check newlyAuthenticated on result.
+     * The dispatcher is FAIL-CLOSED: privileged methods (get_public_key, sign_event,
+     * nip04/nip44 encrypt/decrypt, get_relays) are denied unless this set is provided
+     * AND contains the requesting client's pubkey. Only `connect` and `ping` are allowed
+     * without prior authentication.
+     */
     authenticatedClients?: Set<string>;
+    /**
+     * Explicit opt-in to serve privileged methods WITHOUT any authentication gating.
+     * Dangerous — only for trusted, single-tenant local setups. Defaults to false.
+     */
+    allowUnauthenticated?: boolean;
 }
 /**
  * Result of handleSignerRequest()

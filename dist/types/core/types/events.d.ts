@@ -2,7 +2,7 @@
  * Core event types for Nostr
  * @module core/types/events
  */
-import { NostrEventKind, NostrMessageType } from '../constants';
+import { NostrEventKind, NostrMessageType } from '../constants.js';
 /**
  * Basic Nostr event structure
  */

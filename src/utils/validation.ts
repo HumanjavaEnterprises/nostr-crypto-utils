@@ -1,5 +1,5 @@
-import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent } from '../types';
-import { isNostrEvent, isNostrFilter, isSignedNostrEvent } from '../types/guards';
+import { NostrEvent, NostrFilter, NostrSubscription, SignedNostrEvent } from '../types/index.js';
+import { isNostrEvent, isNostrFilter, isSignedNostrEvent } from '../types/guards.js';
 import { schnorr } from '@noble/curves/secp256k1.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';

@@ -113,13 +113,14 @@ describe('NOSTR Crypto Utils', () => {
       const senderKeyPair = await generateKeyPair();
       const invalidPrivateKey = 'invalid-key';
 
-      await expect(
+      // Canonical NIP-04 is synchronous and validates the private key format.
+      expect(() =>
         decryptMessage(
           'Secret message',
           invalidPrivateKey,
           senderKeyPair.publicKey.hex
         )
-      ).rejects.toThrow('Invalid private key format');
+      ).toThrow('invalid private key');
     });
 
     it('should fail to decrypt with wrong recipient', async () => {
@@ -132,8 +133,8 @@ describe('NOSTR Crypto Utils', () => {
       const encrypted = await encryptMessage(message, senderKeyPair.privateKey, recipientKeyPair.publicKey.hex);
       expect(encrypted).toBeDefined();
 
-      // Try to decrypt with wrong key pair
-      await expect(decryptMessage(encrypted, wrongKeyPair.privateKey, senderKeyPair.publicKey.hex)).rejects.toThrow();
+      // Try to decrypt with wrong key pair (bad MAC/padding) — throws synchronously.
+      expect(() => decryptMessage(encrypted, wrongKeyPair.privateKey, senderKeyPair.publicKey.hex)).toThrow();
     });
   });
 
