@@ -1,0 +1,36 @@
+# nostr-crypto-utils
+
+> Level 0 sovereign cryptography for Nostr — the cryptographic floor an AI agent stands on to own its identity: its own keypair, its own signatures, its own encrypted memory. Not a shared API key. Not a wrapper around a borrowed account. Edge-native (Cloudflare Workers / Deno / browser / Node), 5 audited crypto-only dependencies, no Node polyfills.
+
+This package gives a human or an agent everything needed to be **a first-class participant on any relay, not a wrapper around a borrowed account**: Schnorr keys & event signing, bech32 identities, versioned encryption, gift wrap, private DMs, HTTP auth, remote signing, and encrypted key storage. It performs **no network I/O** — it builds and verifies events and headers; you control the transport. That makes it safe to drop into an edge runtime and into an agent's tool belt.
+
+- Install: `npm i nostr-crypto-utils` (ESM + CJS, TypeScript types included)
+- Import everything from the root, or a single NIP via subpath: `import { nip98 } from 'nostr-crypto-utils'` / `import * as nip98 from 'nostr-crypto-utils/nip98'`
+- Dependencies (all audited, crypto-only): `@noble/ciphers`, `@noble/curves`, `@noble/hashes`, `@scure/base`, `bech32`
+
+## Core API (from the package root)
+- Keys: `generateKeyPair()`, `getPublicKey(skHex)`, `getPublicKeySync(sk)`, `validateKeyPair(kp)`
+- Events: `createEvent(partial)`, `signEvent(event, sk)`, `finalizeEvent(partial, sk)` (create+hash+sign), `getEventHash(event)`, `verifySignature(signedEvent)`
+- Schnorr: `signSchnorr`, `verifySchnorrSignature`
+
+## NIPs (subpath `nostr-crypto-utils/nipNN`)
+- NIP-01 Events: event creation, id hashing, signing, verification
+- NIP-19 bech32 identities: `npubEncode`, `nsecEncode`, `noteEncode`, `nprofileEncode`, `neventEncode`, `naddrEncode`, `nrelayEncode`, `decode`
+- NIP-44 Encryption (v2, ChaCha20+HKDF+HMAC): `getConversationKey(skBytes, pkHex)`, `encrypt(text, ck)`, `decrypt(payload, ck)`
+- NIP-59 Gift Wrap: `createRumor`, `createSeal`, `createGiftWrap`, `wrapEvent(rumor, sk, recipientPk)`, `unwrapEvent(giftWrap, sk)` — obscures author/recipient/content; verifies seal author binding
+- NIP-17 Private DMs: `createDirectMessage(sk, { content, recipients, ... })` (wraps per recipient + sender self-copy), `readDirectMessage(giftWrap, sk)`
+- NIP-98 HTTP Auth: `createAuthEvent({ url, method, payload? }, sk)`, `toAuthHeader(event)`, `fromAuthHeader(header)`, `validateAuthEvent(event, { url, method, body? })` — kind 27235; **no HTTP performed**, you issue the request
+- NIP-46 Remote Signing (Nostr Connect): `parseBunkerURI`, `createSession`, `connectRequest`, `wrapEvent`, `unwrapEvent`, signer-side primitives
+- NIP-49 ncryptsec: `encrypt(skBytes, password)`, `decrypt(ncryptsec, password)`
+- NIP-04 (deprecated → NIP-17), NIP-26 (deprecated → NIP-46): retained for legacy compatibility only
+
+## For agent platforms
+- [AGENTS.md](./AGENTS.md): how to give an agent its own cryptographic identity, wrap these as native tools (Hermes / OpenClaw), recipes (mint identity, NIP-98 request auth, private DMs, encrypted self-memory), and security guidance.
+
+## Where this sits (the sovereignty stack)
+`nostr-crypto-utils` (Level 0: crypto) → `nostr-secure-enclave` (hardware-backed key custody) → `nostrkey` / NostrKeep (identity + sovereign storage) → relays. Each layer owned by the user — built in by design, not bolted on after.
+
+## Reference
+- API reference (TypeDoc): https://humanjavaenterprises.github.io/nostr-crypto-utils/
+- README: ./README.md
+- Nostr NIP specs: https://github.com/nostr-protocol/nips

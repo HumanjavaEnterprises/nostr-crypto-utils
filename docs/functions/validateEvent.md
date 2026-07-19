@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -8,35 +8,29 @@
 
 > **validateEvent**(`event`): `ValidationResult`
 
-Validates a Nostr event against the protocol specification (NIP-01)
+Defined in: [validation/index.ts:126](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/validation/index.ts#L126)
+
+Validates a complete Nostr event by checking its structure, timestamps, ID, and signature.
 
 ## Parameters
 
 ### event
 
-[`NostrEvent`](../interfaces/NostrEvent.md)
+[`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)
 
-Event to validate
+The event to validate
 
 ## Returns
 
 `ValidationResult`
 
-Validation result containing any errors found or true if valid
+Object containing validation result and any error message
 
 ## Example
 
 ```typescript
-const event = createEvent({
-  kind: NostrEventKind.TEXT_NOTE,
-  content: 'Hello Nostr!'
-});
-const validation = validateEvent(event);
-if (!validation.isValid) {
-  console.error('Validation error:', validation.error);
+const result = validateEvent(event);
+if (!result.isValid) {
+  console.error(result.error);
 }
 ```
-
-## Defined in
-
-[utils/validation.ts:29](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/utils/validation.ts#L29)

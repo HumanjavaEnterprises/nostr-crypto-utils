@@ -14,6 +14,10 @@
  * on the wire) by prepending the 02 prefix before deriving the shared secret.
  *
  * @see https://github.com/nostr-protocol/nips/blob/master/04.md
+ *
+ * @deprecated NIP-04 is `unrecommended` upstream — it leaks metadata and uses a
+ * weaker scheme. Prefer NIP-17 Private Direct Messages (NIP-44 encryption +
+ * NIP-59 gift wrap). Retained for compatibility with legacy events only.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.asPublicKey = exports.asPrivateKey = void 0;

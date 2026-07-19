@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -6,15 +6,12 @@
 
 # Interface: NostrEvent
 
-Basic Nostr event interface
-
-## See
-
-https://github.com/nostr-protocol/nips/blob/master/01.md
+Defined in: [types/index.ts:16](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L16)
 
 ## Extended by
 
 - [`SignedNostrEvent`](SignedNostrEvent.md)
+- [`Rumor`](../nostr-crypto-utils/namespaces/nips/nip-59/interfaces/Rumor.md)
 
 ## Properties
 
@@ -22,11 +19,7 @@ https://github.com/nostr-protocol/nips/blob/master/01.md
 
 > **content**: `string`
 
-Content of the event
-
-#### Defined in
-
-[types/base.ts:86](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L86)
+Defined in: [types/index.ts:20](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L20)
 
 ***
 
@@ -34,23 +27,15 @@ Content of the event
 
 > **created\_at**: `number`
 
-Unix timestamp in seconds
-
-#### Defined in
-
-[types/base.ts:90](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L90)
+Defined in: [types/index.ts:18](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L18)
 
 ***
 
 ### kind
 
-> **kind**: [`NostrEventKind`](../enumerations/NostrEventKind.md)
+> **kind**: `number`
 
-Event kind as defined in NIPs
-
-#### Defined in
-
-[types/base.ts:84](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L84)
+Defined in: [types/index.ts:17](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L17)
 
 ***
 
@@ -58,11 +43,7 @@ Event kind as defined in NIPs
 
 > **pubkey**: `string`
 
-Public key of the event creator in hex format
-
-#### Defined in
-
-[types/base.ts:92](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L92)
+Defined in: [types/index.ts:21](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L21)
 
 ***
 
@@ -70,8 +51,4 @@ Public key of the event creator in hex format
 
 > **tags**: `string`[][]
 
-Array of tags associated with the event
-
-#### Defined in
-
-[types/base.ts:88](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/types/base.ts#L88)
+Defined in: [types/index.ts:19](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/types/index.ts#L19)

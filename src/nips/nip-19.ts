@@ -4,7 +4,10 @@
  */
 
 import { bech32 } from 'bech32';
-import { Buffer } from 'buffer';
+import { hexToBytes, bytesToHex } from '@noble/hashes/utils.js';
+
+const utf8Encoder = new TextEncoder();
+const utf8Decoder = new TextDecoder();
 
 export type Nip19DataType = 'npub' | 'nsec' | 'note' | 'nprofile' | 'nevent' | 'naddr' | 'nrelay';
 
@@ -37,7 +40,7 @@ const TLV_TYPES = {
  */
 export function npubEncode(pubkey: string): string {
   validateHexString(pubkey, 64);
-  const data = Buffer.from(pubkey, 'hex');
+  const data = hexToBytes(pubkey);
   const words = bech32.toWords(data);
   return bech32.encode('npub', words, 1000);
 }
@@ -50,7 +53,7 @@ export function npubEncode(pubkey: string): string {
  */
 export function nsecEncode(privkey: string): string {
   validateHexString(privkey, 64);
-  const data = Buffer.from(privkey, 'hex');
+  const data = hexToBytes(privkey);
   const words = bech32.toWords(data);
   return bech32.encode('nsec', words, 1000);
 }
@@ -63,7 +66,7 @@ export function nsecEncode(privkey: string): string {
  */
 export function noteEncode(eventId: string): string {
   validateHexString(eventId, 64);
-  const data = Buffer.from(eventId, 'hex');
+  const data = hexToBytes(eventId);
   const words = bech32.toWords(data);
   return bech32.encode('note', words, 1000);
 }
@@ -172,7 +175,7 @@ export function naddrEncode(
  */
 export function nrelayEncode(url: string): string {
   validateRelayUrl(url);
-  const data = Buffer.from(url, 'utf8');
+  const data = utf8Encoder.encode(url);
   const words = bech32.toWords(data);
   return bech32.encode('nrelay', words, 1000);
 }
@@ -195,7 +198,7 @@ export function decode(str: string): Nip19Data {
 
   try {
     const decoded = bech32.decode(str, 1000);
-    const data = Buffer.from(bech32.fromWords(decoded.words));
+    const data = Uint8Array.from(bech32.fromWords(decoded.words));
 
     // For nrelay type
     let url: string;
@@ -205,14 +208,16 @@ export function decode(str: string): Nip19Data {
     switch (decoded.prefix) {
       case 'npub':
       case 'nsec':
-      case 'note':
-        validateHexString(data.toString('hex'), 64);
+      case 'note': {
+        const hex = bytesToHex(data);
+        validateHexString(hex, 64);
         return {
           type: decoded.prefix as Nip19DataType,
-          data: data.toString('hex')
+          data: hex
         };
+      }
       case 'nrelay':
-        url = data.toString('utf8');
+        url = utf8Decoder.decode(data);
         validateRelayUrl(url);
         return {
           type: 'nrelay',
@@ -262,15 +267,15 @@ function encodeTLV(data: Nip19Data): number[] {
 
   // Kind (type 3): event kind as uint32 big-endian
   if (data.kind !== undefined) {
-    const kindBytes = Buffer.alloc(4);
-    kindBytes.writeUInt32BE(data.kind);
+    const kindBytes = new Uint8Array(4);
+    new DataView(kindBytes.buffer).setUint32(0, data.kind, false);
     result.push(TLV_TYPES.KIND, kindBytes.length);
     result.push(...kindBytes);
   }
 
   // Author (type 2): author pubkey (32-byte hex)
   if (data.author) {
-    const authorBytes = Buffer.from(data.author, 'hex');
+    const authorBytes = hexToBytes(data.author);
     result.push(TLV_TYPES.AUTHOR, authorBytes.length);
     result.push(...authorBytes);
   }
@@ -278,24 +283,25 @@ function encodeTLV(data: Nip19Data): number[] {
   // Relay (type 1): relay URLs (utf8)
   if (data.relays?.length) {
     for (const relay of data.relays) {
-      const relayBytes = Buffer.from(relay, 'utf8');
+      const relayBytes = utf8Encoder.encode(relay);
       result.push(TLV_TYPES.RELAY, relayBytes.length);
       result.push(...relayBytes);
     }
   }
 
   // Special (type 0), emitted last: UTF-8 identifier for naddr, 32-byte hex
-  // pubkey/id for nprofile/nevent.
+  // pubkey/id for nprofile/nevent. Per NIP-19 there is no separate TLV type 4;
+  // the naddr d-tag identifier IS the SPECIAL value.
   const specialBytes = isNaddr
-    ? Buffer.from(data.data, 'utf8')
-    : Buffer.from(data.data, 'hex');
+    ? utf8Encoder.encode(data.data)
+    : hexToBytes(data.data);
   result.push(TLV_TYPES.SPECIAL, specialBytes.length);
   result.push(...specialBytes);
 
-  return bech32.toWords(Buffer.from(result));
+  return bech32.toWords(Uint8Array.from(result));
 }
 
-function decodeTLV(prefix: Nip19DataType, data: Buffer): Nip19Data {
+function decodeTLV(prefix: Nip19DataType, data: Uint8Array): Nip19Data {
   const isNaddr = prefix === 'naddr';
   const result: Nip19Data = {
     type: prefix,
@@ -321,25 +327,25 @@ function decodeTLV(prefix: Nip19DataType, data: Buffer): Nip19Data {
       case TLV_TYPES.SPECIAL:
         if (isNaddr) {
           // For naddr, SPECIAL is the UTF-8 d-tag identifier, not hex.
-          result.data = value.toString('utf8');
+          result.data = utf8Decoder.decode(value);
           result.identifier = result.data;
         } else {
-          result.data = value.toString('hex');
+          result.data = bytesToHex(value);
           validateHexString(result.data, 64);
         }
         break;
       case TLV_TYPES.RELAY:
-        relay = value.toString('utf8');
+        relay = utf8Decoder.decode(value);
         validateRelayUrl(relay);
         result.relays = result.relays || [];
         result.relays.push(relay);
         break;
       case TLV_TYPES.AUTHOR:
-        result.author = value.toString('hex');
+        result.author = bytesToHex(value);
         validateHexString(result.author, 64);
         break;
       case TLV_TYPES.KIND:
-        result.kind = value.readUInt32BE();
+        result.kind = new DataView(value.buffer, value.byteOffset, value.byteLength).getUint32(0, false);
         break;
       default:
         // Skip unknown TLV types

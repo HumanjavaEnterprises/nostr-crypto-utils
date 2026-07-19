@@ -1,4 +1,4 @@
-[**nostr-crypto-utils v0.4.1**](../README.md)
+[**nostr-crypto-utils v0.9.0**](../README.md)
 
 ***
 
@@ -8,7 +8,9 @@
 
 > **validateSignedEvent**(`event`): `ValidationResult`
 
-Validates a signed Nostr event (NIP-01)
+Defined in: [validation/index.ts:156](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/be74ab5aca2dc1a3967c5b722bcc405900aade28/src/validation/index.ts#L156)
+
+Validates a signed Nostr event by checking its structure and signature format.
 
 ## Parameters
 
@@ -16,23 +18,19 @@ Validates a signed Nostr event (NIP-01)
 
 [`SignedNostrEvent`](../interfaces/SignedNostrEvent.md)
 
-Signed event to validate
+The event to validate
 
 ## Returns
 
 `ValidationResult`
 
-Validation result containing any errors found or true if valid
+Object containing validation result and any error message
 
 ## Example
 
 ```typescript
-const validation = validateSignedEvent(signedEvent);
-if (!validation.isValid) {
-  console.error('Invalid signature or event structure:', validation.error);
+const result = validateSignedEvent(event);
+if (!result.isValid) {
+  console.error(result.error);
 }
 ```
-
-## Defined in
-
-[utils/validation.ts:93](https://github.com/HumanjavaEnterprises/nostr-crypto-utils/blob/9c160331e9485dc52c520a832e977c4e54bbdc89/src/utils/validation.ts#L93)

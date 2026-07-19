@@ -37,7 +37,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip49 = exports.nip46 = exports.nip44 = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.verifySignature = exports.finalizeEvent = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKeySync = exports.getPublicKey = exports.generateKeyPair = exports.Nip46Method = exports.NostrMessageType = exports.NostrEventKind = exports.isPublicKeyHex = exports.isPrivateKeyHex = exports.asPublicKey = exports.asPrivateKey = void 0;
+exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip98 = exports.nip17 = exports.nip59 = exports.nip49 = exports.nip46 = exports.nip44 = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.verifySignature = exports.finalizeEvent = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKeySync = exports.getPublicKey = exports.generateKeyPair = exports.Nip46Method = exports.NostrMessageType = exports.NostrEventKind = exports.isPublicKeyHex = exports.isPrivateKeyHex = exports.asPublicKey = exports.asPrivateKey = void 0;
 var keys_js_1 = require("./types/keys.js");
 Object.defineProperty(exports, "asPrivateKey", { enumerable: true, get: function () { return keys_js_1.asPrivateKey; } });
 Object.defineProperty(exports, "asPublicKey", { enumerable: true, get: function () { return keys_js_1.asPublicKey; } });
@@ -84,6 +84,9 @@ exports.nip26 = __importStar(require("./nips/nip-26.js"));
 exports.nip44 = __importStar(require("./nips/nip-44.js"));
 exports.nip46 = __importStar(require("./nips/nip-46.js"));
 exports.nip49 = __importStar(require("./nips/nip-49.js"));
+exports.nip59 = __importStar(require("./nips/nip-59.js"));
+exports.nip17 = __importStar(require("./nips/nip-17.js"));
+exports.nip98 = __importStar(require("./nips/nip-98.js"));
 // Utils
 var encoding_js_1 = require("./utils/encoding.js");
 Object.defineProperty(exports, "hexToBytes", { enumerable: true, get: function () { return encoding_js_1.hexToBytes; } });

@@ -1,84 +1,127 @@
 /**
  * @module logger
- * @description Logger utility for the application
+ * @description Zero-dependency, edge-safe logger for nostr-crypto-utils.
+ *
+ * Replaces the previous pino-based logger so the package runs natively on
+ * Cloudflare Workers / Deno / browsers with no Node polyfills and no transitive
+ * logging dependencies. The public API stays compatible with common pino usage:
+ *   - level gating via `LOG_LEVEL` (or `logger.level = '...'`)
+ *   - `logger.info('msg')` and `logger.error({ err }, 'msg')` call signatures
+ *   - `logger.child(bindings)`
  */
-var LogLevel;
+export var LogLevel;
 (function (LogLevel) {
     LogLevel[LogLevel["DEBUG"] = 0] = "DEBUG";
     LogLevel[LogLevel["INFO"] = 1] = "INFO";
     LogLevel[LogLevel["WARN"] = 2] = "WARN";
     LogLevel[LogLevel["ERROR"] = 3] = "ERROR";
 })(LogLevel || (LogLevel = {}));
-import pino from 'pino';
-/**
- * Create a logger instance with consistent configuration
- * @param name - Component or module name for the logger
- * @returns Configured pino logger instance
- */
-export function createLogger(name) {
-    return pino({
-        name,
-        level: process.env.LOG_LEVEL || 'info',
-        transport: process.env.NODE_ENV === 'development' ? {
-            target: 'pino-pretty',
-            options: {
-                colorize: true,
-                translateTime: 'HH:MM:ss',
-                ignore: 'pid,hostname',
+// Ordered for gating. trace/fatal/silent included for pino-call compatibility.
+const LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'];
+/** Read LOG_LEVEL without assuming a Node `process` global (Workers-safe). */
+function defaultLevel() {
+    const env = typeof process !== 'undefined' && process.env ? process.env : {};
+    const lvl = (env.LOG_LEVEL || 'info').toLowerCase();
+    return LEVELS.includes(lvl) ? lvl : 'info';
+}
+function rank(level) {
+    const i = LEVELS.indexOf(level);
+    return i === -1 ? LEVELS.indexOf('info') : i;
+}
+function serializeError(value) {
+    if (value instanceof Error) {
+        return { name: value.name, message: value.message, stack: value.stack };
+    }
+    return value;
+}
+const CONSOLE = {
+    trace: (console.debug ?? console.log).bind(console),
+    debug: (console.debug ?? console.log).bind(console),
+    info: (console.info ?? console.log).bind(console),
+    warn: (console.warn ?? console.log).bind(console),
+    error: (console.error ?? console.log).bind(console),
+    fatal: (console.error ?? console.log).bind(console),
+    silent: () => { },
+};
+class EdgeLogger {
+    level;
+    name;
+    bindings;
+    constructor(opts = {}) {
+        this.name = opts.name;
+        this.level = opts.level || defaultLevel();
+        this.bindings = opts.bindings ?? {};
+    }
+    emit(method, args) {
+        if (this.level === 'silent' || rank(method) < rank(this.level))
+            return;
+        let context;
+        let message;
+        if (args.length && typeof args[0] === 'object' && args[0] !== null) {
+            // pino-style: (mergingObject, message)
+            context = {};
+            for (const [k, v] of Object.entries(args[0])) {
+                context[k] = serializeError(v);
             }
-        } : undefined,
-        formatters: {
-            level: (label) => {
-                return { level: label.toUpperCase() };
-            }
+            message = args[1] != null ? String(args[1]) : '';
         }
-    });
+        else {
+            message = args
+                .map((a) => (typeof a === 'string' ? a : JSON.stringify(serializeError(a))))
+                .join(' ');
+        }
+        const merged = { ...this.bindings, ...context };
+        const prefix = `[${new Date().toISOString()}] ${method.toUpperCase()}` + (this.name ? ` (${this.name})` : '');
+        const ctx = Object.keys(merged).length ? ` ${JSON.stringify(merged)}` : '';
+        (CONSOLE[method] ?? CONSOLE.info)(`${prefix}: ${message}${ctx}`);
+    }
+    trace(...args) {
+        this.emit('trace', args);
+    }
+    debug(...args) {
+        this.emit('debug', args);
+    }
+    info(...args) {
+        this.emit('info', args);
+    }
+    warn(...args) {
+        this.emit('warn', args);
+    }
+    error(...args) {
+        this.emit('error', args);
+    }
+    fatal(...args) {
+        this.emit('fatal', args);
+    }
+    child(bindings) {
+        return new EdgeLogger({
+            name: this.name,
+            level: this.level,
+            bindings: { ...this.bindings, ...bindings },
+        });
+    }
 }
 /**
- * Simple log function for basic logging needs
+ * Create a named logger instance.
+ * @param name - Component or module name for the logger
+ */
+export function createLogger(name) {
+    return new EdgeLogger({ name });
+}
+/**
+ * Simple log function for basic logging needs.
  * @param message - Message to log
  * @param data - Optional data to include
  */
 export function log(message, data) {
     console.log(message, data);
 }
+/** Default logger instance for the library. */
+export const logger = new EdgeLogger({ name: 'nostr-crypto-utils' });
 /**
- * Default logger instance for the application
- * Includes enhanced error handling and formatting
+ * Legacy class-based logger, retained for backward compatibility.
+ * Prefer {@link createLogger} / {@link logger}.
  */
-export const logger = pino({
-    name: 'nostr-crypto-utils',
-    level: process.env.LOG_LEVEL || 'info',
-    transport: process.env.NODE_ENV === 'development' ? {
-        target: 'pino-pretty',
-        options: {
-            colorize: true,
-            translateTime: 'HH:MM:ss',
-            ignore: 'pid,hostname',
-        }
-    } : undefined,
-    formatters: {
-        level: (label) => {
-            return { level: label.toUpperCase() };
-        },
-        log: (obj) => {
-            // Convert error objects to strings for better logging
-            if (obj && typeof obj === 'object' && 'err' in obj) {
-                const newObj = { ...obj };
-                if (newObj.err instanceof Error) {
-                    const err = newObj.err;
-                    newObj.err = {
-                        message: err.message,
-                        stack: err.stack,
-                        name: err.name,
-                    };
-                }
-                return newObj;
-            }
-            return obj;
-        }
-    }
-});
 export class CustomLogger {
     _level;
     constructor(level = LogLevel.INFO) {

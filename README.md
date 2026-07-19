@@ -2,6 +2,12 @@
 
 A comprehensive cryptographic utility library for Nostr protocol implementation, focusing on core security operations and cross-platform compatibility.
 
+> **Edge-native (v0.8.0+):** runs unmodified on **Cloudflare Workers / Deno / browsers** — 5 audited crypto-only dependencies (`@noble/*`, `@scure/base`, `bech32`), no Node polyfills, no logging deps.
+>
+> **Building an agent?** This is Level 0 of a sovereign stack — give your AI its own
+> cryptographic identity, not a shared API key. See **[AGENTS.md](./AGENTS.md)** for agent
+> integration (Hermes / OpenClaw) and **[llms.txt](./llms.txt)** for a machine-readable map.
+
 ## Overview
 
 This library provides essential cryptographic operations and utilities required for Nostr protocol implementation, with a focus on:
@@ -9,13 +15,15 @@ This library provides essential cryptographic operations and utilities required 
 - Schnorr signatures for the Nostr protocol
 - Key management and validation
 - Event signing and verification
-- Encrypted direct messages (NIP-04)
+- HTTP Auth (NIP-98)
+- Gift Wrap (NIP-59) and Private Direct Messages (NIP-17)
 - Versioned encrypted payloads (NIP-44)
 - Remote signing / Nostr Connect (NIP-46)
 - Private key encryption / ncryptsec (NIP-49)
 - Bech32-encoded entities (NIP-19)
-- Delegated event signing (NIP-26)
 - Authentication protocol (NIP-42)
+- Encrypted direct messages (NIP-04 — _deprecated_, use NIP-17)
+- Delegated event signing (NIP-26 — _deprecated_, use NIP-46)
 
 ## Core Features
 
@@ -36,13 +44,16 @@ This library provides essential cryptographic operations and utilities required 
 
 ### Protocol Support
 - NIP-01: Basic protocol flow
-- NIP-04: Encrypted Direct Messages
+- NIP-17: Private Direct Messages
 - NIP-19: Bech32-Encoded Entities
-- NIP-26: Delegated Event Signing
 - NIP-42: Authentication Protocol
 - NIP-44: Versioned Encrypted Payloads
 - NIP-46: Nostr Connect (Remote Signing)
 - NIP-49: Private Key Encryption (ncryptsec)
+- NIP-59: Gift Wrap
+- NIP-98: HTTP Auth
+- NIP-04: Encrypted Direct Messages _(deprecated → NIP-17)_
+- NIP-26: Delegated Event Signing _(deprecated → NIP-46)_
 
 ## Project Structure
 
@@ -64,10 +75,10 @@ This library provides essential cryptographic operations and utilities required 
 
 ## Technical Requirements
 
-- Node.js 18 or higher
-- TypeScript with "bundler" moduleResolution
-- Supports both ESM and CJS formats
-- Cross-platform compatible (Node.js and browser environments)
+- **Edge-native**: runs unmodified on Cloudflare Workers, Deno, browsers, and Node.js 18+ — no Node polyfills required
+- Supports both ESM and CJS formats, with per-NIP subpath exports (`nostr-crypto-utils/nip98`, etc.)
+- TypeScript-first with full type definitions
+- 5 runtime dependencies, all audited and crypto-only (`@noble/ciphers`, `@noble/curves`, `@noble/hashes`, `@scure/base`, `bech32`)
 
 [![npm version](https://badge.fury.io/js/nostr-crypto-utils.svg)](https://www.npmjs.com/package/nostr-crypto-utils)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
@@ -99,12 +110,12 @@ Any remaining `npm audit` findings are in development-only tooling (eslint, type
 
 ## Why Choose nostr-crypto-utils?
 
-- **Lightweight**: Only 208.7KB unpacked, focusing on essential cryptographic operations
+- **Edge-native**: zero Node polyfills — deploys as-is to Cloudflare Workers, Deno, and browsers
+- **Lean, audited dependencies**: only 5 crypto-only runtime deps (`@noble/*`, `@scure/base`, `bech32`) — small attack surface, easy to audit
 - **Type-First**: Built from the ground up with TypeScript for maximum type safety
-- **Minimal Dependencies**: Reduced attack surface and easier auditing
-- **Modular Design**: Perfect for projects that need cryptographic operations without full client functionality
+- **Modular Design**: Per-NIP subpath exports — import only what you need
 - **Complementary**: Works seamlessly with nostr-nsec-seedphrase for complete key management
-- **Security Focused**: Strict validation and comprehensive test coverage
+- **Security Focused**: Strict validation and comprehensive test coverage (161 tests)
 
 ## Features
 
@@ -112,10 +123,11 @@ Any remaining `npm audit` findings are in development-only tooling (eslint, type
 - **Type Safety**: Full TypeScript support with comprehensive type definitions
 - **Event Handling**: Create, sign, and validate Nostr events
 - **Message Formatting**: Protocol-compliant message formatting for relay communication
-- **Encryption**: Secure encryption and decryption for direct messages (NIP-04)
+- **Encryption**: Versioned NIP-44 encryption, NIP-59 gift wrap, NIP-17 private DMs
+- **HTTP Auth**: NIP-98 signed-request auth (event + header build/verify, no transport)
 - **Validation**: Comprehensive validation for events, filters, and subscriptions
-- **Cross-Platform**: Works in both Node.js and browser environments
-- **Zero Dependencies**: Minimal external dependencies for better security
+- **Edge-Native**: Cloudflare Workers / Deno / browser / Node.js — no polyfills
+- **Lean Dependencies**: 5 audited crypto-only runtime dependencies
 
 ## Supported NIPs
 
@@ -124,13 +136,16 @@ This library implements the following Nostr Implementation Possibilities (NIPs):
 | NIP | Title | Description | Status |
 |-----|-------|-------------|---------|
 | [NIP-01](https://github.com/nostr-protocol/nips/blob/master/01.md) | Basic Protocol Flow Description | Core protocol functionality including event creation, signing, and verification | ✅ Complete |
-| [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md) | Encrypted Direct Messages | Secure, end-to-end encrypted direct messaging between users | ✅ Complete |
+| [NIP-17](https://github.com/nostr-protocol/nips/blob/master/17.md) | Private Direct Messages | Encrypted chat (`kind 14`) over NIP-44 + NIP-59 gift wrap | ✅ Complete |
 | [NIP-19](https://github.com/nostr-protocol/nips/blob/master/19.md) | bech32-encoded Entities | Human-readable encoding for keys, events, and other entities | ✅ Complete |
-| [NIP-26](https://github.com/nostr-protocol/nips/blob/master/26.md) | Delegated Event Signing | Create and verify delegated event signing capabilities | ✅ Complete |
 | [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md) | Authentication | Client-relay authentication protocol | ✅ Complete |
-| [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned Encrypted Payloads | Modern encryption replacing NIP-04 (ChaCha20 + HMAC) | ✅ Complete |
+| [NIP-44](https://github.com/nostr-protocol/nips/blob/master/44.md) | Versioned Encrypted Payloads | Modern encryption (v2: ChaCha20 + HKDF + HMAC) | ✅ Complete |
 | [NIP-46](https://github.com/nostr-protocol/nips/blob/master/46.md) | Nostr Connect (Remote Signing) | Protocol layer for remote signing via bunker | ✅ Complete |
 | [NIP-49](https://github.com/nostr-protocol/nips/blob/master/49.md) | Private Key Encryption | ncryptsec password-encrypted key storage | ✅ Complete |
+| [NIP-59](https://github.com/nostr-protocol/nips/blob/master/59.md) | Gift Wrap | Rumor → seal (`kind 13`) → gift wrap (`kind 1059`/`21059`) over NIP-44 | ✅ Complete |
+| [NIP-98](https://github.com/nostr-protocol/nips/blob/master/98.md) | HTTP Auth | Build/verify `kind 27235` events + `Authorization: Nostr` header (no HTTP performed) | ✅ Complete |
+| [NIP-04](https://github.com/nostr-protocol/nips/blob/master/04.md) | Encrypted Direct Messages | Legacy DMs — **deprecated** upstream, prefer NIP-17 | ⚠️ Deprecated |
+| [NIP-26](https://github.com/nostr-protocol/nips/blob/master/26.md) | Delegated Event Signing | **Deprecated** upstream, prefer NIP-46 for acting on behalf of a key | ⚠️ Deprecated |
 
 ### NIP-01 Features
 - Event creation and serialization
@@ -282,6 +297,88 @@ const ncryptsec = nip49.encrypt(secretKeyBytes, 'my-password');
 const secretKey = nip49.decrypt(ncryptsec, 'my-password');
 ```
 
+### NIP-98 Usage (HTTP Auth)
+
+Builds and verifies the `kind 27235` auth event and the `Authorization: Nostr <base64>`
+header. **No HTTP request is made** — you issue the request yourself, which keeps the
+package edge-native. Ideal for authenticating requests to Nostr-native HTTP services.
+
+```typescript
+import { nip98 } from 'nostr-crypto-utils';
+// Or via subpath: import * as nip98 from 'nostr-crypto-utils/nip98';
+
+// --- client side ---
+const event = await nip98.createAuthEvent(
+  { url: 'https://api.example.com/v1/me', method: 'GET' },
+  privateKeyHex,
+);
+const res = await fetch('https://api.example.com/v1/me', {
+  headers: { Authorization: nip98.toAuthHeader(event) },
+});
+
+// POST with a body — the body is hashed into a `payload` tag
+const body = JSON.stringify({ name: 'alice' });
+const postAuth = await nip98.createAuthEvent(
+  { url: 'https://api.example.com/v1/register', method: 'POST', payload: body },
+  privateKeyHex,
+);
+
+// --- server side (e.g. a Cloudflare Worker) ---
+const incoming = nip98.fromAuthHeader(request.headers.get('Authorization'));
+const result = await nip98.validateAuthEvent(incoming, {
+  url: request.url,
+  method: request.method,
+  body: await request.text(), // optional, checks the payload tag when present
+});
+if (!result.valid) return new Response(result.reason, { status: 401 });
+const authedPubkey = incoming.pubkey;
+```
+
+### NIP-59 Usage (Gift Wrap)
+
+Encapsulates any event: a rumor (unsigned) is sealed (`kind 13`) and gift-wrapped
+(`kind 1059`, or ephemeral `kind 21059`) using NIP-44 encryption. Unwrapping verifies
+the seal signature and enforces that the seal author equals the rumor author.
+
+```typescript
+import { nip59 } from 'nostr-crypto-utils';
+// Or via subpath: import * as nip59 from 'nostr-crypto-utils/nip59';
+
+// Build a rumor and gift-wrap it to a recipient
+const rumor = await nip59.createRumor({ kind: 1, content: 'hello' }, senderPubkeyHex);
+const giftWrap = await nip59.wrapEvent(rumor, senderPrivkeyHex, recipientPubkeyHex);
+// giftWrap.kind === 1059, signed by a random one-time key, p-tagged to the recipient
+
+// Recipient unwraps it back to the rumor
+const recovered = await nip59.unwrapEvent(giftWrap, recipientPrivkeyHex);
+// recovered.content === 'hello', recovered.pubkey === sender
+```
+
+### NIP-17 Usage (Private Direct Messages)
+
+Encrypted chat built on NIP-44 + NIP-59. `createDirectMessage` returns one gift wrap
+per recipient **plus** a copy addressed to the sender; publish each to the matching
+party's DM inbox relays (NIP-17 `kind 10050`).
+
+```typescript
+import { nip17 } from 'nostr-crypto-utils';
+// Or via subpath: import * as nip17 from 'nostr-crypto-utils/nip17';
+
+// Send a DM (also works for group rooms via multiple recipients)
+const wraps = await nip17.createDirectMessage(senderPrivkeyHex, {
+  content: 'hey bob',
+  recipients: [bobPubkeyHex],
+  subject: 'dinner',          // optional
+});
+for (const { recipient, giftWrap } of wraps) {
+  // publish giftWrap to `recipient`'s DM relays
+}
+
+// Read a received gift wrap into the kind-14 chat message
+const message = await nip17.readDirectMessage(receivedGiftWrap, recipientPrivkeyHex);
+// message.kind === 14, message.content === 'hey bob'
+```
+
 ### Type System
 
 #### Event Types
@@ -422,9 +519,13 @@ These examples demonstrate the library's type-safe approach to Schnorr signature
 
 ### Encrypted Direct Messages (NIP-04)
 
-> **Breaking change in 0.8.0.** NIP-04 has a single canonical, **synchronous** API
-> with **branded key types**. The argument order is fixed, and passing keys in the
-> wrong order (or as plain strings) is a **compile error**:
+> ⚠️ **Deprecated.** NIP-04 is `unrecommended` upstream (it leaks metadata). For new
+> work use **[NIP-17 Private Direct Messages](#nip-17-usage-private-direct-messages)**
+> (NIP-44 encryption + NIP-59 gift wrap). NIP-04 remains only for legacy compatibility.
+>
+> **Breaking change in 0.8.0.** When you do use NIP-04, it now has a single canonical,
+> **synchronous** API with **branded key types**. The argument order is fixed, and passing
+> keys in the wrong order (or as plain strings) is a **compile error**:
 >
 > - `encryptMessage(message, senderPrivkey: PrivateKey, recipientPubkey: PublicKey): string`
 > - `decryptMessage(ciphertext, recipientPrivkey: PrivateKey, senderPubkey: PublicKey): string`
@@ -432,6 +533,8 @@ These examples demonstrate the library's type-safe approach to Schnorr signature
 > Build the branded keys with `asPrivateKey(hex)` / `asPublicKey(hex)` (64-char hex /
 > 32-byte x-only). Real x-only Nostr pubkeys are accepted (no more "Point of length 32
 > was invalid"). The legacy `encrypt`/`decrypt` remain as deprecated back-compat wrappers.
+
+The library provides robust support for encrypted direct messages following the NIP-04 specification:
 
 ```typescript
 import { encryptMessage, decryptMessage, asPrivateKey, asPublicKey } from 'nostr-crypto-utils';
@@ -554,6 +657,10 @@ Together, these libraries provide:
 - Minimal bundle size and dependencies
 
 ## Delegate Token Creation (NIP-26)
+
+> ⚠️ **Deprecated.** NIP-26 is `unrecommended` upstream ("adds unnecessary burden for
+> little gain") and cannot revoke without time-bounding. For acting on behalf of a key,
+> prefer **NIP-46 remote signing**. The following remains for legacy compatibility.
 
 You can use this library to create delegate tokens for use on web servers or other applications. This implements [NIP-26](https://github.com/nostr-protocol/nips/blob/master/26.md) for delegation of signing authority.
 

@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.8.0] - 2026-07-17
+## [0.9.1] - 2026-07-19
 
-Crypto-correctness release addressing the 2026-07-17 release audit. **BREAKING** — see below.
+Reconciliation release. Unifies the two parallel lines that diverged in 2026-07:
+the crypto-correctness/security build published to npm as `0.8.0`, and the git
+edge-native refactor (git `0.8.0`) plus NIP-98/59/17 and agent-native docs (git
+`0.9.0`). Everything ships together here. Note: npm `0.8.0` and git `0.8.0` were
+different artifacts that happened to share a version number; from `0.9.1` on there
+is a single line carrying both. The crypto-correctness changes below were the npm
+`0.8.0` security build. **BREAKING** — see below.
 
 ### Breaking
 - **Canonical NIP-04 + branded key types.** There is now a single blessed NIP-04
@@ -74,6 +80,58 @@ Crypto-correctness release addressing the 2026-07-17 release audit. **BREAKING**
   (nprofile/nevent/naddr, cross-checked against nostr-tools), and a deterministic
   BIP-340 sign/verify KAT. Tests now assert against these vectors — not just
   self-round-trips — so a symmetric encode/decode bug can no longer pass CI.
+
+## [0.9.0] - 2026-06-07
+
+### Added
+- **NIP-98 HTTP Auth** (`nostr-crypto-utils/nip98`): `createAuthEvent`,
+  `validateAuthEvent`, `toAuthHeader`/`fromAuthHeader`, `hashPayload`. Builds and
+  verifies the `kind 27235` event and the `Authorization: Nostr <base64>` header.
+  **No HTTP is performed** — the caller issues the request (keeps the package
+  edge-native).
+- **NIP-59 Gift Wrap** (`nostr-crypto-utils/nip59`): `createRumor`, `createSeal`,
+  `createGiftWrap`, `wrapEvent`, `unwrapEvent`. Rumor → seal (`kind 13`) → gift
+  wrap (`kind 1059`, or ephemeral `kind 21059`) over NIP-44. Unwrap verifies the
+  seal signature and enforces the seal-author = rumor-author binding.
+- **NIP-17 Private Direct Messages** (`nostr-crypto-utils/nip17`):
+  `createChatRumor`, `createDirectMessage` (wraps per recipient + a sender
+  self-copy), `readDirectMessage`. Builds `kind 14` chat rumors on the 44+59 stack.
+- Subpath exports `./nip59`, `./nip17`, `./nip98`; browser IIFE bundles for each.
+
+### Changed
+- **NIP-04** and **NIP-26** are marked `@deprecated` to match upstream
+  (`unrecommended`). They remain functional for legacy compatibility; prefer
+  NIP-17 (DMs) and NIP-46 (acting on behalf of a key) respectively.
+
+### Notes
+- 161 tests pass (was 143): +8 NIP-98, +5 NIP-59, +5 NIP-17, all round-trip
+  and negative-path covered. Still 5 runtime deps, still edge-native.
+
+## [0.8.0] - 2026-06-07
+
+### Changed
+- **Edge-native: zero non-crypto dependencies.** Runtime deps cut from 13 → 5
+  (`@noble/ciphers`, `@noble/curves`, `@noble/hashes`, `@scure/base`, `bech32` —
+  all audited, browser/Workers-native). The package now runs unmodified on
+  Cloudflare Workers / Deno / browsers with no Node polyfills.
+- **Logger no longer depends on `pino`/`pino-pretty`.** Replaced with a tiny
+  zero-dependency, edge-safe logger. Public API is preserved for common usage:
+  level gating via `LOG_LEVEL`, `logger.info('msg')` and `logger.error({ err }, 'msg')`
+  call signatures, and `logger.child(bindings)`.
+- **NIP-19 no longer uses the `buffer` polyfill.** All hex/utf8/uint32 conversions
+  now use `@noble/hashes/utils` + `TextEncoder`/`TextDecoder` + `DataView`,
+  completing the "no Buffer dependency" goal started in 0.6.0.
+
+### Removed
+- Dependencies: `pino`, `pino-pretty`, `buffer`, `assert`, `util`,
+  `vm-browserify`, `stream-browserify`, `path-browserify`.
+
+### Notes
+- All 143 tests pass unchanged. NIP-19 round-trips (npub/nsec/note/nprofile/
+  nevent/naddr/nrelay) verified, including `naddr` uint32 kind encoding.
+- **Migration:** if you imported the `Logger` *type* from this package and relied
+  on pino-specific methods, note it's now a local interface (trace/debug/info/
+  warn/error/fatal/child). Standard logging calls are unaffected.
 
 ## [0.7.2] - 2026-07-16
 
