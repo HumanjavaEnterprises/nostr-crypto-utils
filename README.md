@@ -77,6 +77,14 @@ This library provides essential cryptographic operations and utilities required 
 [![Coverage Status](https://coveralls.io/repos/github/HumanjavaEnterprises/nostr-crypto-utils/badge.svg?branch=main)](https://coveralls.io/github/HumanjavaEnterprises/nostr-crypto-utils?branch=main)
 [![Known Vulnerabilities](https://snyk.io/test/github/HumanjavaEnterprises/nostr-crypto-utils/badge.svg)](https://snyk.io/test/github/HumanjavaEnterprises/nostr-crypto-utils)
 
+> **Release note — v0.8.0 (staged, pending publish).** This is the kernel of a
+> coordinated 2026-07 correctness pass across the Nostr library family. Every fix
+> in this release is verified against a shared known-answer vector set (NIP-44 v2 /
+> NIP-49 / NIP-19 TLV / BIP-340 deterministic-sign) so symmetric encode/decode bugs
+> can no longer hide in self-round-trip tests. The family dogfoods only its own
+> libraries — there is no upstream `nostr-tools` dependency. See
+> [CHANGELOG.md](CHANGELOG.md) for the full (breaking) details.
+
 ## Security Notice
 
 ⚠️ **Important**: This library handles cryptographic keys and operations that are critical for securing your Nostr identity and data. All cryptographic operations, including key generation, signing, and encryption, must be handled with appropriate security measures.
