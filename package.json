@@ -1,6 +1,6 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Core cryptographic utilities for Nostr protocol — edge-native (Cloudflare Workers / Deno / browser), zero non-crypto dependencies",
   "type": "module",
   "main": "./dist/cjs/index.js",

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-07-21
+
+### Fixed
+
+- **NIP-04 shared-secret derivation intermittently threw "second arg must be
+  public key" (~1.5% of keypairs).** `deriveSharedX` detected the 32-byte x-only
+  pubkey form by its leading hex byte (`startsWith('02'/'03')`), but a raw
+  x-coordinate can itself begin with `0x02`/`0x03`; those keys were misread as
+  already-compressed 33-byte keys, so the `02` prefix was skipped and a 32-byte
+  value reached `getSharedSecret`. Now detected by length (64 hex ⇒ x-only ⇒
+  prepend `02`). NIP-04 encrypt/decrypt now succeeds for 100% of valid keypairs
+  (verified over 5000 random round-trips + the full `02`/`03`-leading key class).
+  NIP-44 was unaffected (it already always prepends `02`).
+
+### Tests
+
+- NIP-59 gift-wrap test no longer asserts a 2-char plaintext isn't a substring of
+  base64 ciphertext (flaky ~40%); it now decrypts and checks the round-trip.
+
 ## [0.9.1] - 2026-07-19
 
 Reconciliation release. Unifies the two parallel lines that diverged in 2026-07:

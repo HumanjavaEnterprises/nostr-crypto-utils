@@ -39,7 +39,13 @@ const utf8Decoder = new TextDecoder();
  * by prepending the 02 prefix, or an already-prefixed 33-byte pubkey (66 hex).
  */
 function deriveSharedX(privHex, pubHex) {
-    const normalizedPub = pubHex.startsWith('02') || pubHex.startsWith('03') ? pubHex : '02' + pubHex;
+    // Detect the x-only form by LENGTH, not the leading byte. A 32-byte x-only
+    // pubkey (64 hex) is a raw x-coordinate whose first byte can itself be 0x02 or
+    // 0x03 (~1.5% of keys); the old `startsWith('02'/'03')` check misread those as
+    // already-compressed 33-byte keys, skipped the prefix, and passed a 32-byte
+    // value to getSharedSecret → "second arg must be public key". 64 hex ⇒ prepend
+    // the 02 prefix; a 66-hex compressed key is used as-is.
+    const normalizedPub = pubHex.length === 64 ? '02' + pubHex : pubHex;
     const sharedPoint = secp256k1_js_1.secp256k1.getSharedSecret((0, utils_js_1.hexToBytes)(privHex), (0, utils_js_1.hexToBytes)(normalizedPub));
     const sharedX = sharedPoint.slice(1, 33);
     sharedPoint.fill(0);

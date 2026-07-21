@@ -37,7 +37,12 @@ describe('NIP-59 Gift Wrap', () => {
     expect(wrap.kind).toBe(KIND_GIFT_WRAP);
     expect(wrap.pubkey).not.toBe(alicePub); // ephemeral signer
     expect(wrap.tags).toContainEqual(['p', bobPub]);
-    expect(wrap.content).not.toContain('hi'); // encrypted
+    // Prove the content is genuinely encrypted by decrypting it, not by checking
+    // that the plaintext isn't a substring of the base64 ciphertext — a 2-char
+    // plaintext like 'hi' appears in random base64 ~40% of the time (flaky).
+    expect(wrap.content).not.toBe('hi');
+    const out = await unwrapEvent(wrap, bobPriv);
+    expect(out.content).toBe('hi');
   });
 
   it('supports the ephemeral gift wrap kind (21059)', async () => {
