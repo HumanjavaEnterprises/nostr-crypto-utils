@@ -11,7 +11,6 @@ exports.bytesToBuffer = bytesToBuffer;
 exports.concatenateBytes = concatenateBytes;
 exports.compareBytes = compareBytes;
 exports.zeroBytes = zeroBytes;
-exports.randomBytes = randomBytes;
 exports.numberToBytes = numberToBytes;
 exports.bytesToNumber = bytesToNumber;
 exports.splitBytes = splitBytes;
@@ -83,16 +82,6 @@ function compareBytes(a, b) {
  */
 function zeroBytes(length) {
     return new Uint8Array(length);
-}
-/**
- * Create byte array with random values
- * @param length Length of array
- * @returns Random byte array
- */
-function randomBytes(length) {
-    const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
-    return array;
 }
 /**
  * Convert number to byte array

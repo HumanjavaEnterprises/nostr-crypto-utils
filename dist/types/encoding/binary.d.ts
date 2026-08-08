@@ -46,12 +46,6 @@ export declare function compareBytes(a: Uint8Array, b: Uint8Array): boolean;
  */
 export declare function zeroBytes(length: number): Uint8Array;
 /**
- * Create byte array with random values
- * @param length Length of array
- * @returns Random byte array
- */
-export declare function randomBytes(length: number): Uint8Array;
-/**
  * Convert number to byte array
  * @param num Number to convert
  * @param length Length of resulting array (default: minimum needed)

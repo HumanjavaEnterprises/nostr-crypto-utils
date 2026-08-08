@@ -69,16 +69,6 @@ export function zeroBytes(length) {
     return new Uint8Array(length);
 }
 /**
- * Create byte array with random values
- * @param length Length of array
- * @returns Random byte array
- */
-export function randomBytes(length) {
-    const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
-    return array;
-}
-/**
  * Convert number to byte array
  * @param num Number to convert
  * @param length Length of resulting array (default: minimum needed)
