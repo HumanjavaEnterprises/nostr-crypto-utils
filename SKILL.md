@@ -67,5 +67,5 @@ server, a bare call). **[AGENTS.md](./AGENTS.md)** has the capability→function
 and reference integrations to learn from — including the Hermes plugin and OpenClaw skill
 shapes (templates: [`nostrkey.app.HA-python.src`](https://github.com/HumanjavaEnterprises/nostrkey.app.HA-python.src) ·
 [`nostrkey.app.OC-python.src`](https://github.com/HumanjavaEnterprises/nostrkey.app.OC-python.src);
-docs: <https://loginwithnostr.com/hermes>, <https://loginwithnostr.com/openclaw>). Pick the
+docs: <https://loginwithnostr.com/python-agents>, <https://loginwithnostr.com/python-agents>). Pick the
 one closest to your world, or invent your own. Same npub, same events, any language.

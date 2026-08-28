@@ -156,10 +156,10 @@ Keys come from custody (env / enclave / bunker), never from tool input.
   `tools.py` (`handle_<tool>(args, **kw)` returning `tool_result(...)`/`tool_error(...)`) + a
   `SKILL.md` behavioral protocol. Template:
   [`nostrkey.app.HA-python.src`](https://github.com/HumanjavaEnterprises/nostrkey.app.HA-python.src) ·
-  docs: <https://loginwithnostr.com/hermes>
+  docs: <https://loginwithnostr.com/python-agents>
 - **OpenClaw skill** (Python): the `*.OC-python` skill shape, installed via clawhub/PyPI. Template:
   [`nostrkey.app.OC-python.src`](https://github.com/HumanjavaEnterprises/nostrkey.app.OC-python.src) ·
-  docs: <https://loginwithnostr.com/openclaw>
+  docs: <https://loginwithnostr.com/python-agents>
 - **MCP server**: expose the functions as MCP tools so any MCP-capable agent can call them.
 
 > **Cross-language note.** This package is JS/TS. For Python agent stacks, the sibling
