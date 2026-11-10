@@ -47,4 +47,3 @@ export const NOSTR_EVENT_KIND = {
     CUSTOM_FIRST: 40000,
     CUSTOM_LAST: 49999
 };
-//# sourceMappingURL=constants.js.map

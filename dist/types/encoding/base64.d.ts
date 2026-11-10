@@ -92,4 +92,3 @@ export declare function removeBase64Padding(base64: string): string;
  * @returns Properly padded base64 string
  */
 export declare function addBase64Padding(base64: string): string;
-//# sourceMappingURL=base64.d.ts.map

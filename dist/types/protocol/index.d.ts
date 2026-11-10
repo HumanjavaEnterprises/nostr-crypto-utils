@@ -121,4 +121,3 @@ export declare function createReplyFilter(eventId: string, limit?: number): Nost
  * @returns {NostrFilter} Created filter
  */
 export declare function createFilter(pubkey: string): NostrFilter;
-//# sourceMappingURL=index.d.ts.map

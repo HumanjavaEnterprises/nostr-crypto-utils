@@ -97,4 +97,3 @@ export type NostrMessageType = typeof NOSTR_MESSAGE_TYPE[keyof typeof NOSTR_MESS
 export type NostrKind = typeof NOSTR_KIND[keyof typeof NOSTR_KIND];
 /** Type for tags extracted from NOSTR_TAG constant */
 export type NostrTag = typeof NOSTR_TAG[keyof typeof NOSTR_TAG];
-//# sourceMappingURL=constants.d.ts.map

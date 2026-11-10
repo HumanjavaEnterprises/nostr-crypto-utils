@@ -37,4 +37,3 @@ export declare function getTagValue(event: NostrEvent, tagName: string): string 
  * Get all tag values from event
  */
 export declare function getTagValues(event: NostrEvent, tagName: string): string[];
-//# sourceMappingURL=functions.d.ts.map

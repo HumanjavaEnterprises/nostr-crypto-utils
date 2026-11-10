@@ -12,4 +12,3 @@ export declare function createEventMessage(event: SignedNostrEvent): [NostrMessa
  * @returns The parsed message components
  */
 export declare function parseNostrMessage(message: string): [NostrMessageType, ...unknown[]];
-//# sourceMappingURL=transport.d.ts.map

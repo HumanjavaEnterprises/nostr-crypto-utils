@@ -313,4 +313,3 @@ function createMockChannelMessage(content = 'Hello, channel!') {
         pubkey: '' // Required by UnsignedEvent interface
     };
 }
-//# sourceMappingURL=integration.js.map

@@ -49,13 +49,15 @@ export async function verifyDelegation(delegation) {
  * @returns True if conditions are met
  */
 export function checkDelegationConditions(event, conditions) {
-    if (conditions.kind !== undefined && event.kind !== conditions.kind) {
+    const allowedKinds = conditions.kinds ?? (conditions.kind !== undefined ? [conditions.kind] : undefined);
+    if (allowedKinds !== undefined && !allowedKinds.includes(event.kind)) {
         return false;
     }
-    if (conditions.since !== undefined && event.created_at < conditions.since) {
+    // NIP-26: `created_at>` and `created_at<` are strict comparisons.
+    if (conditions.since !== undefined && !(event.created_at > conditions.since)) {
         return false;
     }
-    if (conditions.until !== undefined && event.created_at > conditions.until) {
+    if (conditions.until !== undefined && !(event.created_at < conditions.until)) {
         return false;
     }
     return true;
@@ -88,10 +90,18 @@ export function extractDelegation(event) {
     if (!tag || tag.length !== 4) {
         return null;
     }
+    // Unparseable conditions fail closed: the delegation is not recognized.
+    let conditions;
+    try {
+        conditions = parseConditions(tag[2]);
+    }
+    catch {
+        return null;
+    }
     return {
         delegator: tag[1],
         delegatee: event.pubkey,
-        conditions: parseConditions(tag[2]),
+        conditions,
         token: tag[3],
         // Preserve the original conditions string exactly as signed by the delegator.
         conditionsString: tag[2]
@@ -100,7 +110,11 @@ export function extractDelegation(event) {
 // Helper functions
 function serializeConditions(conditions) {
     const parts = [];
-    if (conditions.kind !== undefined) {
+    if (conditions.kinds !== undefined) {
+        for (const k of conditions.kinds)
+            parts.push(`kind=${k}`);
+    }
+    else if (conditions.kind !== undefined) {
         parts.push(`kind=${conditions.kind}`);
     }
     if (conditions.since !== undefined) {
@@ -111,19 +125,40 @@ function serializeConditions(conditions) {
     }
     return parts.join('&');
 }
+function parseUint(raw) {
+    if (!/^\d+$/.test(raw))
+        throw new Error(`invalid delegation condition value: ${raw}`);
+    return Number(raw);
+}
+/**
+ * Parse a NIP-26 conditions string. Repeated `kind=` clauses form a set of
+ * allowed kinds. Unknown or malformed clauses throw (fail closed).
+ */
 function parseConditions(conditionsString) {
     const conditions = {};
-    const parts = conditionsString.split('&');
-    for (const part of parts) {
+    if (typeof conditionsString !== 'string' || conditionsString === '')
+        return conditions;
+    const kinds = [];
+    for (const part of conditionsString.split('&')) {
         if (part.startsWith('kind=')) {
-            conditions.kind = parseInt(part.slice(5));
+            kinds.push(parseUint(part.slice(5)));
         }
         else if (part.startsWith('created_at>')) {
-            conditions.since = parseInt(part.slice(11));
+            conditions.since = parseUint(part.slice(11));
         }
         else if (part.startsWith('created_at<')) {
-            conditions.until = parseInt(part.slice(11));
+            conditions.until = parseUint(part.slice(11));
         }
+        else {
+            throw new Error(`unknown delegation condition: ${part}`);
+        }
+    }
+    if (kinds.length === 1) {
+        conditions.kind = kinds[0];
+    }
+    else if (kinds.length > 1) {
+        conditions.kind = kinds[0];
+        conditions.kinds = kinds;
     }
     return conditions;
 }
@@ -137,4 +172,3 @@ async function verifyDelegationSignature(delegator, delegatee, conditions, signa
     const msgHash = sha256(new TextEncoder().encode(`nostr:delegation:${delegatee}:${conditions}`));
     return verifySchnorrSignature(hexToBytes(signature), msgHash, hexToBytes(delegator));
 }
-//# sourceMappingURL=nip-26.js.map

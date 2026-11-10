@@ -121,4 +121,3 @@ export interface NostrError {
     message: string;
     details?: Record<string, unknown>;
 }
-//# sourceMappingURL=base.d.ts.map

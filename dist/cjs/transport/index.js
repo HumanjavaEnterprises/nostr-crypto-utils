@@ -60,4 +60,3 @@ function formatSubscriptionForRelay(id, filters) {
 function formatCloseForRelay(id) {
     return ['CLOSE', id];
 }
-//# sourceMappingURL=index.js.map

@@ -43,7 +43,7 @@ npm i nostr-crypto-utils
 ```
 
 ESM + CJS, types included, per-NIP subpath exports. No network, no Node-only APIs — runs
-on Cloudflare Workers, Deno, browsers, and Node 18+.
+on Cloudflare Workers, Deno, browsers, and Node 20+.
 
 ---
 

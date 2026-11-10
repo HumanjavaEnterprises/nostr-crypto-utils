@@ -48,4 +48,3 @@ interface SharedSecret {
 export declare function generateSharedSecret(privateKey: string, publicKey: string): SharedSecret;
 export { generateSharedSecret as computeSharedSecret };
 export { asPrivateKey, asPublicKey, type PrivateKey, type PublicKey } from '../types/keys.js';
-//# sourceMappingURL=nip-04.d.ts.map

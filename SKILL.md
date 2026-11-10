@@ -40,7 +40,8 @@ These are security-critical gates. Follow them on every dispatch that touches ke
 3. **Verify before you act.** Treat `verifySignature` and `validateAuthEvent` as gates,
    not decorations. Do not act on an event whose signature you have not checked.
 4. **NIP-98 auth is short-lived.** `validateAuthEvent` enforces a `created_at` window
-   (default 60s) and binds `u`/`method` (and optionally a `payload` hash). Do not widen
+   (default 60s), binds `u`/`method`, and requires a matching `payload` hash when the
+   request has a body (pass `seenIds` to reject replays). Do not widen
    the window without reason.
 5. **Gift wraps prove authorship.** `unwrapEvent` rejects events where the seal author ≠
    the rumor author. You can trust who a private message is from.

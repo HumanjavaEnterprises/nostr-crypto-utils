@@ -39,7 +39,7 @@ const entries = [
 const sharedOptions = {
   bundle: true,
   minify: true,
-  sourcemap: true,
+  sourcemap: false,
   format: 'iife',
   target: ['es2020'],
   platform: 'browser',

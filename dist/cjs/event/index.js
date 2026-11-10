@@ -12,4 +12,3 @@ Object.defineProperty(exports, "getEventHash", { enumerable: true, get: function
 var signing_js_1 = require("./signing.js");
 Object.defineProperty(exports, "validateEvent", { enumerable: true, get: function () { return signing_js_1.validateEvent; } });
 Object.defineProperty(exports, "calculateEventId", { enumerable: true, get: function () { return signing_js_1.calculateEventId; } });
-//# sourceMappingURL=index.js.map

@@ -70,7 +70,7 @@ function encryptMessage(message, senderPrivkey, recipientPubkey) {
         return (0, base64_js_1.bytesToBase64)(ciphertext) + '?iv=' + (0, base64_js_1.bytesToBase64)(iv);
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to encrypt message');
+        logger_js_1.logger.debug({ error }, 'Failed to encrypt message');
         throw error;
     }
 }
@@ -105,7 +105,7 @@ function decryptMessage(ciphertext, recipientPrivkey, senderPubkey) {
         return utf8Decoder.decode(plaintext);
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to decrypt message');
+        logger_js_1.logger.debug({ error }, 'Failed to decrypt message');
         throw error;
     }
 }
@@ -128,4 +128,3 @@ function generateSharedSecret(privateKey, publicKey) {
 var keys_js_2 = require("../types/keys.js");
 Object.defineProperty(exports, "asPrivateKey", { enumerable: true, get: function () { return keys_js_2.asPrivateKey; } });
 Object.defineProperty(exports, "asPublicKey", { enumerable: true, get: function () { return keys_js_2.asPublicKey; } });
-//# sourceMappingURL=nip-04.js.map

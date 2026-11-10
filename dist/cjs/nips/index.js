@@ -47,4 +47,3 @@ __exportStar(require("./nip-01.js"), exports);
 __exportStar(require("./nip-04.js"), exports);
 __exportStar(require("./nip-19.js"), exports);
 __exportStar(require("./nip-26.js"), exports);
-//# sourceMappingURL=index.js.map

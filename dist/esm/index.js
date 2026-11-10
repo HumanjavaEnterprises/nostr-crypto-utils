@@ -8,7 +8,7 @@ export { NostrEventKind, NostrMessageType, Nip46Method } from './types/index.js'
 // Core crypto functions
 export { generateKeyPair, getPublicKey, getPublicKeySync, validateKeyPair, createEvent, signEvent, finalizeEvent, verifySignature, } from './crypto.js';
 // Validation functions
-export { validateEvent, validateEventId, validateEventSignature, validateSignedEvent, validateEventBase, validateFilter, validateSubscription, validateResponse, } from './validation/index.js';
+export { validateEvent, validateEventId, validateEventSignature, validateSignedEvent, validateSignedEventFormat, validateEventBase, validateFilter, validateSubscription, validateResponse, } from './validation/index.js';
 // Event functions
 export { calculateEventId, } from './event/index.js';
 // NIP-04 encryption
@@ -24,6 +24,7 @@ export * as nip49 from './nips/nip-49.js';
 export * as nip59 from './nips/nip-59.js';
 export * as nip17 from './nips/nip-17.js';
 export * as nip98 from './nips/nip-98.js';
+// Logging (silent by default; opt in with setLogLevel or NOSTR_CRYPTO_UTILS_LOG_LEVEL)
+export { setLogLevel, getLogLevel } from './utils/logger.js';
 // Utils
 export { hexToBytes, bytesToHex, utf8ToBytes, bytesToUtf8, } from './utils/encoding.js';
-//# sourceMappingURL=index.js.map

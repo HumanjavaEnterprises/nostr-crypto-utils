@@ -74,4 +74,3 @@ export declare function createMockDirectMessage(content?: string): UnsignedEvent
  * Creates a mock channel message event for testing
  */
 export declare function createMockChannelMessage(content?: string): UnsignedEvent;
-//# sourceMappingURL=integration.d.ts.map

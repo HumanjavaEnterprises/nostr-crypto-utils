@@ -76,4 +76,3 @@ export async function createDirectMessage(senderPrivateKey, params) {
 export async function readDirectMessage(giftWrap, recipientPrivateKey) {
     return unwrapEvent(giftWrap, recipientPrivateKey);
 }
-//# sourceMappingURL=nip-17.js.map

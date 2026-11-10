@@ -7,6 +7,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-10
+
+Fixes from the 2026-11-10 external review. The core crypto is unchanged and still
+passes the official vectors (NIP-44 v2 122/122, NIP-01, NIP-19, NIP-04, NIP-49,
+NIP-26). Minor bump because of the behaviour changes under **Breaking**.
+
+### Breaking
+- **NIP-46 `handleSignerRequest`: `connect` is fail-closed.** With no `secret` it
+  used to authenticate ANY client. It now needs a matching `secret`, an
+  `onConnect(clientPubkey, params)` callback that returns `true`, or the explicit
+  opt-in `allowOpenConnect: true` (old behaviour; `allowUnauthenticated: true`
+  also still implies it).
+- **`validateSignedEvent` now verifies the id and signature** (it is the same as
+  `validateEvent`). The old format-only check is `validateSignedEventFormat`.
+- **Strict canonical hex.** `verifySignature` (root, `nip01`, `event/signing`),
+  `validateEvent` / `validateSignedEvent` and `validateEventBase` (when
+  `id`/`sig` are present) reject uppercase, padded or wrong-length `id` /
+  `pubkey` / `sig`; `validateEventId` checks the `id`, `validateEventSignature`
+  the `sig` and `pubkey` (it recomputes the hash and does not look at `id`).
+  A space-padded `sig` used to pass `validateEvent`. `validateEvent` /
+  `validateSignedEvent` also reject a non-string pubkey such as `{ hex }`.
+- **Logging is silent by default.** Library logs are no longer written at
+  `info`/`error` level; invalid input logs at `debug` only. Opt in with
+  `setLogLevel(level)` or env `NOSTR_CRYPTO_UTILS_LOG_LEVEL` (read lazily). The
+  generic `LOG_LEVEL` env var is no longer read.
+- **NIP-49 `decrypt` caps `log_n` at 18 by default** (256 MiB of scrypt); pass
+  `{ maxLogN }` to open stronger keys. `decrypt` also checks the payload is 91
+  bytes; `encrypt` requires a 32-byte key and `0 <= logn <= 22`.
+- **NIP-98 `validateAuthEvent`: `requirePayload` defaults to `true` when the body
+  is non-empty.** Pass `requirePayload: false` for the old behaviour.
+- **`signEvent`, `nip01.signEvent` and `finalizeEvent` throw when `event.pubkey`
+  is not the signing key's pubkey** (they used to return an unverifiable event).
+  `signEvent` / `nip01.signEvent` fill in a missing pubkey.
+- **NIP-46 `unwrapRequest` / `unwrapEvent` throw on a non-canonical (e.g.
+  uppercase) `event.pubkey`**, which could otherwise dodge the `seenIds` cache.
+- **`nip01.validateEvent` is now a deprecated alias of
+  `nip01.validateEventStructure`** (same structure-only check; it never verified
+  the signature, unlike the root `validateEvent`).
+- **NIP-26:** `created_at>` / `created_at<` are strict; repeated `kind=` clauses
+  form a set (`conditions.kinds`); unknown or non-numeric clauses make
+  `extractDelegation` return `null`.
+- **NIP-19 decode:** nevent/nprofile without TLV 0 throws; a KIND TLV that is not
+  4 bytes throws; non-ws(s) relay hints are skipped instead of throwing.
+  Encoders reject kinds outside `0..2^32-1`.
+- **Removed `customCrypto` / `CryptoSubtle`** and the global `Window`/`Global`
+  type augmentation from `crypto.ts` (unused internally; never a root export).
+- **`engines.node` is now `>=20`.**
+
+### Fixed
+- Importing the package is side-effect-free: no module-load WebCrypto probe, no
+  `import('crypto')`, no unhandled rejection on Workers without `nodejs_compat`.
+- Published `.d.ts` no longer retypes `window.crypto` (broke consumers with
+  `skipLibCheck: false`).
+- `naddrEncode` accepts an empty identifier (plain replaceable kinds).
+- `createEvent` / `finalizeEvent` keep `created_at: 0` (used `||`).
+- NIP-59 `unwrapEvent` checks the rumor id is its hash; gift-wrap timestamps use
+  `randomBytes` instead of `Math.random`.
+- NIP-44 `decrypt` does the spec's pre-decode checks (`#` prefix, base64 length
+  132..87472).
+- `decode(undefined)` throws a clean `Error`.
+- NIP-46 `handleSignerRequest` returns an `invalid params` error response
+  instead of throwing a TypeError when `params` is missing or not an array.
+
+### Added
+- NIP-46: `secret` compared in constant time; `usedSecrets` + `consumedSecret` for
+  one-time secrets; `signerPubkey` check on connect params; `unwrapRequest` /
+  `unwrapEvent` accept `{ seenIds, maxAgeSeconds, now }` replay protection.
+- NIP-98: `seenIds` replay guard.
+- Root exports `setLogLevel`, `getLogLevel`, `validateSignedEventFormat`, type
+  `Nip46UnwrapOptions`.
+- Subpaths `./nip01`, `./nip04`, `./nip19`, `./nip26`, and `./package.json`;
+  `workerd` and `browser` export conditions (ESM).
+
+### Packaging / docs
+- Tarball no longer ships source maps, `src/`, `examples/` or compiled test setup.
+- Dev tooling: vitest / @vitest/coverage-v8 ^4.1.12, `overrides.minimatch ^11.0.6`; `npm audit` is clean.
+- README, AGENTS.md, llms.txt, SKILL.md and examples rewritten to match the real
+  exports (the old README imported nine functions that do not exist, and its
+  `validateEvent` example never rejected anything).
+- Not changed: the NIP-19 TLV encoder order. It matches nostr-tools 2.x
+  byte-for-byte (shared KAT vectors), which the review's suggested order would break.
+
 ## [0.9.2] - 2026-07-21
 
 ### Fixed

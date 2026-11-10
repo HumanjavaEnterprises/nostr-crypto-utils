@@ -6,9 +6,9 @@ export type { NostrEvent, UnsignedNostrEvent, SignedNostrEvent, NostrFilter, Nos
 export type { PrivateKey, PublicKey } from './types/keys.js';
 export { asPrivateKey, asPublicKey, isPrivateKeyHex, isPublicKeyHex, } from './types/keys.js';
 export { NostrEventKind, NostrMessageType, Nip46Method } from './types/index.js';
-export type { Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, BunkerURI, BunkerValidationResult, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, } from './types/index.js';
+export type { Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, BunkerURI, BunkerValidationResult, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, Nip46UnwrapOptions, } from './types/index.js';
 export { generateKeyPair, getPublicKey, getPublicKeySync, validateKeyPair, createEvent, signEvent, finalizeEvent, verifySignature, } from './crypto.js';
-export { validateEvent, validateEventId, validateEventSignature, validateSignedEvent, validateEventBase, validateFilter, validateSubscription, validateResponse, } from './validation/index.js';
+export { validateEvent, validateEventId, validateEventSignature, validateSignedEvent, validateSignedEventFormat, validateEventBase, validateFilter, validateSubscription, validateResponse, } from './validation/index.js';
 export { calculateEventId, } from './event/index.js';
 export { computeSharedSecret, encryptMessage, decryptMessage, } from './nips/nip-04.js';
 export * as nip01 from './nips/nip-01.js';
@@ -21,5 +21,6 @@ export * as nip49 from './nips/nip-49.js';
 export * as nip59 from './nips/nip-59.js';
 export * as nip17 from './nips/nip-17.js';
 export * as nip98 from './nips/nip-98.js';
+export { setLogLevel, getLogLevel } from './utils/logger.js';
+export type { LogLevelName } from './utils/logger.js';
 export { hexToBytes, bytesToHex, utf8ToBytes, bytesToUtf8, } from './utils/encoding.js';
-//# sourceMappingURL=index.d.ts.map

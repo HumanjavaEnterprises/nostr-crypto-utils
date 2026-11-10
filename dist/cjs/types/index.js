@@ -65,4 +65,3 @@ __exportStar(require("./messages.js"), exports);
 __exportStar(require("./guards.js"), exports);
 /** Re-export NIP-46 types */
 __exportStar(require("./nip46.js"), exports);
-//# sourceMappingURL=index.js.map

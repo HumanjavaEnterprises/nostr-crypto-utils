@@ -27,7 +27,9 @@ const TWO_DAYS_SECONDS = 2 * 24 * 60 * 60;
 /** Random unix timestamp within the last two days (metadata obfuscation, NIP-59). */
 function randomPastTimestamp() {
     const now = Math.floor(Date.now() / 1000);
-    return now - Math.floor(Math.random() * TWO_DAYS_SECONDS);
+    const r = (0, utils_js_1.randomBytes)(4);
+    const u32 = ((r[0] << 24) | (r[1] << 16) | (r[2] << 8) | r[3]) >>> 0;
+    return now - (u32 % TWO_DAYS_SECONDS);
 }
 /**
  * Build a rumor (unsigned event with a computed `id`) authored by `senderPubkey`.
@@ -112,6 +114,8 @@ async function unwrapEvent(giftWrap, recipientPrivateKey) {
     if (rumor.pubkey !== seal.pubkey) {
         throw new Error('rumor author does not match seal author');
     }
+    if (typeof rumor.id !== 'string' || rumor.id !== (await (0, creation_js_1.getEventHash)(rumor))) {
+        throw new Error('rumor id does not match its hash');
+    }
     return rumor;
 }
-//# sourceMappingURL=nip-59.js.map

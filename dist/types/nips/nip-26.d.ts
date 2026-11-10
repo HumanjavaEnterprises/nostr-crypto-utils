@@ -9,7 +9,11 @@
 import { NostrEvent } from '../types/index.js';
 export interface DelegationConditions {
     kind?: number;
+    /** Allowed kinds when the conditions string carries several `kind=` clauses. */
+    kinds?: number[];
+    /** Event created_at must be strictly greater than this. */
     since?: number;
+    /** Event created_at must be strictly less than this. */
     until?: number;
 }
 export interface Delegation {
@@ -59,4 +63,3 @@ export declare function addDelegationTag(event: NostrEvent, delegation: Delegati
  * @returns Delegation or null if not found
  */
 export declare function extractDelegation(event: NostrEvent): Delegation | null;
-//# sourceMappingURL=nip-26.d.ts.map

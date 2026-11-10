@@ -45,4 +45,3 @@ function utf8ToBytes(str) {
 function bytesToUtf8(bytes) {
     return new TextDecoder().decode(bytes);
 }
-//# sourceMappingURL=encoding.js.map

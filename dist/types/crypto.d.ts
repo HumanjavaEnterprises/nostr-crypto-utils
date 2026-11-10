@@ -21,45 +21,6 @@
  * when using the lower-level secp256k1 functions directly.
  */
 import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent } from './types/index.js';
-/**
- * Custom crypto interface for cross-platform compatibility
- */
-export interface CryptoSubtle {
-    subtle: {
-        generateKey(algorithm: RsaHashedKeyGenParams | EcKeyGenParams, extractable: boolean, keyUsages: readonly KeyUsage[]): Promise<CryptoKeyPair>;
-        importKey(format: 'raw' | 'pkcs8' | 'spki', keyData: ArrayBuffer, algorithm: RsaHashedImportParams | EcKeyImportParams | AesKeyAlgorithm, extractable: boolean, keyUsages: readonly KeyUsage[]): Promise<CryptoKey>;
-        encrypt(algorithm: {
-            name: string;
-            iv: Uint8Array;
-        }, key: CryptoKey, data: ArrayBuffer): Promise<ArrayBuffer>;
-        decrypt(algorithm: {
-            name: string;
-            iv: Uint8Array;
-        }, key: CryptoKey, data: ArrayBuffer): Promise<ArrayBuffer>;
-    };
-    getRandomValues<T extends Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array>(array: T): T;
-}
-declare global {
-    interface Window {
-        crypto: CryptoSubtle;
-    }
-    interface Global {
-        crypto: CryptoSubtle;
-    }
-}
-/**
- * Crypto implementation that works in both Node.js and browser environments
- */
-declare class CustomCrypto {
-    private cryptoInstance;
-    private initPromise;
-    constructor();
-    private initialize;
-    private ensureInitialized;
-    getSubtle(): Promise<CryptoSubtle['subtle']>;
-    getRandomValues<T extends Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array>(array: T): Promise<T>;
-}
-export declare const customCrypto: CustomCrypto;
 export declare const signSchnorr: (message: import("@noble/curves/utils.js").TArg<Uint8Array>, secretKey: import("@noble/curves/utils.js").TArg<Uint8Array>, auxRand?: import("@noble/curves/utils.js").TArg<Uint8Array>) => import("@noble/curves/utils.js").TRet<Uint8Array>;
 export declare const verifySchnorrSignature: (signature: import("@noble/curves/utils.js").TArg<Uint8Array>, message: import("@noble/curves/utils.js").TArg<Uint8Array>, publicKey: import("@noble/curves/utils.js").TArg<Uint8Array>) => boolean;
 /**
@@ -106,8 +67,10 @@ export declare function getPublicKeySync(privateKey: string | Uint8Array): strin
  */
 export declare function finalizeEvent(event: Partial<NostrEvent>, privateKey: string | Uint8Array): Promise<SignedNostrEvent>;
 /**
- * Verifies an event signature
+ * Verifies an event signature (NIP-01).
+ *
+ * Returns `false` — silently, without logging — for any invalid input: a
+ * non-canonical (uppercase / wrong-length / non-hex) `id`, `pubkey` or `sig`,
+ * an `id` that is not the hash of the event, or a bad signature.
  */
 export declare function verifySignature(event: SignedNostrEvent): Promise<boolean>;
-export {};
-//# sourceMappingURL=crypto.d.ts.map

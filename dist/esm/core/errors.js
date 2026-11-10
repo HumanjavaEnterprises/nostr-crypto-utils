@@ -125,4 +125,3 @@ export function createError(message, code) {
             return new NostrError(message, code);
     }
 }
-//# sourceMappingURL=errors.js.map

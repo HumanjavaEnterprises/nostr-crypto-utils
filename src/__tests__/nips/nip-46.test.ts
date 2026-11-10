@@ -388,9 +388,16 @@ describe('NIP-46', () => {
       expect(result.newlyAuthenticated).toBeUndefined();
     });
 
-    it('should accept connect with no secret required', async () => {
+    it('should refuse connect with no secret and no approval (fail-closed)', async () => {
       const req = connectRequest(signer.pubkey);
       const result = await handleSignerRequest(req, client.pubkey, testHandlers);
+      expect(result.response.error).toMatch(/unauthorized/);
+      expect(result.newlyAuthenticated).toBeUndefined();
+    });
+
+    it('should accept connect with no secret when allowOpenConnect is set', async () => {
+      const req = connectRequest(signer.pubkey);
+      const result = await handleSignerRequest(req, client.pubkey, testHandlers, { allowOpenConnect: true });
       expect(result.response.result).toBe('ack');
       expect(result.newlyAuthenticated).toBe(client.pubkey);
     });

@@ -7,13 +7,12 @@ import { generateKeyPair, createEvent, signEvent, verifySignature } from 'nostr-
 
 async function main() {
   // Generate a new Nostr key pair
-  const keyPair = generateKeyPair();
-  console.log('Public key:', keyPair.publicKey);
-  console.log('Private key:', keyPair.privateKey);
+  const keyPair = await generateKeyPair();
+  console.log('Public key:', keyPair.publicKey.hex);
 
   // Create an unsigned text note event (kind 1)
   const event = createEvent({
-    pubkey: keyPair.publicKey,
+    pubkey: keyPair.publicKey.hex,
     kind: 1,
     content: 'Hello Nostr!',
     tags: [],

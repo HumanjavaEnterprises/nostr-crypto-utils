@@ -88,4 +88,3 @@ export declare function isByteArray(value: unknown): value is Uint8Array;
  * @returns Copy of the byte array
  */
 export declare function copyBytes(bytes: Uint8Array): Uint8Array;
-//# sourceMappingURL=binary.d.ts.map

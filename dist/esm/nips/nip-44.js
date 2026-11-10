@@ -94,6 +94,14 @@ function encrypt(plaintext, conversationKey, nonce = randomBytes(32)) {
  * @returns Decrypted plaintext string
  */
 function decrypt(payload, conversationKey) {
+    // NIP-44 pre-decode checks: '#' marks a future non-base64 version; the base64
+    // length of a valid v2 payload is 132..87472.
+    if (typeof payload !== 'string')
+        throw new Error('invalid payload: expected a string');
+    if (payload[0] === '#')
+        throw new Error('unknown encryption version');
+    if (payload.length < 132 || payload.length > 87472)
+        throw new Error('invalid payload size');
     const data = base64.decode(payload);
     const version = data[0];
     if (version !== 2)
@@ -122,4 +130,3 @@ export const v2 = {
     decrypt,
 };
 export { getConversationKey, encrypt, decrypt, calcPaddedLen };
-//# sourceMappingURL=nip-44.js.map

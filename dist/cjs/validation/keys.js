@@ -16,8 +16,7 @@ function isValidPublicKey(pubkey) {
         return result.isValid;
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate public key');
+        logger_js_1.logger.debug({ error }, 'Failed to validate public key');
         return false;
     }
 }
-//# sourceMappingURL=keys.js.map

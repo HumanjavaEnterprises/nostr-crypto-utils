@@ -75,8 +75,8 @@ This library provides essential cryptographic operations and utilities required 
 
 ## Technical Requirements
 
-- **Edge-native**: runs unmodified on Cloudflare Workers, Deno, browsers, and Node.js 18+ — no Node polyfills required
-- Supports both ESM and CJS formats, with per-NIP subpath exports (`nostr-crypto-utils/nip98`, etc.)
+- **Edge-native**: runs unmodified on Cloudflare Workers, Deno, browsers, and Node.js 20+ — no Node polyfills required, no side effects at import
+- Supports both ESM and CJS formats, with per-NIP subpath exports (`nostr-crypto-utils/nip01`, `/nip04`, `/nip17`, `/nip19`, `/nip26`, `/nip44`, `/nip46`, `/nip49`, `/nip59`, `/nip98`) and `workerd` / `browser` export conditions
 - TypeScript-first with full type definitions
 - 5 runtime dependencies, all audited and crypto-only (`@noble/ciphers`, `@noble/curves`, `@noble/hashes`, `@scure/base`, `bech32`)
 
@@ -115,7 +115,7 @@ Any remaining `npm audit` findings are in development-only tooling (eslint, type
 - **Type-First**: Built from the ground up with TypeScript for maximum type safety
 - **Modular Design**: Per-NIP subpath exports — import only what you need
 - **Complementary**: Works seamlessly with nostr-nsec-seedphrase for complete key management
-- **Security Focused**: Strict validation and comprehensive test coverage (161 tests)
+- **Security Focused**: Strict validation, official NIP test vectors, silent-by-default logging
 
 ## Features
 
@@ -176,69 +176,43 @@ This library implements the following Nostr Implementation Possibilities (NIPs):
 
 ### NIP-19 Usage Examples
 
+The encoders live in the `nip19` namespace (root) or the `nostr-crypto-utils/nip19` subpath.
+
 ```typescript
-import { 
-  npubEncode, 
-  nsecEncode, 
-  noteEncode, 
+import {
+  npubEncode,
+  nsecEncode,
+  noteEncode,
   nprofileEncode,
   neventEncode,
   naddrEncode,
-  nrelayEncode,
-  decode 
-} from 'nostr-crypto-utils';
+  decode,
+} from 'nostr-crypto-utils/nip19';
+// or: import { nip19 } from 'nostr-crypto-utils'; nip19.npubEncode(...)
 
-// Encode a public key
-const npub = npubEncode('7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0');
-// npub1xtscya34g58tk0z6v2g0r6w5gpqrxdgkz9xeav
+const pubkey = '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0';
 
-// Encode a private key
-const nsec = nsecEncode('7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0');
-// nsec1xtscya34g58tk0z6v2g0r6w5gpqrxdgkz9xeav
+const npub = npubEncode(pubkey);   // 'npub1...'
+const note = noteEncode(pubkey);   // any 32-byte hex id → 'note1...'
 
-// Encode a note ID
-const note = noteEncode('7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0');
-// note1xtscya34g58tk0z6v2g0r6w5gpqrxdgkz9xeav
+// Profile with relay hints
+const nprofile = nprofileEncode(pubkey, ['wss://relay1.example.com', 'wss://relay2.example.com']);
 
-// Encode a profile with multiple relays
-const nprofile = nprofileEncode(
-  '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
-  ['wss://relay1.example.com', 'wss://relay2.example.com']
-);
+// Event with relay, author and kind (kind must be an integer in 0..2^32-1)
+const nevent = neventEncode(pubkey, ['wss://relay.example.com'], pubkey, 1);
 
-// Encode an event with author and kind
-const nevent = neventEncode(
-  '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
-  ['wss://relay.example.com'],
-  '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
-  1
-);
-
-// Encode an addressable entity (NIP-33)
-const naddr = naddrEncode(
-  '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
-  30023,
-  'my-article',
-  ['wss://relay.example.com']
-);
-
-// Encode a relay URL
-const nrelay = nrelayEncode('wss://relay.example.com');
+// Addressable entity; the d-tag identifier may be '' for plain replaceable kinds
+const naddr = naddrEncode(pubkey, 30023, 'my-article', ['wss://relay.example.com']);
 
 // Decode any bech32-encoded entity
 const decoded = decode(nprofile);
-console.log(decoded);
-// {
-//   type: 'nprofile',
-//   data: '7f3b6c2444c526fc7b3a48b0a1e38fb6a5a4062d4a097c9e96feb3c1df2f36d0',
-//   relays: ['wss://relay1.example.com', 'wss://relay2.example.com']
-// }
+// { type: 'nprofile', data: '7f3b…36d0', relays: ['wss://relay1.example.com', 'wss://relay2.example.com'] }
 
-// All functions include validation
+// Inputs are validated
 try {
-  const invalidNpub = npubEncode('invalid-hex');
+  npubEncode('invalid-hex');
 } catch (error) {
-  console.error(error); // Error: Invalid hex string
+  // Error: Invalid hex string
 }
 ```
 
@@ -283,6 +257,32 @@ const response = nip46.unwrapEvent(responseEvent, session);
 const filter = nip46.createResponseFilter(session.clientPubkey);
 ```
 
+Signer (bunker) side — `connect` is **fail-closed**: it succeeds only with a matching
+secret (compared in constant time), an approving `onConnect` callback, or an explicit
+`allowOpenConnect: true`.
+
+```typescript
+import { nip46 } from 'nostr-crypto-utils';
+
+const authenticated = new Set<string>();
+const usedSecrets = new Set<string>();
+const seen = new Set<string>(); // replay cache: bound it yourself
+
+const { request, clientPubkey, conversationKey } = nip46.unwrapRequest(incomingEvent, signerSecretKeyHex, {
+  seenIds: seen,       // a repeated request throws
+  maxAgeSeconds: 120,  // also verifies the event signature
+});
+const result = await nip46.handleSignerRequest(request, clientPubkey, handlers, {
+  secret: bunkerSecret,      // from your bunker:// URI
+  usedSecrets,               // one-time secrets
+  signerPubkey: signerPubkeyHex,
+  authenticatedClients: authenticated,
+});
+if (result.newlyAuthenticated) authenticated.add(result.newlyAuthenticated);
+if (result.consumedSecret) usedSecrets.add(result.consumedSecret);
+const reply = await nip46.wrapResponse(result.response, signerSecretKeyHex, signerPubkeyHex, clientPubkey, conversationKey);
+```
+
 ### NIP-49 Usage (ncryptsec Key Encryption)
 
 ```typescript
@@ -295,6 +295,10 @@ const ncryptsec = nip49.encrypt(secretKeyBytes, 'my-password');
 
 // Decrypt it back
 const secretKey = nip49.decrypt(ncryptsec, 'my-password');
+
+// log_n in a received ncryptsec is attacker-controlled (scrypt memory = 128 * 8 * 2^log_n).
+// decrypt refuses log_n > 18 (256 MiB) by default; raise it explicitly if you must:
+const strongKey = nip49.decrypt(otherNcryptsec, 'my-password', { maxLogN: 20 });
 ```
 
 ### NIP-98 Usage (HTTP Auth)
@@ -328,11 +332,15 @@ const incoming = nip98.fromAuthHeader(request.headers.get('Authorization'));
 const result = await nip98.validateAuthEvent(incoming, {
   url: request.url,
   method: request.method,
-  body: await request.text(), // optional, checks the payload tag when present
+  body: await request.text(), // a non-empty body requires a matching payload tag
+  seenIds: recentAuthIds,      // optional replay guard (a Set you bound yourself)
 });
 if (!result.valid) return new Response(result.reason, { status: 401 });
 const authedPubkey = incoming.pubkey;
 ```
+
+Since 0.10.0 a token **without** a `payload` tag no longer authorizes a non-empty body
+(`requirePayload` defaults to true); pass `requirePayload: false` to accept such tokens.
 
 ### NIP-59 Usage (Gift Wrap)
 
@@ -434,88 +442,25 @@ npm install nostr-crypto-utils
 
 ### Basic Usage
 
-#### NIP-19 Encoding (Human-Readable Formats)
-```typescript
-import { npubEncode, nsecEncode, noteEncode } from 'nostr-crypto-utils';
-
-// Convert a hex public key to npub format
-const hexPubkey = '12xyl6w6aacmqa3gmmzwrr9m3u0ldx3dwqhczuascswvew9am9q4sfg99cx';
-const npub = npubEncode(hexPubkey);
-console.log(npub); // npub1...
-
-// Convert a hex private key to nsec format
-const hexPrivkey = 'your-hex-private-key';
-const nsec = nsecEncode(hexPrivkey);
-console.log(nsec); // nsec1...
-
-// Convert an event ID to note format
-const eventId = 'your-event-id';
-const note = noteEncode(eventId);
-console.log(note); // note1...
-```
-
 #### Key Generation and Event Signing
 ```typescript
-import { generateKeyPair, createEvent, signEvent } from 'nostr-crypto-utils';
+import { generateKeyPair, finalizeEvent, verifySignature } from 'nostr-crypto-utils';
+import { npubEncode } from 'nostr-crypto-utils/nip19';
 
-// Generate a new key pair
-const keyPair = generateKeyPair();
-console.log(keyPair.publicKey, keyPair.privateKey);
+// Generate a new key pair (async). privateKey is hex; publicKey is { hex, bytes }.
+const keyPair = await generateKeyPair();
+const npub = npubEncode(keyPair.publicKey.hex);
 
-// Create and sign an event
-const event = createEvent({
-  pubkey: keyPair.publicKey,
-  kind: 1,
-  content: 'Hello Nostr!'
-});
-const signedEvent = signEvent(event, keyPair.privateKey);
+// Create, hash and sign an event in one step (pubkey is derived from the key)
+const signedEvent = await finalizeEvent({ kind: 1, content: 'Hello Nostr!', tags: [] }, keyPair.privateKey);
+
+// Verify: returns false (silently) for any invalid or non-canonical event
+const ok = await verifySignature(signedEvent); // true
 ```
 
-### Schnorr Signature Examples
-
-The library provides robust support for Schnorr signatures, which are fundamental to Nostr's cryptographic operations. Here are some common use cases:
-
-#### Basic Message Signing
-
-```typescript
-import { schnorrSign, schnorrVerify } from 'nostr-crypto-utils';
-
-// Sign a message
-const message = 'Hello Nostr!';
-const privateKey = 'your-private-key';
-const signature = await schnorrSign(message, privateKey);
-
-// Verify the signature
-const publicKey = 'corresponding-public-key';
-const isValid = await schnorrVerify(signature, message, publicKey);
-console.log('Signature valid:', isValid); // true
-```
-
-#### Delegation Token Example (NIP-26)
-
-```typescript
-import { schnorrSign } from 'nostr-crypto-utils';
-
-// Create a delegation token
-const delegateePubkey = 'delegatee-public-key';
-const delegatorPrivkey = 'delegator-private-key';
-const conditions = {
-  kind: 1,  // Only allow text notes
-  until: Math.floor(Date.now() / 1000) + 86400 // 24 hours from now
-};
-
-// Format conditions string
-const conditionsString = Object.entries(conditions)
-  .map(([key, value]) => `${key}=${value}`)
-  .sort()
-  .join('&');
-
-// Create and sign the delegation message
-const message = `nostr:delegation:${delegateePubkey}:${conditionsString}`;
-const token = await schnorrSign(message, delegatorPrivkey);
-```
-
-These examples demonstrate the library's type-safe approach to Schnorr signatures, ensuring both security and ease of use.
+`createEvent(partial)` + `signEvent(event, privateKey)` are the two-step form. `signEvent`
+throws if `event.pubkey` is set to a key other than the signing key (and fills it in when
+it is missing), so it can never produce an unverifiable event.
 
 ### Encrypted Direct Messages (NIP-04)
 
@@ -577,31 +522,29 @@ function decryptDM(
 The library provides utilities for validating Nostr events and verifying signatures:
 
 ```typescript
-import { validateEvent, verifySignature } from 'nostr-crypto-utils';
-import type { NostrEvent, SignedNostrEvent } from './types';
+import { validateEvent } from 'nostr-crypto-utils';
+import type { SignedNostrEvent } from 'nostr-crypto-utils';
 
-async function validateSignedMessage(event: NostrEvent): Promise<boolean> {
-  try {
-    // First validate the event structure
-    if (!validateEvent(event)) {
-      console.debug('Invalid event format');
-      return false;
-    }
-
-    // Then verify the signature
-    const isValid = await verifySignature(event as SignedNostrEvent);
-    if (!isValid) {
-      console.debug('Invalid signature');
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error validating signed message:', error);
+function isAuthentic(event: SignedNostrEvent): boolean {
+  // validateEvent returns a ValidationResult object — check .isValid.
+  // It checks structure, canonical lowercase hex id/pubkey/sig, id = hash(event),
+  // and the schnorr signature.
+  const result = validateEvent(event);
+  if (!result.isValid) {
+    console.debug('Rejected event:', result.error);
     return false;
   }
+  return true;
 }
 ```
+
+`validateSignedEvent` is the same full check. `validateSignedEventFormat` checks only the
+shape and hex format (no signature verification) — never use it to decide trust.
+
+Note the `nip01` namespace / `nostr-crypto-utils/nip01` subpath: its
+`validateEventStructure` (and the deprecated alias `nip01.validateEvent`) returns a plain
+boolean for **field shape only** — no id, hex or signature check. For trust, use the root
+`validateEvent` (above) or `verifySignature`.
 
 These examples demonstrate real-world usage patterns from production Nostr applications, showcasing both the security features and ease of use of the library.
 
@@ -633,21 +576,10 @@ These examples demonstrate real-world usage patterns from production Nostr appli
 This library is designed to work seamlessly with [nostr-nsec-seedphrase](https://github.com/HumanjavaEnterprises/nostr-nsec-seedphrase) to provide a complete solution for Nostr key management and cryptographic operations:
 
 ```typescript
-import { generateSeedPhrase } from 'nostr-nsec-seedphrase';
-import { createTextNoteEvent, signEvent } from 'nostr-crypto-utils';
+import { finalizeEvent } from 'nostr-crypto-utils';
 
-// Generate keys using nostr-nsec-seedphrase
-const seedPhrase = generateSeedPhrase();
-const keyPair = seedPhraseToKeyPair(seedPhrase);
-
-// Use nostr-crypto-utils for event creation and signing
-const event = createTextNoteEvent({
-  content: 'Hello Nostr!',
-  pubkey: keyPair.publicKey,
-  created_at: Math.floor(Date.now() / 1000)
-});
-
-const signedEvent = signEvent(event, keyPair.privateKey);
+// privateKeyHex: a 64-char hex key derived from a seed phrase with nostr-nsec-seedphrase
+const signedEvent = await finalizeEvent({ kind: 1, content: 'Hello Nostr!', tags: [] }, privateKeyHex);
 ```
 
 Together, these libraries provide:
@@ -667,83 +599,42 @@ You can use this library to create delegate tokens for use on web servers or oth
 ### Basic Delegation Example
 
 ```typescript
-import { createDelegation, validateDelegation } from 'nostr-crypto-utils';
+import { generateKeyPair, finalizeEvent } from 'nostr-crypto-utils';
+import {
+  createDelegation,
+  verifyDelegation,
+  addDelegationTag,
+  extractDelegation,
+  checkDelegationConditions,
+} from 'nostr-crypto-utils/nip26';
 
-// Create a delegation token (delegator's perspective)
-const delegatorKeyPair = await generateKeyPair();
-const delegateePubkey = 'npub1...'; // The public key you're delegating to
+const delegator = await generateKeyPair();
+const delegatee = await generateKeyPair();
+const now = Math.floor(Date.now() / 1000);
 
-const delegation = await createDelegation({
-  delegatorPrivkey: delegatorKeyPair.privateKey,
-  delegateePubkey,
-  conditions: {
-    kind: 1,  // Only allow text notes
-    until: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60  // 30 days
-  }
-});
-
-// Validate a delegation token (delegatee's perspective)
-const isValid = await validateDelegation({
-  token: delegation.token,
-  delegatorPubkey: delegatorKeyPair.publicKey,
-  delegateePubkey,
-  kind: 1
-});
-```
-
-### Web Server Example
-
-Here's how to use delegation tokens in a web server context:
-
-```typescript
-import { createEvent, signEventWithDelegation } from 'nostr-crypto-utils';
-
-// On your server, store these securely
-const DELEGATE_PRIVKEY = 'nsec1...';  // Your server's private key
-const DELEGATION_TOKEN = 'nostr:delegation:...';  // Token from the delegator
-const DELEGATOR_PUBKEY = 'npub1...';  // Delegator's public key
-
-// Create and sign an event on behalf of the delegator
-const event = await createEvent({
+// Delegator signs a token: kind 1 only, valid for 30 days.
+// Serialized as 'kind=1&created_at>…&created_at<…' (strict comparisons per NIP-26).
+const delegation = createDelegation(delegator.privateKey, delegatee.publicKey.hex, {
   kind: 1,
-  content: 'Posted via delegation!',
-  pubkey: DELEGATOR_PUBKEY,  // Original delegator's pubkey
-  created_at: Math.floor(Date.now() / 1000)
+  since: now - 60,
+  until: now + 30 * 24 * 60 * 60,
 });
 
-const signedEvent = await signEventWithDelegation({
-  event,
-  delegatePrivkey: DELEGATE_PRIVKEY,
-  delegation: {
-    token: DELEGATION_TOKEN,
-    conditions: {
-      kind: 1,
-      until: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
-    }
-  }
-});
+// Delegatee attaches the delegation tag and signs with its own key
+const unsigned = addDelegationTag(
+  { kind: 1, content: 'Posted via delegation', tags: [], created_at: now, pubkey: delegatee.publicKey.hex },
+  delegation,
+);
+const event = await finalizeEvent(unsigned, delegatee.privateKey);
+
+// Verifier: token signature + conditions
+const found = extractDelegation(event); // null if missing or the conditions string is malformed
+const ok = !!found && (await verifyDelegation(found)) && checkDelegationConditions(event, found.conditions);
 ```
 
-### Conditional Delegation
-
-You can create more specific delegations with conditions:
-
-```typescript
-// Create a delegation with multiple conditions
-const delegation = await createDelegation({
-  delegatorPrivkey: delegatorKeyPair.privateKey,
-  delegateePubkey,
-  conditions: {
-    kinds: [1, 6],  // Allow only text notes and reposts
-    until: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,  // 1 week
-    since: Math.floor(Date.now() / 1000),  // Starting from now
-    tags: [
-      ['t', 'nostr'],  // Only allow posts with tag 't' = 'nostr'
-      ['p', delegateePubkey]  // Only allow mentions of the delegatee
-    ]
-  }
-});
-```
+Several `kind=` clauses in one conditions string form a set of allowed kinds
+(`{ kinds: [1, 6] }` serializes to `kind=1&kind=6`). Unknown clauses make
+`extractDelegation` return `null` (fail closed). Tag restrictions are not supported.
 
 ### Security Considerations
 
@@ -770,19 +661,20 @@ For more details on delegation, see the [NIP-26 specification](https://github.co
 - **Better JSDoc Comments**: Improved documentation with clear and concise JSDoc comments
 - **NIP References**: Added references to relevant NIPs for better understanding of the underlying protocol
 
-## Debug Mode
+## Logging
 
-Enable debug mode to get detailed logging:
+The library is **silent by default** — invalid input never writes to the console. Opt in:
 
 ```typescript
-import { setDebugLevel } from 'nostr-crypto-utils';
+import { setLogLevel, getLogLevel } from 'nostr-crypto-utils';
 
-// Enable debug logging
-setDebugLevel('debug');
-
-// Or for even more detail
-setDebugLevel('trace');
+setLogLevel('debug');   // 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'silent'
+getLogLevel();          // 'debug'
+setLogLevel(undefined); // back to the default
 ```
+
+Or set the env var `NOSTR_CRYPTO_UTILS_LOG_LEVEL=debug` (read lazily on first log call,
+never at import time; the generic `LOG_LEVEL` is ignored).
 
 ### Common Error Messages
 
@@ -817,43 +709,6 @@ When troubleshooting, verify these common points:
 - Verify relay connections
 - Check for rate limiting
 - Confirm proper websocket handling
-
-### Testing Tools
-
-```typescript
-// Test delegation validity
-const testDelegation = async (delegation) => {
-  const result = await validateDelegation({
-    token: delegation.token,
-    delegatorPubkey: delegation.delegator,
-    delegateePubkey: delegation.delegatee,
-    kind: 1
-  });
-  
-  console.log('Delegation valid:', result.isValid);
-  if (!result.isValid) {
-    console.error('Validation error:', result.error);
-  }
-  
-  return result;
-};
-
-// Test event signing
-const testEventSigning = async (event, delegation) => {
-  try {
-    const signed = await signEventWithDelegation({
-      event,
-      delegatePrivkey: delegation.privateKey,
-      delegation: delegation.token
-    });
-    console.log('Event signed successfully:', signed.id);
-    return true;
-  } catch (error) {
-    console.error('Signing failed:', error);
-    return false;
-  }
-};
-```
 
 For more help, join our [Discord community](https://discord.gg/nostr) or [open an issue](https://github.com/humanjavaenterprises/nostr-crypto-utils/issues).
 

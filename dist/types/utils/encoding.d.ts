@@ -25,4 +25,3 @@ export declare function utf8ToBytes(str: string): Uint8Array;
  * @returns UTF-8 string
  */
 export declare function bytesToUtf8(bytes: Uint8Array): string;
-//# sourceMappingURL=encoding.d.ts.map

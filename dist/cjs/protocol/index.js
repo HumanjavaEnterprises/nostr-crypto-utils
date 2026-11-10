@@ -273,4 +273,3 @@ function createFilter(pubkey) {
         ]
     };
 }
-//# sourceMappingURL=index.js.map

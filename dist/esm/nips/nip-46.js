@@ -9,10 +9,42 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/46.md
  */
 import { schnorr } from '@noble/curves/secp256k1.js';
-import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
+import { bytesToHex, hexToBytes, randomBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { getConversationKey as nip44GetConversationKey, encrypt as nip44Encrypt, decrypt as nip44Decrypt, } from './nip-44.js';
 import { Nip46Method } from '../types/index.js';
+import { verifySignature } from './nip-01.js';
+import { isHex32 } from '../utils/strict-hex.js';
+/** Constant-time string comparison (UTF-8 bytes). Length is not hidden. */
+function constantTimeEqual(a, b) {
+    const x = utf8ToBytes(a);
+    const y = utf8ToBytes(b);
+    if (x.length !== y.length)
+        return false;
+    let diff = 0;
+    for (let i = 0; i < x.length; i++)
+        diff |= x[i] ^ y[i];
+    return diff === 0;
+}
+/** Apply the optional freshness / replay checks shared by both unwrap functions. */
+function checkReplay(event, payloadId, opts) {
+    if (!opts)
+        return;
+    if (opts.maxAgeSeconds !== undefined) {
+        if (!verifySignature(event))
+            throw new Error('invalid event signature');
+        const now = opts.now ?? Math.floor(Date.now() / 1000);
+        if (typeof event.created_at !== 'number' || Math.abs(now - event.created_at) > opts.maxAgeSeconds) {
+            throw new Error('event created_at outside allowed window');
+        }
+    }
+    if (opts.seenIds) {
+        const key = `${event.pubkey}:${payloadId}`;
+        if (opts.seenIds.has(key))
+            throw new Error('replayed NIP-46 message');
+        opts.seenIds.add(key);
+    }
+}
 // ─── 1. Bunker URI ─────────────────────────────────────────────────────────
 /**
  * Parse a bunker:// URI into its components
@@ -211,14 +243,22 @@ export async function wrapEvent(payload, session, recipientPubkey) {
  * Decrypt and parse a kind 24133 event
  * @param event - Signed kind 24133 event
  * @param session - NIP-46 session
+ * @param opts - Optional replay protection (seen-id cache, created_at window)
  * @returns Decrypted JSON-RPC request or response
  */
-export function unwrapEvent(event, session) {
+export function unwrapEvent(event, session, opts) {
     if (event.kind !== 24133) {
         throw new Error(`expected kind 24133, got ${event.kind}`);
     }
+    // Canonical lowercase pubkey only: hexToBytes is case-insensitive, so a
+    // re-cased pubkey would still decrypt but dodge the seenIds replay cache.
+    if (!isHex32(event.pubkey)) {
+        throw new Error('invalid event pubkey: expected 64 lowercase hex chars');
+    }
     const json = nip44Decrypt(event.content, session.conversationKey);
-    return parsePayload(json);
+    const payload = parsePayload(json);
+    checkReplay(event, payload.id, opts);
+    return payload;
 }
 // ─── 5. Convenience Request Creators ────────────────────────────────────────
 /**
@@ -328,11 +368,17 @@ export function createRequestFilter(signerPubkey, since) {
  *
  * @param event - Signed kind 24133 event from a client
  * @param signerSecretKey - Signer's private key (hex)
+ * @param opts - Optional replay protection (seen-id cache, created_at window)
  * @returns Decrypted request, client pubkey, and conversation key for reuse
  */
-export function unwrapRequest(event, signerSecretKey) {
+export function unwrapRequest(event, signerSecretKey, opts) {
     if (event.kind !== 24133) {
         throw new Error(`expected kind 24133, got ${event.kind}`);
+    }
+    // Canonical lowercase pubkey only: hexToBytes is case-insensitive, so a
+    // re-cased pubkey would still decrypt but dodge the seenIds replay cache.
+    if (!isHex32(event.pubkey)) {
+        throw new Error('invalid event pubkey: expected 64 lowercase hex chars');
     }
     const clientPubkey = event.pubkey;
     const signerSecretKeyBytes = hexToBytes(signerSecretKey);
@@ -342,6 +388,7 @@ export function unwrapRequest(event, signerSecretKey) {
     if (!isRequest(payload)) {
         throw new Error('expected a NIP-46 request, got a response');
     }
+    checkReplay(event, payload.id, opts);
     return {
         request: payload,
         clientPubkey,
@@ -400,18 +447,47 @@ export async function wrapResponse(response, signerSecretKey, signerPubkey, clie
 export async function handleSignerRequest(request, clientPubkey, handlers, opts) {
     const { method, params, id } = request;
     const authenticated = opts?.authenticatedClients;
-    // connect is always allowed (it's the auth handshake)
+    // Requests come from unauthenticated senders: never index into a non-array.
+    if (!Array.isArray(params)) {
+        return { response: createResponse(id, undefined, 'invalid params') };
+    }
+    // connect is the auth handshake. FAIL-CLOSED: it succeeds only with a matching
+    // secret, an approving onConnect callback, or an explicit allowOpenConnect opt-in.
     if (method === Nip46Method.CONNECT || method === 'connect') {
-        // params[0] = remote pubkey, params[1] = secret (optional)
-        const clientSecret = params[1] || undefined;
-        if (opts?.secret && clientSecret !== opts.secret) {
+        // params[0] = remote signer pubkey, params[1] = secret (optional), params[2] = perms
+        const clientSecret = typeof params[1] === 'string' && params[1] !== '' ? params[1] : undefined;
+        if (opts?.signerPubkey && (typeof params[0] !== 'string' || params[0].toLowerCase() !== opts.signerPubkey.toLowerCase())) {
+            return { response: createResponse(id, undefined, 'connect addressed to a different signer') };
+        }
+        if (opts?.secret) {
+            if (clientSecret === undefined || !constantTimeEqual(clientSecret, opts.secret)) {
+                return { response: createResponse(id, undefined, 'invalid secret') };
+            }
+            if (opts.usedSecrets?.has(clientSecret)) {
+                return { response: createResponse(id, undefined, 'secret already used') };
+            }
+        }
+        if (opts?.onConnect) {
+            let approved;
+            try {
+                approved = (await opts.onConnect(clientPubkey, params)) === true;
+            }
+            catch {
+                approved = false;
+            }
+            if (!approved) {
+                return { response: createResponse(id, undefined, 'unauthorized: connect not approved') };
+            }
+        }
+        else if (!opts?.secret && !opts?.allowOpenConnect && !opts?.allowUnauthenticated) {
             return {
-                response: createResponse(id, undefined, 'invalid secret'),
+                response: createResponse(id, undefined, 'unauthorized: connect requires a secret or approval'),
             };
         }
         return {
             response: createResponse(id, 'ack'),
             newlyAuthenticated: clientPubkey,
+            ...(opts?.secret ? { consumedSecret: opts.secret } : {}),
         };
     }
     // ping is always allowed (even unauthenticated)
@@ -492,4 +568,3 @@ export async function handleSignerRequest(request, clientPubkey, handlers, opts)
         };
     }
 }
-//# sourceMappingURL=nip-46.js.map

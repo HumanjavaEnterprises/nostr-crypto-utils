@@ -38,4 +38,3 @@ export declare const v2: {
     decrypt: typeof decrypt;
 };
 export { getConversationKey, encrypt, decrypt, calcPaddedLen };
-//# sourceMappingURL=nip-44.d.ts.map

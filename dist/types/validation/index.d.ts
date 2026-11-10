@@ -47,19 +47,25 @@ export declare function validateEventSignature(event: SignedNostrEvent): Validat
  */
 export declare function validateEvent(event: SignedNostrEvent): ValidationResult;
 /**
- * Validates a signed Nostr event by checking its structure and signature format.
+ * Validates a signed Nostr event: structure, canonical id/pubkey/sig format,
+ * id = hash(event), AND the schnorr signature. Equivalent to {@link validateEvent}.
+ *
+ * Before 0.10.0 this only checked the format of `id`/`sig`; that check is now
+ * {@link validateSignedEventFormat}.
  *
  * @param {SignedNostrEvent} event - The event to validate
  * @returns {ValidationResult} Object containing validation result and any error message
- * @example
- * ```typescript
- * const result = validateSignedEvent(event);
- * if (!result.isValid) {
- *   console.error(result.error);
- * }
- * ```
  */
 export declare function validateSignedEvent(event: SignedNostrEvent): ValidationResult;
+/**
+ * FORMAT-ONLY check of a signed event: structure plus canonical lowercase hex
+ * `pubkey` (64), `id` (64) and `sig` (128). Does NOT recompute the id or verify
+ * the signature — use {@link validateEvent} to decide whether an event is authentic.
+ *
+ * @param {SignedNostrEvent} event - The event to check
+ * @returns {ValidationResult} Object containing validation result and any error message
+ */
+export declare function validateSignedEventFormat(event: SignedNostrEvent): ValidationResult;
 /**
  * Validates a Nostr event by checking its structure and fields.
  * @param event - The event to validate
@@ -108,4 +114,3 @@ export declare function validateSubscription(subscription: NostrSubscription): V
  * ```
  */
 export declare function validateResponse(message: unknown): ValidationResult;
-//# sourceMappingURL=index.d.ts.map

@@ -146,4 +146,3 @@ export function splitHex(hex, chunkSize) {
     }
     return chunks;
 }
-//# sourceMappingURL=hex.js.map

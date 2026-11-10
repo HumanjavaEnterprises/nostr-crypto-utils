@@ -5,6 +5,7 @@
     "moduleResolution": "NodeNext",
     "outDir": "./dist/esm",
     "declaration": false,
+    "sourceMap": false,
     "declarationMap": false
   }
 }

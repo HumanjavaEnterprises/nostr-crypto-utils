@@ -87,4 +87,3 @@ export declare const Defaults: {
 export declare const Regex: {
     readonly HEX: RegExp;
 };
-//# sourceMappingURL=constants.d.ts.map

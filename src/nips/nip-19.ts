@@ -114,8 +114,8 @@ export function neventEncode(
   if (author) {
     validateHexString(author, 64);
   }
-  if (kind !== undefined && !Number.isInteger(kind)) {
-    throw new Error('Invalid event kind');
+  if (kind !== undefined) {
+    validateKind(kind);
   }
 
   const data = encodeTLV({
@@ -144,11 +144,10 @@ export function naddrEncode(
   relays?: string[]
 ): string {
   validateHexString(pubkey, 64);
-  if (!Number.isInteger(kind)) {
-    throw new Error('Invalid event kind');
-  }
-  if (!identifier) {
-    throw new Error('Identifier is required');
+  validateKind(kind);
+  // The d-tag identifier may be empty (plain replaceable kinds, e.g. 10002).
+  if (typeof identifier !== 'string') {
+    throw new Error('Identifier must be a string');
   }
   if (relays) {
     relays.forEach(validateRelayUrl);
@@ -187,7 +186,7 @@ export function nrelayEncode(url: string): string {
  * @throws {Error} If string is invalid or malformed
  */
 export function decode(str: string): Nip19Data {
-  if (!str.includes('1')) {
+  if (typeof str !== 'string' || !str.includes('1')) {
     throw new Error('Invalid bech32 string');
   }
 
@@ -240,6 +239,21 @@ export function decode(str: string): Nip19Data {
 }
 
 // Helper functions
+
+function validateKind(kind: number): void {
+  if (!Number.isInteger(kind) || kind < 0 || kind > 0xffffffff) {
+    throw new Error('Invalid event kind (must be an integer in 0..4294967295)');
+  }
+}
+
+function isValidRelayUrl(url: string): boolean {
+  try {
+    validateRelayUrl(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function validateHexString(str: string, length?: number): void {
   if (!/^[0-9a-fA-F]+$/.test(str)) {
@@ -310,10 +324,14 @@ function decodeTLV(prefix: Nip19DataType, data: Uint8Array): Nip19Data {
   };
 
   let i = 0;
+  let hasSpecial = false;
   // For relay type
   let relay: string;
 
   while (i < data.length) {
+    if (i + 1 >= data.length) {
+      throw new Error('Invalid TLV data');
+    }
     const type = data[i];
     const length = data[i + 1];
 
@@ -325,6 +343,7 @@ function decodeTLV(prefix: Nip19DataType, data: Uint8Array): Nip19Data {
 
     switch (type) {
       case TLV_TYPES.SPECIAL:
+        hasSpecial = true;
         if (isNaddr) {
           // For naddr, SPECIAL is the UTF-8 d-tag identifier, not hex.
           result.data = utf8Decoder.decode(value);
@@ -336,15 +355,21 @@ function decodeTLV(prefix: Nip19DataType, data: Uint8Array): Nip19Data {
         break;
       case TLV_TYPES.RELAY:
         relay = utf8Decoder.decode(value);
-        validateRelayUrl(relay);
-        result.relays = result.relays || [];
-        result.relays.push(relay);
+        // Relay hints are advisory: skip ones we can't use instead of rejecting
+        // the whole entity (interop with encoders that emit https:// hints).
+        if (isValidRelayUrl(relay)) {
+          result.relays = result.relays || [];
+          result.relays.push(relay);
+        }
         break;
       case TLV_TYPES.AUTHOR:
         result.author = bytesToHex(value);
         validateHexString(result.author, 64);
         break;
       case TLV_TYPES.KIND:
+        if (length !== 4) {
+          throw new Error('Invalid TLV data: kind must be 4 bytes');
+        }
         result.kind = new DataView(value.buffer, value.byteOffset, value.byteLength).getUint32(0, false);
         break;
       default:
@@ -353,6 +378,11 @@ function decodeTLV(prefix: Nip19DataType, data: Uint8Array): Nip19Data {
     }
 
     i += 2 + length;
+  }
+
+  // nprofile / nevent are meaningless without their primary (TLV 0) value.
+  if (!isNaddr && !hasSpecial) {
+    throw new Error(`Invalid ${prefix}: missing TLV 0 (special)`);
   }
 
   // naddr requires an author (pubkey) and kind per NIP-19.

@@ -48,4 +48,3 @@ export * from './messages.js';
 export * from './guards.js';
 /** Re-export NIP-46 types */
 export * from './nip46.js';
-//# sourceMappingURL=index.js.map

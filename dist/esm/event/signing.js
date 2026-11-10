@@ -6,6 +6,7 @@ import { schnorr } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { logger } from '../utils/logger.js';
+import { isHex32, isHex64 } from '../utils/strict-hex.js';
 import { getEventHash, serializeEvent } from './creation.js';
 /**
  * Signs a Nostr event with a private key (NIP-01)
@@ -15,8 +16,17 @@ import { getEventHash, serializeEvent } from './creation.js';
  */
 export async function signEvent(event, privateKey) {
     try {
+        const privateKeyBytes = hexToBytes(privateKey);
+        // Same rule as the root signEvent: never produce an unverifiable event.
+        const derivedPubkey = bytesToHex(schnorr.getPublicKey(privateKeyBytes));
+        if (!event.pubkey) {
+            event = { ...event, pubkey: derivedPubkey };
+        }
+        else if (event.pubkey !== derivedPubkey) {
+            throw new Error('event.pubkey does not match the signing key');
+        }
         const hash = await getEventHash(event);
-        const sig = schnorr.sign(hexToBytes(hash), hexToBytes(privateKey));
+        const sig = schnorr.sign(hexToBytes(hash), privateKeyBytes);
         return {
             ...event,
             id: hash,
@@ -24,7 +34,7 @@ export async function signEvent(event, privateKey) {
         };
     }
     catch (error) {
-        logger.error({ error }, 'Failed to sign event');
+        logger.debug({ error }, 'Failed to sign event');
         throw error;
     }
 }
@@ -35,19 +45,21 @@ export async function signEvent(event, privateKey) {
  */
 export function verifySignature(event) {
     try {
+        if (!event || typeof event !== 'object')
+            return false;
+        if (!isHex32(event.id) || !isHex32(event.pubkey) || !isHex64(event.sig))
+            return false;
         // Recompute the id from the serialized event and require it to match the
         // claimed id BEFORE verifying the signature. Without this, an event whose
         // content/tags were swapped but whose (id, sig) remain a valid pair would
         // pass verification, letting forged content read as authentic.
         const computedId = bytesToHex(sha256(new TextEncoder().encode(serializeEvent(event))));
-        if (computedId !== event.id) {
-            logger.error('Event id does not match hash of content');
+        if (computedId !== event.id)
             return false;
-        }
         return schnorr.verify(hexToBytes(event.sig), hexToBytes(event.id), hexToBytes(event.pubkey));
     }
     catch (error) {
-        logger.error({ error }, 'Failed to verify signature');
+        logger.debug({ error }, 'Failed to verify signature');
         return false;
     }
 }
@@ -66,7 +78,7 @@ export function validateEvent(event) {
         return verifySignature(event);
     }
     catch (error) {
-        logger.error({ error }, 'Error validating event');
+        logger.debug({ error }, 'Error validating event');
         return false;
     }
 }
@@ -78,4 +90,3 @@ export function validateEvent(event) {
 export function calculateEventId(event) {
     return getEventHash(event);
 }
-//# sourceMappingURL=signing.js.map

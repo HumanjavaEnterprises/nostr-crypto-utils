@@ -37,7 +37,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.nip98 = exports.nip17 = exports.nip59 = exports.nip49 = exports.nip46 = exports.nip44 = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.verifySignature = exports.finalizeEvent = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKeySync = exports.getPublicKey = exports.generateKeyPair = exports.Nip46Method = exports.NostrMessageType = exports.NostrEventKind = exports.isPublicKeyHex = exports.isPrivateKeyHex = exports.asPublicKey = exports.asPrivateKey = void 0;
+exports.bytesToUtf8 = exports.utf8ToBytes = exports.bytesToHex = exports.hexToBytes = exports.getLogLevel = exports.setLogLevel = exports.nip98 = exports.nip17 = exports.nip59 = exports.nip49 = exports.nip46 = exports.nip44 = exports.nip26 = exports.nip19 = exports.nip04 = exports.nip01 = exports.decryptMessage = exports.encryptMessage = exports.computeSharedSecret = exports.calculateEventId = exports.validateResponse = exports.validateSubscription = exports.validateFilter = exports.validateEventBase = exports.validateSignedEventFormat = exports.validateSignedEvent = exports.validateEventSignature = exports.validateEventId = exports.validateEvent = exports.verifySignature = exports.finalizeEvent = exports.signEvent = exports.createEvent = exports.validateKeyPair = exports.getPublicKeySync = exports.getPublicKey = exports.generateKeyPair = exports.Nip46Method = exports.NostrMessageType = exports.NostrEventKind = exports.isPublicKeyHex = exports.isPrivateKeyHex = exports.asPublicKey = exports.asPrivateKey = void 0;
 var keys_js_1 = require("./types/keys.js");
 Object.defineProperty(exports, "asPrivateKey", { enumerable: true, get: function () { return keys_js_1.asPrivateKey; } });
 Object.defineProperty(exports, "asPublicKey", { enumerable: true, get: function () { return keys_js_1.asPublicKey; } });
@@ -64,6 +64,7 @@ Object.defineProperty(exports, "validateEvent", { enumerable: true, get: functio
 Object.defineProperty(exports, "validateEventId", { enumerable: true, get: function () { return index_js_2.validateEventId; } });
 Object.defineProperty(exports, "validateEventSignature", { enumerable: true, get: function () { return index_js_2.validateEventSignature; } });
 Object.defineProperty(exports, "validateSignedEvent", { enumerable: true, get: function () { return index_js_2.validateSignedEvent; } });
+Object.defineProperty(exports, "validateSignedEventFormat", { enumerable: true, get: function () { return index_js_2.validateSignedEventFormat; } });
 Object.defineProperty(exports, "validateEventBase", { enumerable: true, get: function () { return index_js_2.validateEventBase; } });
 Object.defineProperty(exports, "validateFilter", { enumerable: true, get: function () { return index_js_2.validateFilter; } });
 Object.defineProperty(exports, "validateSubscription", { enumerable: true, get: function () { return index_js_2.validateSubscription; } });
@@ -87,10 +88,13 @@ exports.nip49 = __importStar(require("./nips/nip-49.js"));
 exports.nip59 = __importStar(require("./nips/nip-59.js"));
 exports.nip17 = __importStar(require("./nips/nip-17.js"));
 exports.nip98 = __importStar(require("./nips/nip-98.js"));
+// Logging (silent by default; opt in with setLogLevel or NOSTR_CRYPTO_UTILS_LOG_LEVEL)
+var logger_js_1 = require("./utils/logger.js");
+Object.defineProperty(exports, "setLogLevel", { enumerable: true, get: function () { return logger_js_1.setLogLevel; } });
+Object.defineProperty(exports, "getLogLevel", { enumerable: true, get: function () { return logger_js_1.getLogLevel; } });
 // Utils
 var encoding_js_1 = require("./utils/encoding.js");
 Object.defineProperty(exports, "hexToBytes", { enumerable: true, get: function () { return encoding_js_1.hexToBytes; } });
 Object.defineProperty(exports, "bytesToHex", { enumerable: true, get: function () { return encoding_js_1.bytesToHex; } });
 Object.defineProperty(exports, "utf8ToBytes", { enumerable: true, get: function () { return encoding_js_1.utf8ToBytes; } });
 Object.defineProperty(exports, "bytesToUtf8", { enumerable: true, get: function () { return encoding_js_1.bytesToUtf8; } });
-//# sourceMappingURL=index.js.map

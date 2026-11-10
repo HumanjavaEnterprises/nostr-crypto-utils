@@ -64,7 +64,7 @@ export async function getEventHash(event: NostrEvent): Promise<string> {
     const hash = await sha256(new TextEncoder().encode(serialized));
     return bytesToHex(hash);
   } catch (error) {
-    logger.error({ error }, 'Failed to get event hash');
+    logger.debug({ error }, 'Failed to get event hash');
     throw error;
   }
 }

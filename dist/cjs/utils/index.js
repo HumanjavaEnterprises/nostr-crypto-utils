@@ -41,4 +41,3 @@ Object.defineProperty(exports, "createChannelMessageEvent", { enumerable: true, 
 // Export logger
 const logger_js_1 = require("./logger.js");
 exports.logger = (0, logger_js_1.createLogger)('default');
-//# sourceMappingURL=index.js.map

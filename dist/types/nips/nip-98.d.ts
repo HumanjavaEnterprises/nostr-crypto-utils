@@ -56,8 +56,18 @@ export interface ValidateAuthParams {
     body?: string | Uint8Array;
     /** Allowed clock skew in seconds (default 60, per the NIP suggestion). */
     maxAgeSeconds?: number;
-    /** Require a matching `payload` tag whenever `body` is provided (default false). */
+    /**
+     * Require a matching `payload` tag when `body` is non-empty. Defaults to TRUE
+     * (since 0.10.0): a token without a payload tag would otherwise authorize any
+     * body within the time window. Set `false` to accept such tokens.
+     */
     requirePayload?: boolean;
+    /**
+     * Replay guard: ids of tokens already accepted. A token whose id is in the set
+     * is rejected; an accepted token's id is ADDED to the set. Bound its lifetime
+     * yourself (entries older than `maxAgeSeconds` can be dropped).
+     */
+    seenIds?: Set<string>;
     /** Override "now" (unix seconds) — for testing. */
     now?: number;
 }
@@ -88,4 +98,3 @@ export interface AuthValidationResult {
  * ```
  */
 export declare function validateAuthEvent(event: SignedNostrEvent, params: ValidateAuthParams): Promise<AuthValidationResult>;
-//# sourceMappingURL=nip-98.d.ts.map

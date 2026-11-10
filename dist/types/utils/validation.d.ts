@@ -59,4 +59,3 @@ export declare function validateFilter(filter: NostrFilter): ValidationResult;
  * @returns Validation result
  */
 export declare function validateSubscription(subscription: NostrSubscription): ValidationResult;
-//# sourceMappingURL=validation.d.ts.map

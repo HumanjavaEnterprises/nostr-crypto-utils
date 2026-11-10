@@ -1,60 +1,112 @@
 {
   "name": "nostr-crypto-utils",
-  "version": "0.9.3",
+  "version": "0.10.0",
   "description": "Core cryptographic utilities for Nostr protocol — edge-native (Cloudflare Workers / Deno / browser), zero non-crypto dependencies",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
+      "workerd": "./dist/esm/index.js",
+      "browser": "./dist/esm/index.js",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
     },
+    "./nip01": {
+      "types": "./dist/types/nips/nip-01.d.ts",
+      "workerd": "./dist/esm/nips/nip-01.js",
+      "browser": "./dist/esm/nips/nip-01.js",
+      "import": "./dist/esm/nips/nip-01.js",
+      "require": "./dist/cjs/nips/nip-01.js",
+      "default": "./dist/cjs/nips/nip-01.js"
+    },
+    "./nip04": {
+      "types": "./dist/types/nips/nip-04.d.ts",
+      "workerd": "./dist/esm/nips/nip-04.js",
+      "browser": "./dist/esm/nips/nip-04.js",
+      "import": "./dist/esm/nips/nip-04.js",
+      "require": "./dist/cjs/nips/nip-04.js",
+      "default": "./dist/cjs/nips/nip-04.js"
+    },
+    "./nip17": {
+      "types": "./dist/types/nips/nip-17.d.ts",
+      "workerd": "./dist/esm/nips/nip-17.js",
+      "browser": "./dist/esm/nips/nip-17.js",
+      "import": "./dist/esm/nips/nip-17.js",
+      "require": "./dist/cjs/nips/nip-17.js",
+      "default": "./dist/cjs/nips/nip-17.js"
+    },
+    "./nip19": {
+      "types": "./dist/types/nips/nip-19.d.ts",
+      "workerd": "./dist/esm/nips/nip-19.js",
+      "browser": "./dist/esm/nips/nip-19.js",
+      "import": "./dist/esm/nips/nip-19.js",
+      "require": "./dist/cjs/nips/nip-19.js",
+      "default": "./dist/cjs/nips/nip-19.js"
+    },
+    "./nip26": {
+      "types": "./dist/types/nips/nip-26.d.ts",
+      "workerd": "./dist/esm/nips/nip-26.js",
+      "browser": "./dist/esm/nips/nip-26.js",
+      "import": "./dist/esm/nips/nip-26.js",
+      "require": "./dist/cjs/nips/nip-26.js",
+      "default": "./dist/cjs/nips/nip-26.js"
+    },
     "./nip44": {
       "types": "./dist/types/nips/nip-44.d.ts",
+      "workerd": "./dist/esm/nips/nip-44.js",
+      "browser": "./dist/esm/nips/nip-44.js",
       "import": "./dist/esm/nips/nip-44.js",
       "require": "./dist/cjs/nips/nip-44.js",
       "default": "./dist/cjs/nips/nip-44.js"
     },
     "./nip46": {
       "types": "./dist/types/nips/nip-46.d.ts",
+      "workerd": "./dist/esm/nips/nip-46.js",
+      "browser": "./dist/esm/nips/nip-46.js",
       "import": "./dist/esm/nips/nip-46.js",
       "require": "./dist/cjs/nips/nip-46.js",
       "default": "./dist/cjs/nips/nip-46.js"
     },
     "./nip49": {
       "types": "./dist/types/nips/nip-49.d.ts",
+      "workerd": "./dist/esm/nips/nip-49.js",
+      "browser": "./dist/esm/nips/nip-49.js",
       "import": "./dist/esm/nips/nip-49.js",
       "require": "./dist/cjs/nips/nip-49.js",
       "default": "./dist/cjs/nips/nip-49.js"
     },
     "./nip59": {
       "types": "./dist/types/nips/nip-59.d.ts",
+      "workerd": "./dist/esm/nips/nip-59.js",
+      "browser": "./dist/esm/nips/nip-59.js",
       "import": "./dist/esm/nips/nip-59.js",
       "require": "./dist/cjs/nips/nip-59.js",
       "default": "./dist/cjs/nips/nip-59.js"
     },
-    "./nip17": {
-      "types": "./dist/types/nips/nip-17.d.ts",
-      "import": "./dist/esm/nips/nip-17.js",
-      "require": "./dist/cjs/nips/nip-17.js",
-      "default": "./dist/cjs/nips/nip-17.js"
-    },
     "./nip98": {
       "types": "./dist/types/nips/nip-98.d.ts",
+      "workerd": "./dist/esm/nips/nip-98.js",
+      "browser": "./dist/esm/nips/nip-98.js",
       "import": "./dist/esm/nips/nip-98.js",
       "require": "./dist/cjs/nips/nip-98.js",
       "default": "./dist/cjs/nips/nip-98.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist",
-    "src",
-    "examples/**/*",
+    "dist/esm",
+    "dist/cjs",
+    "dist/types",
+    "dist/browser",
+    "!dist/**/*.map",
+    "!dist/**/__tests__",
     "README.md",
+    "CHANGELOG.md",
     "AGENTS.md",
     "SKILL.md",
     "llms.txt",
@@ -116,15 +168,18 @@
     "@types/node": "^26.1.1",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.12",
     "esbuild": "^0.28.1",
     "eslint": "^10.7.0",
     "typedoc": "^0.28.20",
     "typedoc-plugin-markdown": "^4.12.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "minimatch": "^11.0.6"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }

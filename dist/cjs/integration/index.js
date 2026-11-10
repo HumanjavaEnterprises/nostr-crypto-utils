@@ -28,4 +28,3 @@ async function createTestEvent() {
 async function verifyTestEvent(event) {
     return (0, crypto_js_2.verifySignature)(event);
 }
-//# sourceMappingURL=index.js.map

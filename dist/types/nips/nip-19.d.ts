@@ -74,4 +74,3 @@ export declare function nrelayEncode(url: string): string;
  * @throws {Error} If string is invalid or malformed
  */
 export declare function decode(str: string): Nip19Data;
-//# sourceMappingURL=nip-19.d.ts.map

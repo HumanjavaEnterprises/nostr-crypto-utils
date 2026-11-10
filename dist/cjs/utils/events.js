@@ -66,4 +66,3 @@ function createDirectMessageEvent(content, recipientPubKey, pubkey) {
         tags: [['p', recipientPubKey]]
     });
 }
-//# sourceMappingURL=events.js.map

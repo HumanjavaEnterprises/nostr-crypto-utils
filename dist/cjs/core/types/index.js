@@ -21,4 +21,3 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./events.js"), exports);
 __exportStar(require("./crypto.js"), exports);
 __exportStar(require("./protocol.js"), exports);
-//# sourceMappingURL=index.js.map

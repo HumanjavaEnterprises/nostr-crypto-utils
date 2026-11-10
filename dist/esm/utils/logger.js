@@ -18,11 +18,51 @@ export var LogLevel;
 })(LogLevel || (LogLevel = {}));
 // Ordered for gating. trace/fatal/silent included for pino-call compatibility.
 const LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'];
-/** Read LOG_LEVEL without assuming a Node `process` global (Workers-safe). */
-function defaultLevel() {
-    const env = typeof process !== 'undefined' && process.env ? process.env : {};
-    const lvl = (env.LOG_LEVEL || 'info').toLowerCase();
-    return LEVELS.includes(lvl) ? lvl : 'info';
+/**
+ * Library logging is SILENT by default. Callers opt in with {@link setLogLevel}
+ * or the namespaced env var `NOSTR_CRYPTO_UTILS_LOG_LEVEL` (read lazily on first
+ * use, never at import time; the generic `LOG_LEVEL` is deliberately ignored).
+ */
+const DEFAULT_LEVEL = 'silent';
+const ENV_VAR = 'NOSTR_CRYPTO_UTILS_LOG_LEVEL';
+let overrideLevel;
+let envLevel; // undefined = not read yet, null = unset
+function isLevel(v) {
+    return typeof v === 'string' && LEVELS.includes(v);
+}
+/** Read the namespaced env var without assuming a Node `process` global (Workers-safe). */
+function readEnvLevel() {
+    try {
+        const proc = globalThis.process;
+        const raw = proc?.env?.[ENV_VAR];
+        const lvl = typeof raw === 'string' ? raw.toLowerCase() : undefined;
+        return isLevel(lvl) ? lvl : null;
+    }
+    catch {
+        return null;
+    }
+}
+function effectiveDefaultLevel() {
+    if (overrideLevel)
+        return overrideLevel;
+    if (envLevel === undefined)
+        envLevel = readEnvLevel();
+    return envLevel ?? DEFAULT_LEVEL;
+}
+/**
+ * Set the log level for every logger in this library.
+ * Pass `undefined` to go back to the default (env var, else `silent`).
+ * @example setLogLevel('debug')
+ */
+export function setLogLevel(level) {
+    if (level !== undefined && !isLevel(level)) {
+        throw new Error(`Invalid log level: ${String(level)}`);
+    }
+    overrideLevel = level;
+}
+/** Current effective library log level. */
+export function getLogLevel() {
+    return effectiveDefaultLevel();
 }
 function rank(level) {
     const i = LEVELS.indexOf(level);
@@ -34,26 +74,42 @@ function serializeError(value) {
     }
     return value;
 }
-const CONSOLE = {
-    trace: (console.debug ?? console.log).bind(console),
-    debug: (console.debug ?? console.log).bind(console),
-    info: (console.info ?? console.log).bind(console),
-    warn: (console.warn ?? console.log).bind(console),
-    error: (console.error ?? console.log).bind(console),
-    fatal: (console.error ?? console.log).bind(console),
-    silent: () => { },
+// Resolve console methods at call time (not import time) so hosts can patch or
+// redirect console after this module loads.
+const CONSOLE_METHOD = {
+    trace: 'debug',
+    debug: 'debug',
+    info: 'info',
+    warn: 'warn',
+    error: 'error',
+    fatal: 'error',
 };
+function write(method, line) {
+    if (method === 'silent')
+        return;
+    const c = console;
+    const fn = c[CONSOLE_METHOD[method]] ?? c.log;
+    fn?.call(console, line);
+}
 class EdgeLogger {
-    level;
+    explicitLevel;
     name;
     bindings;
     constructor(opts = {}) {
         this.name = opts.name;
-        this.level = opts.level || defaultLevel();
+        this.explicitLevel = opts.level;
         this.bindings = opts.bindings ?? {};
     }
+    /** Per-instance level; falls back to the library-wide level (see setLogLevel). */
+    get level() {
+        return this.explicitLevel ?? effectiveDefaultLevel();
+    }
+    set level(value) {
+        this.explicitLevel = value;
+    }
     emit(method, args) {
-        if (this.level === 'silent' || rank(method) < rank(this.level))
+        const level = this.level;
+        if (level === 'silent' || rank(method) < rank(level))
             return;
         let context;
         let message;
@@ -73,7 +129,7 @@ class EdgeLogger {
         const merged = { ...this.bindings, ...context };
         const prefix = `[${new Date().toISOString()}] ${method.toUpperCase()}` + (this.name ? ` (${this.name})` : '');
         const ctx = Object.keys(merged).length ? ` ${JSON.stringify(merged)}` : '';
-        (CONSOLE[method] ?? CONSOLE.info)(`${prefix}: ${message}${ctx}`);
+        write(method, `${prefix}: ${message}${ctx}`);
     }
     trace(...args) {
         this.emit('trace', args);
@@ -96,7 +152,7 @@ class EdgeLogger {
     child(bindings) {
         return new EdgeLogger({
             name: this.name,
-            level: this.level,
+            level: this.explicitLevel,
             bindings: { ...this.bindings, ...bindings },
         });
     }
@@ -152,4 +208,3 @@ export class CustomLogger {
         this._log(LogLevel.ERROR, errorMessage, context);
     }
 }
-//# sourceMappingURL=logger.js.map

@@ -21,7 +21,7 @@ function formatEventForRelay(event) {
         return JSON.stringify(['EVENT', event]);
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to format event for relay');
+        logger_js_1.logger.debug({ error }, 'Failed to format event for relay');
         throw error;
     }
 }
@@ -33,7 +33,7 @@ function parseNostrMessage(message) {
         return JSON.parse(message);
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to parse Nostr message');
+        logger_js_1.logger.debug({ error }, 'Failed to parse Nostr message');
         throw error;
     }
 }
@@ -92,7 +92,7 @@ function valueToString(value) {
             return JSON.stringify(value);
         }
         catch (error) {
-            logger_js_1.logger.error({ error }, 'Failed to stringify object');
+            logger_js_1.logger.debug({ error }, 'Failed to stringify object');
             return String(value);
         }
     }
@@ -113,4 +113,3 @@ function getTagValues(event, tagName) {
         .filter((t) => t[0] === tagName)
         .map((t) => t[1]);
 }
-//# sourceMappingURL=functions.js.map

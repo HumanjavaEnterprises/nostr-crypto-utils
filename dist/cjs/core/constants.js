@@ -90,4 +90,3 @@ exports.Defaults = {
 exports.Regex = {
     HEX: /^[0-9a-fA-F]*$/,
 };
-//# sourceMappingURL=constants.js.map

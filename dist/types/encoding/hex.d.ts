@@ -90,4 +90,3 @@ export declare function concatenateHex(hexStrings: string[]): string;
  * @returns Array of hex strings
  */
 export declare function splitHex(hex: string, chunkSize: number): string[];
-//# sourceMappingURL=hex.d.ts.map

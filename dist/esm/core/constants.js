@@ -87,4 +87,3 @@ export const Defaults = {
 export const Regex = {
     HEX: /^[0-9a-fA-F]*$/,
 };
-//# sourceMappingURL=constants.js.map

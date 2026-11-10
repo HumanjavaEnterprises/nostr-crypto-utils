@@ -24,4 +24,3 @@ export async function createTestEvent() {
 export async function verifyTestEvent(event) {
     return verifySignature(event);
 }
-//# sourceMappingURL=index.js.map

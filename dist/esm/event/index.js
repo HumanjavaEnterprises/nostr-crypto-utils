@@ -4,4 +4,3 @@
  */
 export { createEvent, serializeEvent, getEventHash } from './creation.js';
 export { validateEvent, calculateEventId } from './signing.js';
-//# sourceMappingURL=index.js.map

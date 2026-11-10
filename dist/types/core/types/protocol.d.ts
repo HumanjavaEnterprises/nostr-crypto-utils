@@ -70,4 +70,3 @@ export interface SubscriptionOptions {
     timeout?: number;
     skipVerification?: boolean;
 }
-//# sourceMappingURL=protocol.d.ts.map

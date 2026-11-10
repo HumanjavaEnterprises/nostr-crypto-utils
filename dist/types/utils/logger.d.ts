@@ -28,6 +28,14 @@ export interface Logger {
     child(bindings: Record<string, unknown>): Logger;
 }
 /**
+ * Set the log level for every logger in this library.
+ * Pass `undefined` to go back to the default (env var, else `silent`).
+ * @example setLogLevel('debug')
+ */
+export declare function setLogLevel(level: LogLevelName | undefined): void;
+/** Current effective library log level. */
+export declare function getLogLevel(): LogLevelName;
+/**
  * Create a named logger instance.
  * @param name - Component or module name for the logger
  */
@@ -55,4 +63,3 @@ export declare class CustomLogger {
     error(message: string | Error | unknown, context?: Record<string, unknown>): void;
 }
 export {};
-//# sourceMappingURL=logger.d.ts.map

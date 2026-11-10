@@ -13,7 +13,7 @@ export function isValidPublicKey(pubkey: string): boolean {
     const result = validatePublicKey(pubkey);
     return result.isValid;
   } catch (error) {
-    logger.error({ error }, 'Failed to validate public key');
+    logger.debug({ error }, 'Failed to validate public key');
     return false;
   }
 }

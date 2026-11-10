@@ -72,4 +72,3 @@ export declare function createDirectMessage(senderPrivateKey: string | Uint8Arra
  * ```
  */
 export declare function readDirectMessage(giftWrap: SignedNostrEvent, recipientPrivateKey: string | Uint8Array): Promise<Rumor>;
-//# sourceMappingURL=nip-17.d.ts.map

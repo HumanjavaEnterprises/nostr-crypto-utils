@@ -26,104 +26,8 @@ import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { KeyPair, PublicKeyDetails, NostrEvent, SignedNostrEvent } from './types/index.js';
 import { logger } from './utils/logger.js';
+import { isHex32, isHex64 } from './utils/strict-hex.js';
 
-
-/**
- * Custom crypto interface for cross-platform compatibility
- */
-export interface CryptoSubtle {
-  subtle: {
-    generateKey(
-      algorithm: RsaHashedKeyGenParams | EcKeyGenParams,
-      extractable: boolean,
-      keyUsages: readonly KeyUsage[]
-    ): Promise<CryptoKeyPair>;
-    importKey(
-      format: 'raw' | 'pkcs8' | 'spki',
-      keyData: ArrayBuffer,
-      algorithm: RsaHashedImportParams | EcKeyImportParams | AesKeyAlgorithm,
-      extractable: boolean,
-      keyUsages: readonly KeyUsage[]
-    ): Promise<CryptoKey>;
-    encrypt(
-      algorithm: { name: string; iv: Uint8Array },
-      key: CryptoKey,
-      data: ArrayBuffer
-    ): Promise<ArrayBuffer>;
-    decrypt(
-      algorithm: { name: string; iv: Uint8Array },
-      key: CryptoKey,
-      data: ArrayBuffer
-    ): Promise<ArrayBuffer>;
-  };
-  getRandomValues<T extends Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array>(array: T): T;
-}
-
-declare global {
-  interface Window {
-    crypto: CryptoSubtle;
-  }
-  interface Global {
-    crypto: CryptoSubtle;
-  }
-}
-
-// Get the appropriate crypto implementation
-const getCrypto = async (): Promise<CryptoSubtle> => {
-  if (typeof window !== 'undefined' && window.crypto) {
-    return window.crypto;
-  }
-  if (typeof global !== 'undefined' && (global as Global).crypto) {
-    return (global as Global).crypto;
-  }
-  try {
-    const cryptoModule = await import('crypto');
-    if (cryptoModule.webcrypto) {
-      return cryptoModule.webcrypto as CryptoSubtle;
-    }
-  } catch {
-    logger.debug('Node crypto not available');
-  }
-
-  throw new Error('No WebCrypto implementation available');
-};
-
-/**
- * Crypto implementation that works in both Node.js and browser environments
- */
-class CustomCrypto {
-  private cryptoInstance: CryptoSubtle | null = null;
-  private initPromise: Promise<void>;
-
-  constructor() {
-    this.initPromise = this.initialize();
-  }
-
-  private async initialize(): Promise<void> {
-    this.cryptoInstance = await getCrypto();
-  }
-
-  private async ensureInitialized(): Promise<CryptoSubtle> {
-    await this.initPromise;
-    if (!this.cryptoInstance) {
-      throw new Error('Crypto implementation not initialized');
-    }
-    return this.cryptoInstance;
-  }
-
-  async getSubtle(): Promise<CryptoSubtle['subtle']> {
-    const crypto = await this.ensureInitialized();
-    return crypto.subtle;
-  }
-
-  async getRandomValues<T extends Uint8Array | Int8Array | Uint16Array | Int16Array | Uint32Array | Int32Array>(array: T): Promise<T> {
-    const crypto = await this.ensureInitialized();
-    return crypto.getRandomValues(array);
-  }
-}
-
-// Create and export default instance
-export const customCrypto = new CustomCrypto();
 
 // Export schnorr functions
 export const signSchnorr = schnorr.sign;
@@ -170,7 +74,7 @@ export async function getPublicKey(privateKey: string): Promise<PublicKeyDetails
       bytes: publicKeyBytes
     };
   } catch (error) {
-    logger.error({ error }, 'Failed to get public key');
+    logger.debug({ error }, 'Failed to get public key');
     throw error;
   }
 }
@@ -183,7 +87,7 @@ export async function validateKeyPair(keyPair: KeyPair): Promise<boolean> {
     const derivedPubKey = await getPublicKey(keyPair.privateKey);
     return derivedPubKey.hex === keyPair.publicKey.hex;
   } catch (error) {
-    logger.error({ error }, 'Failed to validate key pair');
+    logger.debug({ error }, 'Failed to validate key pair');
     return false;
   }
 }
@@ -196,9 +100,9 @@ export function createEvent(event: Partial<NostrEvent>): NostrEvent {
 
   return {
     ...event,
-    created_at: event.created_at || timestamp,
-    tags: event.tags || [],
-    content: event.content || '',
+    created_at: event.created_at ?? timestamp,
+    tags: event.tags ?? [],
+    content: event.content ?? '',
     kind: event.kind ?? 1
   } as NostrEvent;
 }
@@ -221,6 +125,16 @@ function normalizePrivateKey(privateKey: string | Uint8Array): string {
 export async function signEvent(event: NostrEvent, privateKey: string | Uint8Array): Promise<SignedNostrEvent> {
   try {
     const privateKeyHex = normalizePrivateKey(privateKey);
+    const privateKeyBytes = hexToBytes(privateKeyHex);
+
+    // Refuse to produce an event that can never verify: the signing key must be
+    // the key behind event.pubkey. A missing pubkey is filled in from the key.
+    const derivedPubkey = bytesToHex(schnorr.getPublicKey(privateKeyBytes));
+    if (!event.pubkey) {
+      event = { ...event, pubkey: derivedPubkey };
+    } else if (event.pubkey !== derivedPubkey) {
+      throw new Error('event.pubkey does not match the signing key');
+    }
 
     // Serialize event for signing (NIP-01 format)
     const serialized = JSON.stringify([
@@ -235,8 +149,7 @@ export async function signEvent(event: NostrEvent, privateKey: string | Uint8Arr
     // Calculate event hash
     const eventHash = sha256(new TextEncoder().encode(serialized));
 
-    // Convert private key to bytes and sign
-    const privateKeyBytes = hexToBytes(privateKeyHex);
+    // Sign
     const signatureBytes = schnorr.sign(eventHash, privateKeyBytes);
 
     // Create signed event
@@ -246,7 +159,7 @@ export async function signEvent(event: NostrEvent, privateKey: string | Uint8Arr
       sig: bytesToHex(signatureBytes)
     };
   } catch (error) {
-    logger.error({ error }, 'Failed to sign event');
+    logger.debug({ error }, 'Failed to sign event');
     throw error;
   }
 }
@@ -275,13 +188,13 @@ export async function finalizeEvent(
   privateKey: string | Uint8Array
 ): Promise<SignedNostrEvent> {
   const pubkey = event.pubkey || getPublicKeySync(privateKey);
-  const timestamp = event.created_at || Math.floor(Date.now() / 1000);
+  const timestamp = event.created_at ?? Math.floor(Date.now() / 1000);
 
   const fullEvent: NostrEvent = {
     kind: event.kind ?? 1,
     created_at: timestamp,
-    tags: event.tags || [],
-    content: event.content || '',
+    tags: event.tags ?? [],
+    content: event.content ?? '',
     pubkey,
   };
 
@@ -289,10 +202,17 @@ export async function finalizeEvent(
 }
 
 /**
- * Verifies an event signature
+ * Verifies an event signature (NIP-01).
+ *
+ * Returns `false` — silently, without logging — for any invalid input: a
+ * non-canonical (uppercase / wrong-length / non-hex) `id`, `pubkey` or `sig`,
+ * an `id` that is not the hash of the event, or a bad signature.
  */
 export async function verifySignature(event: SignedNostrEvent): Promise<boolean> {
   try {
+    if (!event || typeof event !== 'object') return false;
+    if (!isHex32(event.id) || !isHex32(event.pubkey) || !isHex64(event.sig)) return false;
+
     // Serialize event for verification (NIP-01 format)
     const serialized = JSON.stringify([
       0,
@@ -303,24 +223,13 @@ export async function verifySignature(event: SignedNostrEvent): Promise<boolean>
       event.content
     ]);
 
-    // Calculate event hash
+    // The id must be the hash of the serialized event
     const eventHash = sha256(new TextEncoder().encode(serialized));
+    if (bytesToHex(eventHash) !== event.id) return false;
 
-    // Verify event ID
-    const calculatedId = bytesToHex(eventHash);
-    if (calculatedId !== event.id) {
-      logger.error('Event ID mismatch');
-      return false;
-    }
-
-    // Convert hex strings to bytes
-    const signatureBytes = hexToBytes(event.sig);
-    const pubkeyBytes = hexToBytes(event.pubkey);
-
-    // Verify signature
-    return schnorr.verify(signatureBytes, eventHash, pubkeyBytes);
+    return schnorr.verify(hexToBytes(event.sig), eventHash, hexToBytes(event.pubkey));
   } catch (error) {
-    logger.error({ error }, 'Failed to verify signature');
+    logger.debug({ error }, 'Signature verification threw');
     return false;
   }
 }

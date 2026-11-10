@@ -54,4 +54,3 @@ export function formatSubscriptionForRelay(id, filters) {
 export function formatCloseForRelay(id) {
     return ['CLOSE', id];
 }
-//# sourceMappingURL=index.js.map

@@ -98,8 +98,8 @@ function neventEncode(eventId, relays, author, kind) {
     if (author) {
         validateHexString(author, 64);
     }
-    if (kind !== undefined && !Number.isInteger(kind)) {
-        throw new Error('Invalid event kind');
+    if (kind !== undefined) {
+        validateKind(kind);
     }
     const data = encodeTLV({
         type: 'nevent',
@@ -121,11 +121,10 @@ function neventEncode(eventId, relays, author, kind) {
  */
 function naddrEncode(pubkey, kind, identifier, relays) {
     validateHexString(pubkey, 64);
-    if (!Number.isInteger(kind)) {
-        throw new Error('Invalid event kind');
-    }
-    if (!identifier) {
-        throw new Error('Identifier is required');
+    validateKind(kind);
+    // The d-tag identifier may be empty (plain replaceable kinds, e.g. 10002).
+    if (typeof identifier !== 'string') {
+        throw new Error('Identifier must be a string');
     }
     if (relays) {
         relays.forEach(validateRelayUrl);
@@ -161,7 +160,7 @@ function nrelayEncode(url) {
  * @throws {Error} If string is invalid or malformed
  */
 function decode(str) {
-    if (!str.includes('1')) {
+    if (typeof str !== 'string' || !str.includes('1')) {
         throw new Error('Invalid bech32 string');
     }
     const prefix = str.split('1')[0].toLowerCase();
@@ -210,6 +209,20 @@ function decode(str) {
     }
 }
 // Helper functions
+function validateKind(kind) {
+    if (!Number.isInteger(kind) || kind < 0 || kind > 0xffffffff) {
+        throw new Error('Invalid event kind (must be an integer in 0..4294967295)');
+    }
+}
+function isValidRelayUrl(url) {
+    try {
+        validateRelayUrl(url);
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
 function validateHexString(str, length) {
     if (!/^[0-9a-fA-F]+$/.test(str)) {
         throw new Error('Invalid hex string');
@@ -271,9 +284,13 @@ function decodeTLV(prefix, data) {
         relays: []
     };
     let i = 0;
+    let hasSpecial = false;
     // For relay type
     let relay;
     while (i < data.length) {
+        if (i + 1 >= data.length) {
+            throw new Error('Invalid TLV data');
+        }
         const type = data[i];
         const length = data[i + 1];
         if (i + 2 + length > data.length) {
@@ -282,6 +299,7 @@ function decodeTLV(prefix, data) {
         const value = data.slice(i + 2, i + 2 + length);
         switch (type) {
             case TLV_TYPES.SPECIAL:
+                hasSpecial = true;
                 if (isNaddr) {
                     // For naddr, SPECIAL is the UTF-8 d-tag identifier, not hex.
                     result.data = utf8Decoder.decode(value);
@@ -294,15 +312,21 @@ function decodeTLV(prefix, data) {
                 break;
             case TLV_TYPES.RELAY:
                 relay = utf8Decoder.decode(value);
-                validateRelayUrl(relay);
-                result.relays = result.relays || [];
-                result.relays.push(relay);
+                // Relay hints are advisory: skip ones we can't use instead of rejecting
+                // the whole entity (interop with encoders that emit https:// hints).
+                if (isValidRelayUrl(relay)) {
+                    result.relays = result.relays || [];
+                    result.relays.push(relay);
+                }
                 break;
             case TLV_TYPES.AUTHOR:
                 result.author = (0, utils_js_1.bytesToHex)(value);
                 validateHexString(result.author, 64);
                 break;
             case TLV_TYPES.KIND:
+                if (length !== 4) {
+                    throw new Error('Invalid TLV data: kind must be 4 bytes');
+                }
                 result.kind = new DataView(value.buffer, value.byteOffset, value.byteLength).getUint32(0, false);
                 break;
             default:
@@ -311,10 +335,13 @@ function decodeTLV(prefix, data) {
         }
         i += 2 + length;
     }
+    // nprofile / nevent are meaningless without their primary (TLV 0) value.
+    if (!isNaddr && !hasSpecial) {
+        throw new Error(`Invalid ${prefix}: missing TLV 0 (special)`);
+    }
     // naddr requires an author (pubkey) and kind per NIP-19.
     if (isNaddr && (!result.author || result.kind === undefined)) {
         throw new Error('Invalid naddr: missing author or kind');
     }
     return result;
 }
-//# sourceMappingURL=nip-19.js.map

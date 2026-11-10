@@ -39,4 +39,3 @@ export function utf8ToBytes(str) {
 export function bytesToUtf8(bytes) {
     return new TextDecoder().decode(bytes);
 }
-//# sourceMappingURL=encoding.js.map

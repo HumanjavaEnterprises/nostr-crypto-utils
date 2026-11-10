@@ -33,4 +33,3 @@ export declare function createChannelMessageEvent(content: string, channelId: st
  * @returns Created event
  */
 export declare function createDirectMessageEvent(content: string, recipientPubKey: string, pubkey: string): NostrEvent;
-//# sourceMappingURL=events.d.ts.map

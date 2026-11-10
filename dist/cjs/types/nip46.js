@@ -21,4 +21,3 @@ var Nip46Method;
     Nip46Method["NIP44_DECRYPT"] = "nip44_decrypt";
     Nip46Method["GET_RELAYS"] = "get_relays";
 })(Nip46Method || (exports.Nip46Method = Nip46Method = {}));
-//# sourceMappingURL=nip46.js.map

@@ -11,4 +11,3 @@ export declare function createTestEvent(): Promise<SignedNostrEvent>;
  * Verify a test event
  */
 export declare function verifyTestEvent(event: SignedNostrEvent): Promise<boolean>;
-//# sourceMappingURL=index.d.ts.map

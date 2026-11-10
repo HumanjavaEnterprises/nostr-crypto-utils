@@ -3,20 +3,20 @@
  *
  * Demonstrates encoding and decoding of bech32-encoded Nostr entities.
  */
+import { generateKeyPair } from 'nostr-crypto-utils';
 import {
-  generateKeyPair,
   npubEncode,
   nsecEncode,
   noteEncode,
   nprofileEncode,
   decode,
-} from 'nostr-crypto-utils';
+} from 'nostr-crypto-utils/nip19';
 
 async function main() {
-  const keyPair = generateKeyPair();
+  const keyPair = await generateKeyPair();
 
   // Encode public key as npub
-  const npub = npubEncode(keyPair.publicKey);
+  const npub = npubEncode(keyPair.publicKey.hex);
   console.log('npub:', npub);
 
   // Encode private key as nsec
@@ -24,12 +24,12 @@ async function main() {
   console.log('nsec:', nsec);
 
   // Encode an event ID as note
-  const exampleEventId = keyPair.publicKey; // using pubkey as stand-in
+  const exampleEventId = keyPair.publicKey.hex; // using pubkey as stand-in
   const note = noteEncode(exampleEventId);
   console.log('note:', note);
 
   // Encode a profile with relay hints
-  const nprofile = nprofileEncode(keyPair.publicKey, [
+  const nprofile = nprofileEncode(keyPair.publicKey.hex, [
     'wss://relay.damus.io',
     'wss://nos.lol',
   ]);

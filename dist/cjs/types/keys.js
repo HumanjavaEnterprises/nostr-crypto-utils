@@ -47,4 +47,3 @@ function asPublicKey(hex) {
     }
     return hex;
 }
-//# sourceMappingURL=keys.js.map

@@ -108,6 +108,11 @@ function encrypt(plaintext: string, conversationKey: Uint8Array, nonce: Uint8Arr
  * @returns Decrypted plaintext string
  */
 function decrypt(payload: string, conversationKey: Uint8Array): string {
+  // NIP-44 pre-decode checks: '#' marks a future non-base64 version; the base64
+  // length of a valid v2 payload is 132..87472.
+  if (typeof payload !== 'string') throw new Error('invalid payload: expected a string');
+  if (payload[0] === '#') throw new Error('unknown encryption version');
+  if (payload.length < 132 || payload.length > 87472) throw new Error('invalid payload size');
   const data = base64.decode(payload);
   const version = data[0];
   if (version !== 2) throw new Error(`unknown encryption version: ${version}`);

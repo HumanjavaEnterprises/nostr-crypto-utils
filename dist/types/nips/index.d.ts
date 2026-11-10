@@ -22,4 +22,3 @@ export * from './nip-01.js';
 export * from './nip-04.js';
 export * from './nip-19.js';
 export * from './nip-26.js';
-//# sourceMappingURL=index.d.ts.map

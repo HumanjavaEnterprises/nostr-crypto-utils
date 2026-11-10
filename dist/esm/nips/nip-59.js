@@ -5,7 +5,7 @@
  * NIP-44 encryption. Obscures author, recipient, and content metadata.
  * @see https://github.com/nostr-protocol/nips/blob/master/59.md
  */
-import { hexToBytes } from '@noble/hashes/utils.js';
+import { hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { getConversationKey, encrypt, decrypt } from './nip-44.js';
 import { finalizeEvent, generateKeyPair, verifySignature } from '../crypto.js';
 import { getEventHash } from '../event/creation.js';
@@ -19,7 +19,9 @@ const TWO_DAYS_SECONDS = 2 * 24 * 60 * 60;
 /** Random unix timestamp within the last two days (metadata obfuscation, NIP-59). */
 function randomPastTimestamp() {
     const now = Math.floor(Date.now() / 1000);
-    return now - Math.floor(Math.random() * TWO_DAYS_SECONDS);
+    const r = randomBytes(4);
+    const u32 = ((r[0] << 24) | (r[1] << 16) | (r[2] << 8) | r[3]) >>> 0;
+    return now - (u32 % TWO_DAYS_SECONDS);
 }
 /**
  * Build a rumor (unsigned event with a computed `id`) authored by `senderPubkey`.
@@ -104,6 +106,8 @@ export async function unwrapEvent(giftWrap, recipientPrivateKey) {
     if (rumor.pubkey !== seal.pubkey) {
         throw new Error('rumor author does not match seal author');
     }
+    if (typeof rumor.id !== 'string' || rumor.id !== (await getEventHash(rumor))) {
+        throw new Error('rumor id does not match its hash');
+    }
     return rumor;
 }
-//# sourceMappingURL=nip-59.js.map

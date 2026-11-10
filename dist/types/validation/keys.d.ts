@@ -4,4 +4,3 @@
  * @returns True if public key is valid
  */
 export declare function isValidPublicKey(pubkey: string): boolean;
-//# sourceMappingURL=keys.d.ts.map

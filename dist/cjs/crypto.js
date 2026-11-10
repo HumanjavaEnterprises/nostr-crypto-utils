@@ -21,41 +21,8 @@
  * scheme has specific requirements for key and signature formats that aren't guaranteed
  * when using the lower-level secp256k1 functions directly.
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifySchnorrSignature = exports.signSchnorr = exports.customCrypto = void 0;
+exports.verifySchnorrSignature = exports.signSchnorr = void 0;
 exports.getCompressedPublicKey = getCompressedPublicKey;
 exports.getSchnorrPublicKey = getSchnorrPublicKey;
 exports.generateKeyPair = generateKeyPair;
@@ -70,55 +37,7 @@ const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
 const logger_js_1 = require("./utils/logger.js");
-// Get the appropriate crypto implementation
-const getCrypto = async () => {
-    if (typeof window !== 'undefined' && window.crypto) {
-        return window.crypto;
-    }
-    if (typeof global !== 'undefined' && global.crypto) {
-        return global.crypto;
-    }
-    try {
-        const cryptoModule = await Promise.resolve().then(() => __importStar(require('crypto')));
-        if (cryptoModule.webcrypto) {
-            return cryptoModule.webcrypto;
-        }
-    }
-    catch {
-        logger_js_1.logger.debug('Node crypto not available');
-    }
-    throw new Error('No WebCrypto implementation available');
-};
-/**
- * Crypto implementation that works in both Node.js and browser environments
- */
-class CustomCrypto {
-    cryptoInstance = null;
-    initPromise;
-    constructor() {
-        this.initPromise = this.initialize();
-    }
-    async initialize() {
-        this.cryptoInstance = await getCrypto();
-    }
-    async ensureInitialized() {
-        await this.initPromise;
-        if (!this.cryptoInstance) {
-            throw new Error('Crypto implementation not initialized');
-        }
-        return this.cryptoInstance;
-    }
-    async getSubtle() {
-        const crypto = await this.ensureInitialized();
-        return crypto.subtle;
-    }
-    async getRandomValues(array) {
-        const crypto = await this.ensureInitialized();
-        return crypto.getRandomValues(array);
-    }
-}
-// Create and export default instance
-exports.customCrypto = new CustomCrypto();
+const strict_hex_js_1 = require("./utils/strict-hex.js");
 // Export schnorr functions
 exports.signSchnorr = secp256k1_js_1.schnorr.sign;
 exports.verifySchnorrSignature = secp256k1_js_1.schnorr.verify;
@@ -160,7 +79,7 @@ async function getPublicKey(privateKey) {
         };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to get public key');
+        logger_js_1.logger.debug({ error }, 'Failed to get public key');
         throw error;
     }
 }
@@ -173,7 +92,7 @@ async function validateKeyPair(keyPair) {
         return derivedPubKey.hex === keyPair.publicKey.hex;
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate key pair');
+        logger_js_1.logger.debug({ error }, 'Failed to validate key pair');
         return false;
     }
 }
@@ -184,9 +103,9 @@ function createEvent(event) {
     const timestamp = Math.floor(Date.now() / 1000);
     return {
         ...event,
-        created_at: event.created_at || timestamp,
-        tags: event.tags || [],
-        content: event.content || '',
+        created_at: event.created_at ?? timestamp,
+        tags: event.tags ?? [],
+        content: event.content ?? '',
         kind: event.kind ?? 1
     };
 }
@@ -207,6 +126,16 @@ function normalizePrivateKey(privateKey) {
 async function signEvent(event, privateKey) {
     try {
         const privateKeyHex = normalizePrivateKey(privateKey);
+        const privateKeyBytes = (0, utils_js_1.hexToBytes)(privateKeyHex);
+        // Refuse to produce an event that can never verify: the signing key must be
+        // the key behind event.pubkey. A missing pubkey is filled in from the key.
+        const derivedPubkey = (0, utils_js_1.bytesToHex)(secp256k1_js_1.schnorr.getPublicKey(privateKeyBytes));
+        if (!event.pubkey) {
+            event = { ...event, pubkey: derivedPubkey };
+        }
+        else if (event.pubkey !== derivedPubkey) {
+            throw new Error('event.pubkey does not match the signing key');
+        }
         // Serialize event for signing (NIP-01 format)
         const serialized = JSON.stringify([
             0,
@@ -218,8 +147,7 @@ async function signEvent(event, privateKey) {
         ]);
         // Calculate event hash
         const eventHash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
-        // Convert private key to bytes and sign
-        const privateKeyBytes = (0, utils_js_1.hexToBytes)(privateKeyHex);
+        // Sign
         const signatureBytes = secp256k1_js_1.schnorr.sign(eventHash, privateKeyBytes);
         // Create signed event
         return {
@@ -229,7 +157,7 @@ async function signEvent(event, privateKey) {
         };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to sign event');
+        logger_js_1.logger.debug({ error }, 'Failed to sign event');
         throw error;
     }
 }
@@ -253,21 +181,29 @@ function getPublicKeySync(privateKey) {
  */
 async function finalizeEvent(event, privateKey) {
     const pubkey = event.pubkey || getPublicKeySync(privateKey);
-    const timestamp = event.created_at || Math.floor(Date.now() / 1000);
+    const timestamp = event.created_at ?? Math.floor(Date.now() / 1000);
     const fullEvent = {
         kind: event.kind ?? 1,
         created_at: timestamp,
-        tags: event.tags || [],
-        content: event.content || '',
+        tags: event.tags ?? [],
+        content: event.content ?? '',
         pubkey,
     };
     return signEvent(fullEvent, privateKey);
 }
 /**
- * Verifies an event signature
+ * Verifies an event signature (NIP-01).
+ *
+ * Returns `false` — silently, without logging — for any invalid input: a
+ * non-canonical (uppercase / wrong-length / non-hex) `id`, `pubkey` or `sig`,
+ * an `id` that is not the hash of the event, or a bad signature.
  */
 async function verifySignature(event) {
     try {
+        if (!event || typeof event !== 'object')
+            return false;
+        if (!(0, strict_hex_js_1.isHex32)(event.id) || !(0, strict_hex_js_1.isHex32)(event.pubkey) || !(0, strict_hex_js_1.isHex64)(event.sig))
+            return false;
         // Serialize event for verification (NIP-01 format)
         const serialized = JSON.stringify([
             0,
@@ -277,23 +213,14 @@ async function verifySignature(event) {
             event.tags,
             event.content
         ]);
-        // Calculate event hash
+        // The id must be the hash of the serialized event
         const eventHash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
-        // Verify event ID
-        const calculatedId = (0, utils_js_1.bytesToHex)(eventHash);
-        if (calculatedId !== event.id) {
-            logger_js_1.logger.error('Event ID mismatch');
+        if ((0, utils_js_1.bytesToHex)(eventHash) !== event.id)
             return false;
-        }
-        // Convert hex strings to bytes
-        const signatureBytes = (0, utils_js_1.hexToBytes)(event.sig);
-        const pubkeyBytes = (0, utils_js_1.hexToBytes)(event.pubkey);
-        // Verify signature
-        return secp256k1_js_1.schnorr.verify(signatureBytes, eventHash, pubkeyBytes);
+        return secp256k1_js_1.schnorr.verify((0, utils_js_1.hexToBytes)(event.sig), eventHash, (0, utils_js_1.hexToBytes)(event.pubkey));
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to verify signature');
+        logger_js_1.logger.debug({ error }, 'Signature verification threw');
         return false;
     }
 }
-//# sourceMappingURL=crypto.js.map

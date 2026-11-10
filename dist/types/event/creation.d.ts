@@ -27,4 +27,3 @@ export declare function serializeEvent(event: NostrEvent): string;
  * @returns Event hash in hex format
  */
 export declare function getEventHash(event: NostrEvent): Promise<string>;
-//# sourceMappingURL=creation.d.ts.map

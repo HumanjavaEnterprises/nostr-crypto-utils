@@ -115,13 +115,18 @@ async function validateAuthEvent(event, params) {
                 return { valid: false, reason: 'payload hash does not match request body' };
             }
         }
-        else if (params.requirePayload) {
+        else if (params.body.length > 0 && (params.requirePayload ?? true)) {
             return { valid: false, reason: 'missing payload tag' };
         }
     }
     if (!(await (0, crypto_js_1.verifySignature)(event))) {
         return { valid: false, reason: 'invalid signature' };
     }
+    if (params.seenIds) {
+        if (params.seenIds.has(event.id)) {
+            return { valid: false, reason: 'replayed auth event' };
+        }
+        params.seenIds.add(event.id);
+    }
     return { valid: true };
 }
-//# sourceMappingURL=nip-98.js.map

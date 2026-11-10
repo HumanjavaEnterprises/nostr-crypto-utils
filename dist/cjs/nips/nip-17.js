@@ -82,4 +82,3 @@ async function createDirectMessage(senderPrivateKey, params) {
 async function readDirectMessage(giftWrap, recipientPrivateKey) {
     return (0, nip_59_js_1.unwrapEvent)(giftWrap, recipientPrivateKey);
 }
-//# sourceMappingURL=nip-17.js.map

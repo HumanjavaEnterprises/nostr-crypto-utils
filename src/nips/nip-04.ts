@@ -70,7 +70,7 @@ export function encryptMessage(
     sharedX.fill(0);
     return bytesToBase64(ciphertext) + '?iv=' + bytesToBase64(iv);
   } catch (error) {
-    logger.error({ error }, 'Failed to encrypt message');
+    logger.debug({ error }, 'Failed to encrypt message');
     throw error;
   }
 }
@@ -110,7 +110,7 @@ export function decryptMessage(
     sharedX.fill(0);
     return utf8Decoder.decode(plaintext);
   } catch (error) {
-    logger.error({ error }, 'Failed to decrypt message');
+    logger.debug({ error }, 'Failed to decrypt message');
     throw error;
   }
 }

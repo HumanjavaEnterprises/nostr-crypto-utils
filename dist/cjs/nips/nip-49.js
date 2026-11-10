@@ -5,12 +5,24 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/49.md
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEFAULT_MAX_LOG_N = void 0;
 exports.encrypt = encrypt;
 exports.decrypt = decrypt;
 const chacha_js_1 = require("@noble/ciphers/chacha.js");
 const scrypt_js_1 = require("@noble/hashes/scrypt.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const base_1 = require("@scure/base");
+/**
+ * Default upper bound for the scrypt `log_n` accepted by {@link decrypt}.
+ * log_n is attacker-controlled in a received ncryptsec; scrypt memory is
+ * 128 * r * 2^log_n bytes, so 18 = 256 MiB. Raise it explicitly with
+ * `{ maxLogN }` if you must open keys encrypted with stronger parameters.
+ */
+exports.DEFAULT_MAX_LOG_N = 18;
+/** Hard ceiling for log_n on encrypt (scrypt in noble refuses > 1 GiB anyway). */
+const MAX_ENCRYPT_LOG_N = 22;
+/** Binary payload length: version(1) + logn(1) + salt(16) + nonce(24) + ksb(1) + ciphertext(48). */
+const PAYLOAD_LENGTH = 91;
 /**
  * Encrypt a Nostr private key with a password, producing an ncryptsec bech32 string
  * @param sec - 32-byte secret key
@@ -20,6 +32,12 @@ const base_1 = require("@scure/base");
  * @returns bech32-encoded ncryptsec string
  */
 function encrypt(sec, password, logn = 16, ksb = 0x02) {
+    if (!(sec instanceof Uint8Array) || sec.length !== 32) {
+        throw new Error('secret key must be 32 bytes');
+    }
+    if (!Number.isInteger(logn) || logn < 0 || logn > MAX_ENCRYPT_LOG_N) {
+        throw new Error(`invalid log_n: must be an integer in 0..${MAX_ENCRYPT_LOG_N}`);
+    }
     const salt = (0, utils_js_1.randomBytes)(16);
     const n = 2 ** logn;
     const normalizedPassword = password.normalize('NFKC');
@@ -37,17 +55,23 @@ function encrypt(sec, password, logn = 16, ksb = 0x02) {
  * Decrypt an ncryptsec bech32 string back to the 32-byte secret key
  * @param ncryptsec - bech32-encoded ncryptsec string
  * @param password - Password used for encryption
+ * @param opts - `maxLogN` caps the attacker-controlled scrypt cost (default 18)
  * @returns 32-byte secret key as Uint8Array
  */
-function decrypt(ncryptsec, password) {
+function decrypt(ncryptsec, password, opts = {}) {
+    const maxLogN = opts.maxLogN ?? exports.DEFAULT_MAX_LOG_N;
     const { prefix, words } = base_1.bech32.decode(ncryptsec, 200);
     if (prefix !== 'ncryptsec')
         throw new Error('invalid ncryptsec prefix');
     const data = new Uint8Array(base_1.bech32.fromWords(words));
+    if (data.length !== PAYLOAD_LENGTH)
+        throw new Error(`invalid ncryptsec length: ${data.length}`);
     const version = data[0];
     if (version !== 0x02)
         throw new Error(`unknown ncryptsec version: ${version}`);
     const logn = data[1];
+    if (logn > maxLogN)
+        throw new Error(`ncryptsec log_n ${logn} exceeds maxLogN ${maxLogN}`);
     const salt = data.subarray(2, 18);
     const nonce = data.subarray(18, 42);
     const ksb = data[42];
@@ -59,4 +83,3 @@ function decrypt(ncryptsec, password) {
     const cipher = (0, chacha_js_1.xchacha20poly1305)(key, nonce, aad);
     return cipher.decrypt(ciphertext);
 }
-//# sourceMappingURL=nip-49.js.map

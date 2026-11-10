@@ -75,4 +75,3 @@ export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
  * @returns Appropriate error instance
  */
 export declare function createError(message: string, code: ErrorCode): NostrError;
-//# sourceMappingURL=errors.d.ts.map

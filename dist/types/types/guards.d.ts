@@ -27,4 +27,3 @@ export declare function isNostrResponse(response: unknown): response is NostrRes
  * Type guard for NostrError
  */
 export declare function isNostrError(error: unknown): error is NostrError;
-//# sourceMappingURL=guards.d.ts.map

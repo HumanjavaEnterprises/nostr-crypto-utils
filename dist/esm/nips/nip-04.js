@@ -63,7 +63,7 @@ export function encryptMessage(message, senderPrivkey, recipientPubkey) {
         return bytesToBase64(ciphertext) + '?iv=' + bytesToBase64(iv);
     }
     catch (error) {
-        logger.error({ error }, 'Failed to encrypt message');
+        logger.debug({ error }, 'Failed to encrypt message');
         throw error;
     }
 }
@@ -98,7 +98,7 @@ export function decryptMessage(ciphertext, recipientPrivkey, senderPubkey) {
         return utf8Decoder.decode(plaintext);
     }
     catch (error) {
-        logger.error({ error }, 'Failed to decrypt message');
+        logger.debug({ error }, 'Failed to decrypt message');
         throw error;
     }
 }
@@ -120,4 +120,3 @@ export { generateSharedSecret as computeSharedSecret };
 // Re-export branded key types and constructors so consumers of the nip04
 // namespace can build the arguments the canonical API requires.
 export { asPrivateKey, asPublicKey } from '../types/keys.js';
-//# sourceMappingURL=nip-04.js.map

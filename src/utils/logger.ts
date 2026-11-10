@@ -32,12 +32,54 @@ export interface Logger {
   child(bindings: Record<string, unknown>): Logger;
 }
 
-/** Read LOG_LEVEL without assuming a Node `process` global (Workers-safe). */
-function defaultLevel(): LogLevelName {
-  const env =
-    typeof process !== 'undefined' && process.env ? process.env : ({} as Record<string, string>);
-  const lvl = (env.LOG_LEVEL || 'info').toLowerCase();
-  return (LEVELS as readonly string[]).includes(lvl) ? (lvl as LogLevelName) : 'info';
+/**
+ * Library logging is SILENT by default. Callers opt in with {@link setLogLevel}
+ * or the namespaced env var `NOSTR_CRYPTO_UTILS_LOG_LEVEL` (read lazily on first
+ * use, never at import time; the generic `LOG_LEVEL` is deliberately ignored).
+ */
+const DEFAULT_LEVEL: LogLevelName = 'silent';
+const ENV_VAR = 'NOSTR_CRYPTO_UTILS_LOG_LEVEL';
+
+let overrideLevel: LogLevelName | undefined;
+let envLevel: LogLevelName | null | undefined; // undefined = not read yet, null = unset
+
+function isLevel(v: unknown): v is LogLevelName {
+  return typeof v === 'string' && (LEVELS as readonly string[]).includes(v);
+}
+
+/** Read the namespaced env var without assuming a Node `process` global (Workers-safe). */
+function readEnvLevel(): LogLevelName | null {
+  try {
+    const proc = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+    const raw = proc?.env?.[ENV_VAR];
+    const lvl = typeof raw === 'string' ? raw.toLowerCase() : undefined;
+    return isLevel(lvl) ? lvl : null;
+  } catch {
+    return null;
+  }
+}
+
+function effectiveDefaultLevel(): LogLevelName {
+  if (overrideLevel) return overrideLevel;
+  if (envLevel === undefined) envLevel = readEnvLevel();
+  return envLevel ?? DEFAULT_LEVEL;
+}
+
+/**
+ * Set the log level for every logger in this library.
+ * Pass `undefined` to go back to the default (env var, else `silent`).
+ * @example setLogLevel('debug')
+ */
+export function setLogLevel(level: LogLevelName | undefined): void {
+  if (level !== undefined && !isLevel(level)) {
+    throw new Error(`Invalid log level: ${String(level)}`);
+  }
+  overrideLevel = level;
+}
+
+/** Current effective library log level. */
+export function getLogLevel(): LogLevelName {
+  return effectiveDefaultLevel();
 }
 
 function rank(level: string): number {
@@ -52,29 +94,47 @@ function serializeError(value: unknown): unknown {
   return value;
 }
 
-const CONSOLE: Record<LogLevelName, (...a: unknown[]) => void> = {
-  trace: (console.debug ?? console.log).bind(console),
-  debug: (console.debug ?? console.log).bind(console),
-  info: (console.info ?? console.log).bind(console),
-  warn: (console.warn ?? console.log).bind(console),
-  error: (console.error ?? console.log).bind(console),
-  fatal: (console.error ?? console.log).bind(console),
-  silent: () => {},
+// Resolve console methods at call time (not import time) so hosts can patch or
+// redirect console after this module loads.
+const CONSOLE_METHOD: Record<Exclude<LogLevelName, 'silent'>, 'debug' | 'info' | 'warn' | 'error'> = {
+  trace: 'debug',
+  debug: 'debug',
+  info: 'info',
+  warn: 'warn',
+  error: 'error',
+  fatal: 'error',
 };
 
+function write(method: LogLevelName, line: string): void {
+  if (method === 'silent') return;
+  const c = console as unknown as Record<string, ((...a: unknown[]) => void) | undefined>;
+  const fn = c[CONSOLE_METHOD[method]] ?? c.log;
+  fn?.call(console, line);
+}
+
 class EdgeLogger implements Logger {
-  level: LogLevelName | string;
+  private explicitLevel?: string;
   private readonly name?: string;
   private readonly bindings: Record<string, unknown>;
 
   constructor(opts: { name?: string; level?: string; bindings?: Record<string, unknown> } = {}) {
     this.name = opts.name;
-    this.level = (opts.level as LogLevelName) || defaultLevel();
+    this.explicitLevel = opts.level;
     this.bindings = opts.bindings ?? {};
   }
 
+  /** Per-instance level; falls back to the library-wide level (see setLogLevel). */
+  get level(): LogLevelName | string {
+    return this.explicitLevel ?? effectiveDefaultLevel();
+  }
+
+  set level(value: LogLevelName | string) {
+    this.explicitLevel = value;
+  }
+
   private emit(method: LogLevelName, args: unknown[]): void {
-    if (this.level === 'silent' || rank(method) < rank(this.level)) return;
+    const level = this.level;
+    if (level === 'silent' || rank(method) < rank(level)) return;
 
     let context: Record<string, unknown> | undefined;
     let message: string;
@@ -96,7 +156,7 @@ class EdgeLogger implements Logger {
     const prefix =
       `[${new Date().toISOString()}] ${method.toUpperCase()}` + (this.name ? ` (${this.name})` : '');
     const ctx = Object.keys(merged).length ? ` ${JSON.stringify(merged)}` : '';
-    (CONSOLE[method] ?? CONSOLE.info)(`${prefix}: ${message}${ctx}`);
+    write(method, `${prefix}: ${message}${ctx}`);
   }
 
   trace(...args: unknown[]): void {
@@ -121,7 +181,7 @@ class EdgeLogger implements Logger {
   child(bindings: Record<string, unknown>): Logger {
     return new EdgeLogger({
       name: this.name,
-      level: this.level,
+      level: this.explicitLevel,
       bindings: { ...this.bindings, ...bindings },
     });
   }

@@ -4,4 +4,3 @@
  * @description Nostr protocol types
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-//# sourceMappingURL=protocol.js.map

@@ -15,7 +15,11 @@ import { schnorr } from '@noble/curves/secp256k1.js';
 
 export interface DelegationConditions {
   kind?: number;
+  /** Allowed kinds when the conditions string carries several `kind=` clauses. */
+  kinds?: number[];
+  /** Event created_at must be strictly greater than this. */
   since?: number;
+  /** Event created_at must be strictly less than this. */
   until?: number;
 }
 
@@ -88,15 +92,17 @@ export function checkDelegationConditions(
   event: NostrEvent,
   conditions: DelegationConditions
 ): boolean {
-  if (conditions.kind !== undefined && event.kind !== conditions.kind) {
+  const allowedKinds = conditions.kinds ?? (conditions.kind !== undefined ? [conditions.kind] : undefined);
+  if (allowedKinds !== undefined && !allowedKinds.includes(event.kind)) {
     return false;
   }
 
-  if (conditions.since !== undefined && event.created_at < conditions.since) {
+  // NIP-26: `created_at>` and `created_at<` are strict comparisons.
+  if (conditions.since !== undefined && !(event.created_at > conditions.since)) {
     return false;
   }
 
-  if (conditions.until !== undefined && event.created_at > conditions.until) {
+  if (conditions.until !== undefined && !(event.created_at < conditions.until)) {
     return false;
   }
 
@@ -137,10 +143,18 @@ export function extractDelegation(event: NostrEvent): Delegation | null {
     return null;
   }
 
+  // Unparseable conditions fail closed: the delegation is not recognized.
+  let conditions: DelegationConditions;
+  try {
+    conditions = parseConditions(tag[2]);
+  } catch {
+    return null;
+  }
+
   return {
     delegator: tag[1],
     delegatee: event.pubkey,
-    conditions: parseConditions(tag[2]),
+    conditions,
     token: tag[3],
     // Preserve the original conditions string exactly as signed by the delegator.
     conditionsString: tag[2]
@@ -151,7 +165,9 @@ export function extractDelegation(event: NostrEvent): Delegation | null {
 function serializeConditions(conditions: DelegationConditions): string {
   const parts: string[] = [];
 
-  if (conditions.kind !== undefined) {
+  if (conditions.kinds !== undefined) {
+    for (const k of conditions.kinds) parts.push(`kind=${k}`);
+  } else if (conditions.kind !== undefined) {
     parts.push(`kind=${conditions.kind}`);
   }
   if (conditions.since !== undefined) {
@@ -164,18 +180,37 @@ function serializeConditions(conditions: DelegationConditions): string {
   return parts.join('&');
 }
 
+function parseUint(raw: string): number {
+  if (!/^\d+$/.test(raw)) throw new Error(`invalid delegation condition value: ${raw}`);
+  return Number(raw);
+}
+
+/**
+ * Parse a NIP-26 conditions string. Repeated `kind=` clauses form a set of
+ * allowed kinds. Unknown or malformed clauses throw (fail closed).
+ */
 function parseConditions(conditionsString: string): DelegationConditions {
   const conditions: DelegationConditions = {};
-  const parts = conditionsString.split('&');
+  if (typeof conditionsString !== 'string' || conditionsString === '') return conditions;
+  const kinds: number[] = [];
 
-  for (const part of parts) {
+  for (const part of conditionsString.split('&')) {
     if (part.startsWith('kind=')) {
-      conditions.kind = parseInt(part.slice(5));
+      kinds.push(parseUint(part.slice(5)));
     } else if (part.startsWith('created_at>')) {
-      conditions.since = parseInt(part.slice(11));
+      conditions.since = parseUint(part.slice(11));
     } else if (part.startsWith('created_at<')) {
-      conditions.until = parseInt(part.slice(11));
+      conditions.until = parseUint(part.slice(11));
+    } else {
+      throw new Error(`unknown delegation condition: ${part}`);
     }
+  }
+
+  if (kinds.length === 1) {
+    conditions.kind = kinds[0];
+  } else if (kinds.length > 1) {
+    conditions.kind = kinds[0];
+    conditions.kinds = kinds;
   }
 
   return conditions;

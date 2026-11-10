@@ -222,4 +222,3 @@ function validateSubscription(subscription) {
         error: undefined
     };
 }
-//# sourceMappingURL=validation.js.map

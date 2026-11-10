@@ -148,4 +148,3 @@ export function isByteArray(value) {
 export function copyBytes(bytes) {
     return new Uint8Array(bytes);
 }
-//# sourceMappingURL=binary.js.map

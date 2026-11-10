@@ -28,4 +28,3 @@ export declare function formatSubscriptionForRelay(id: string, filters: NostrFil
  * Formats a close message for relay transmission
  */
 export declare function formatCloseForRelay(id: string): [string, string];
-//# sourceMappingURL=index.d.ts.map

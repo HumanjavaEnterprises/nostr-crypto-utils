@@ -10,4 +10,3 @@ export { formatEventForRelay, formatSubscriptionForRelay, formatCloseForRelay, f
 // Export logger
 import { createLogger } from './logger.js';
 export const logger = createLogger('default');
-//# sourceMappingURL=index.js.map

@@ -5,6 +5,18 @@
  */
 type KeySecurityByte = 0x00 | 0x01 | 0x02;
 /**
+ * Default upper bound for the scrypt `log_n` accepted by {@link decrypt}.
+ * log_n is attacker-controlled in a received ncryptsec; scrypt memory is
+ * 128 * r * 2^log_n bytes, so 18 = 256 MiB. Raise it explicitly with
+ * `{ maxLogN }` if you must open keys encrypted with stronger parameters.
+ */
+export declare const DEFAULT_MAX_LOG_N = 18;
+/** Options for {@link decrypt}. */
+export interface Nip49DecryptOptions {
+    /** Largest accepted log_n (default {@link DEFAULT_MAX_LOG_N}). */
+    maxLogN?: number;
+}
+/**
  * Encrypt a Nostr private key with a password, producing an ncryptsec bech32 string
  * @param sec - 32-byte secret key
  * @param password - Password for encryption
@@ -17,8 +29,8 @@ export declare function encrypt(sec: Uint8Array, password: string, logn?: number
  * Decrypt an ncryptsec bech32 string back to the 32-byte secret key
  * @param ncryptsec - bech32-encoded ncryptsec string
  * @param password - Password used for encryption
+ * @param opts - `maxLogN` caps the attacker-controlled scrypt cost (default 18)
  * @returns 32-byte secret key as Uint8Array
  */
-export declare function decrypt(ncryptsec: string, password: string): Uint8Array;
+export declare function decrypt(ncryptsec: string, password: string, opts?: Nip49DecryptOptions): Uint8Array;
 export {};
-//# sourceMappingURL=nip-49.d.ts.map

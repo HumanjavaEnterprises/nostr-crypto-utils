@@ -28,4 +28,3 @@ export function parseNostrMessage(message) {
     }
     return [messageType, ...rest];
 }
-//# sourceMappingURL=transport.js.map

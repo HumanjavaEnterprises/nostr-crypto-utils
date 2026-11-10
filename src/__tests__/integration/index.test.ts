@@ -20,7 +20,7 @@ describe('Nostr Crypto Utils Integration', () => {
       kind: 1,
       tags: [],
       content: 'Hello, Nostr!',
-      pubkey: keyPair.publicKey,
+      pubkey: keyPair.publicKey.hex,
       created_at: Math.floor(Date.now() / 1000)
     };
 

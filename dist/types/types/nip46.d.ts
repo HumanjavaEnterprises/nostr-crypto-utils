@@ -97,8 +97,33 @@ export interface Nip46SignerHandlers {
  * Options for handleSignerRequest
  */
 export interface Nip46HandleOptions {
-    /** Expected connection secret (from bunker:// URI) */
+    /**
+     * Expected connection secret (from bunker:// URI). Compared in constant time.
+     * When neither `secret` nor `onConnect` is set, `connect` is REFUSED unless
+     * `allowOpenConnect` is true (fail-closed since 0.10.0).
+     */
     secret?: string;
+    /**
+     * Secrets that were already used. If the presented secret is in this set,
+     * connect is refused. Not mutated — on success the result carries
+     * `consumedSecret`, which the caller should add to the set (one-time secrets).
+     */
+    usedSecrets?: Set<string>;
+    /**
+     * Approval callback for connect. Called after any `secret` check passes; connect
+     * succeeds only if it returns true. With no `secret`, this is the gate.
+     */
+    onConnect?: (clientPubkey: string, params: string[]) => boolean | Promise<boolean>;
+    /**
+     * Explicit opt-in to the pre-0.10 behaviour: with no `secret` and no `onConnect`,
+     * acknowledge ANY connect and authenticate the caller. Dangerous. Defaults to false.
+     */
+    allowOpenConnect?: boolean;
+    /**
+     * This signer's pubkey (hex). When set, a connect whose params[0] (the remote
+     * signer pubkey) is not this key is refused.
+     */
+    signerPubkey?: string;
     /**
      * Set of authenticated client pubkeys. Not mutated — check newlyAuthenticated on result.
      * The dispatcher is FAIL-CLOSED: privileged methods (get_public_key, sign_event,
@@ -121,6 +146,27 @@ export interface Nip46HandleResult {
     response: Nip46Response;
     /** If the connect handshake succeeded, this is the client pubkey to add to authenticated set */
     newlyAuthenticated?: string;
+    /** If connect succeeded with a secret, that secret — add it to `usedSecrets` for one-time use */
+    consumedSecret?: string;
+}
+/**
+ * Replay protection for unwrapRequest() / unwrapEvent().
+ */
+export interface Nip46UnwrapOptions {
+    /**
+     * Cache of already-processed requests, keyed by `<sender pubkey>:<request id>`
+     * (both authenticated by the NIP-44 MAC). A repeat throws; a new key is ADDED
+     * to the set. Bound its size/lifetime yourself (pair it with `maxAgeSeconds`).
+     */
+    seenIds?: Set<string>;
+    /**
+     * Reject events whose created_at is more than this many seconds from now.
+     * When set, the event signature is verified too (created_at is otherwise
+     * unauthenticated).
+     */
+    maxAgeSeconds?: number;
+    /** Override "now" (unix seconds) — for testing. */
+    now?: number;
 }
 /**
  * Result of unwrapRequest()
@@ -133,4 +179,3 @@ export interface Nip46UnwrapResult {
     /** NIP-44 conversation key (reuse for wrapResponse) */
     conversationKey: Uint8Array;
 }
-//# sourceMappingURL=nip46.d.ts.map

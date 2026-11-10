@@ -48,9 +48,16 @@ export declare function verifySignature(event: SignedNostrEvent): boolean;
  */
 export declare function calculateEventId(event: NostrEvent): string;
 /**
- * Validates a Nostr event structure (NIP-01)
- * @param event - Event to validate
- * @returns True if event structure is valid
+ * STRUCTURE-ONLY check of a Nostr event (NIP-01): field types and tag shape.
+ * Does NOT check the id, hex format or signature — use the root
+ * `validateEvent` or `verifySignature` to decide whether an event is authentic.
+ * @param event - Event to check
+ * @returns True if the event structure is well-formed
  */
-export declare function validateEvent(event: NostrEvent): boolean;
-//# sourceMappingURL=nip-01.d.ts.map
+export declare function validateEventStructure(event: NostrEvent): boolean;
+/**
+ * @deprecated Structure-only, despite the name — it does NOT verify the id or
+ * signature (unlike the root `validateEvent`). Use {@link validateEventStructure}
+ * for the same check, or the root `validateEvent` / `verifySignature` for trust.
+ */
+export declare const validateEvent: typeof validateEventStructure;

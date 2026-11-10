@@ -47,8 +47,7 @@ export async function getEventHash(event) {
         return bytesToHex(hash);
     }
     catch (error) {
-        logger.error({ error }, 'Failed to get event hash');
+        logger.debug({ error }, 'Failed to get event hash');
         throw error;
     }
 }
-//# sourceMappingURL=creation.js.map

@@ -66,4 +66,3 @@ export declare function wrapEvent(rumor: Rumor, senderPrivateKey: string | Uint8
  * ```
  */
 export declare function unwrapEvent(giftWrap: SignedNostrEvent, recipientPrivateKey: string | Uint8Array): Promise<Rumor>;
-//# sourceMappingURL=nip-59.d.ts.map

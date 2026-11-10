@@ -34,7 +34,7 @@ function withoutGetRandomValues<T>(fn: () => Promise<T>): Promise<T> {
     configurable: true,
     writable: true,
   });
-  const restore = () => {
+  const restore = (): void => {
     if (owned) {
       Object.defineProperty(globalThis.crypto, 'getRandomValues', owned);
     } else {

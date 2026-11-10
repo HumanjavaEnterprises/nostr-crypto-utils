@@ -3,4 +3,3 @@
  * @module core/types/events
  */
 export {};
-//# sourceMappingURL=events.js.map

@@ -175,4 +175,3 @@ function addBase64Padding(base64) {
     const padding = '='.repeat((4 - base64.length % 4) % 4);
     return base64 + padding;
 }
-//# sourceMappingURL=base64.js.map

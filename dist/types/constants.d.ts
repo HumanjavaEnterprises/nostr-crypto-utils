@@ -47,4 +47,3 @@ export declare const NOSTR_EVENT_KIND: {
     readonly CUSTOM_FIRST: 40000;
     readonly CUSTOM_LAST: 49999;
 };
-//# sourceMappingURL=constants.d.ts.map

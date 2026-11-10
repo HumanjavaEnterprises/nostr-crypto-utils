@@ -3,4 +3,3 @@
  * @module core/types/protocol
  */
 export {};
-//# sourceMappingURL=protocol.js.map

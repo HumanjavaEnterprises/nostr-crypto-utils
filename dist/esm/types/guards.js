@@ -178,4 +178,3 @@ export function isNostrError(error) {
     return (typeof validError.type === 'string' &&
         typeof validError.message === 'string');
 }
-//# sourceMappingURL=guards.js.map

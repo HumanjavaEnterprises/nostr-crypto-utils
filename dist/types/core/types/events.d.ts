@@ -56,4 +56,3 @@ export type PartialEvent = Partial<NostrEvent>;
 export type UnsignedEvent = Omit<NostrEvent, 'id' | 'sig' | 'pubkey'> & {
     pubkey: string;
 };
-//# sourceMappingURL=events.d.ts.map

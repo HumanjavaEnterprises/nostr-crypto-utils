@@ -8,7 +8,7 @@
  *
  * @see https://github.com/nostr-protocol/nips/blob/master/46.md
  */
-import type { BunkerURI, BunkerValidationResult, Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, SignedNostrEvent } from '../types/index.js';
+import type { BunkerURI, BunkerValidationResult, Nip46Request, Nip46Response, Nip46Session, Nip46SessionInfo, Nip46SignerHandlers, Nip46HandleOptions, Nip46HandleResult, Nip46UnwrapResult, Nip46UnwrapOptions, SignedNostrEvent } from '../types/index.js';
 import { Nip46Method } from '../types/index.js';
 /**
  * Parse a bunker:// URI into its components
@@ -87,9 +87,10 @@ export declare function wrapEvent(payload: Nip46Request | Nip46Response, session
  * Decrypt and parse a kind 24133 event
  * @param event - Signed kind 24133 event
  * @param session - NIP-46 session
+ * @param opts - Optional replay protection (seen-id cache, created_at window)
  * @returns Decrypted JSON-RPC request or response
  */
-export declare function unwrapEvent(event: SignedNostrEvent, session: Nip46Session): Nip46Request | Nip46Response;
+export declare function unwrapEvent(event: SignedNostrEvent, session: Nip46Session, opts?: Nip46UnwrapOptions): Nip46Request | Nip46Response;
 /**
  * Create a 'connect' request
  * @param remotePubkey - Remote signer's pubkey
@@ -160,9 +161,10 @@ export declare function createRequestFilter(signerPubkey: string, since?: number
  *
  * @param event - Signed kind 24133 event from a client
  * @param signerSecretKey - Signer's private key (hex)
+ * @param opts - Optional replay protection (seen-id cache, created_at window)
  * @returns Decrypted request, client pubkey, and conversation key for reuse
  */
-export declare function unwrapRequest(event: SignedNostrEvent, signerSecretKey: string): Nip46UnwrapResult;
+export declare function unwrapRequest(event: SignedNostrEvent, signerSecretKey: string, opts?: Nip46UnwrapOptions): Nip46UnwrapResult;
 /**
  * Encrypt and sign a NIP-46 response from the signer's perspective.
  *
@@ -185,4 +187,3 @@ export declare function wrapResponse(response: Nip46Response, signerSecretKey: s
  * @returns Response and optional newlyAuthenticated pubkey
  */
 export declare function handleSignerRequest(request: Nip46Request, clientPubkey: string, handlers: Nip46SignerHandlers, opts?: Nip46HandleOptions): Promise<Nip46HandleResult>;
-//# sourceMappingURL=nip-46.d.ts.map

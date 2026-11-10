@@ -5,4 +5,3 @@
 export * from './events.js';
 export * from './crypto.js';
 export * from './protocol.js';
-//# sourceMappingURL=index.js.map

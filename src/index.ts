@@ -38,6 +38,7 @@ export type {
   Nip46HandleOptions,
   Nip46HandleResult,
   Nip46UnwrapResult,
+  Nip46UnwrapOptions,
 } from './types/index.js';
 
 // Core crypto functions
@@ -58,6 +59,7 @@ export {
   validateEventId,
   validateEventSignature,
   validateSignedEvent,
+  validateSignedEventFormat,
   validateEventBase,
   validateFilter,
   validateSubscription,
@@ -87,6 +89,10 @@ export * as nip49 from './nips/nip-49.js';
 export * as nip59 from './nips/nip-59.js';
 export * as nip17 from './nips/nip-17.js';
 export * as nip98 from './nips/nip-98.js';
+
+// Logging (silent by default; opt in with setLogLevel or NOSTR_CRYPTO_UTILS_LOG_LEVEL)
+export { setLogLevel, getLogLevel } from './utils/logger.js';
+export type { LogLevelName } from './utils/logger.js';
 
 // Utils
 export {

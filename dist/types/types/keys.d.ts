@@ -37,4 +37,3 @@ export declare function asPrivateKey(hex: string): PrivateKey;
  */
 export declare function asPublicKey(hex: string): PublicKey;
 export {};
-//# sourceMappingURL=keys.d.ts.map

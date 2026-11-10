@@ -24,55 +24,7 @@ import { schnorr, secp256k1 } from '@noble/curves/secp256k1.js';
 import { bytesToHex, hexToBytes, randomBytes } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { logger } from './utils/logger.js';
-// Get the appropriate crypto implementation
-const getCrypto = async () => {
-    if (typeof window !== 'undefined' && window.crypto) {
-        return window.crypto;
-    }
-    if (typeof global !== 'undefined' && global.crypto) {
-        return global.crypto;
-    }
-    try {
-        const cryptoModule = await import('crypto');
-        if (cryptoModule.webcrypto) {
-            return cryptoModule.webcrypto;
-        }
-    }
-    catch {
-        logger.debug('Node crypto not available');
-    }
-    throw new Error('No WebCrypto implementation available');
-};
-/**
- * Crypto implementation that works in both Node.js and browser environments
- */
-class CustomCrypto {
-    cryptoInstance = null;
-    initPromise;
-    constructor() {
-        this.initPromise = this.initialize();
-    }
-    async initialize() {
-        this.cryptoInstance = await getCrypto();
-    }
-    async ensureInitialized() {
-        await this.initPromise;
-        if (!this.cryptoInstance) {
-            throw new Error('Crypto implementation not initialized');
-        }
-        return this.cryptoInstance;
-    }
-    async getSubtle() {
-        const crypto = await this.ensureInitialized();
-        return crypto.subtle;
-    }
-    async getRandomValues(array) {
-        const crypto = await this.ensureInitialized();
-        return crypto.getRandomValues(array);
-    }
-}
-// Create and export default instance
-export const customCrypto = new CustomCrypto();
+import { isHex32, isHex64 } from './utils/strict-hex.js';
 // Export schnorr functions
 export const signSchnorr = schnorr.sign;
 export const verifySchnorrSignature = schnorr.verify;
@@ -114,7 +66,7 @@ export async function getPublicKey(privateKey) {
         };
     }
     catch (error) {
-        logger.error({ error }, 'Failed to get public key');
+        logger.debug({ error }, 'Failed to get public key');
         throw error;
     }
 }
@@ -127,7 +79,7 @@ export async function validateKeyPair(keyPair) {
         return derivedPubKey.hex === keyPair.publicKey.hex;
     }
     catch (error) {
-        logger.error({ error }, 'Failed to validate key pair');
+        logger.debug({ error }, 'Failed to validate key pair');
         return false;
     }
 }
@@ -138,9 +90,9 @@ export function createEvent(event) {
     const timestamp = Math.floor(Date.now() / 1000);
     return {
         ...event,
-        created_at: event.created_at || timestamp,
-        tags: event.tags || [],
-        content: event.content || '',
+        created_at: event.created_at ?? timestamp,
+        tags: event.tags ?? [],
+        content: event.content ?? '',
         kind: event.kind ?? 1
     };
 }
@@ -161,6 +113,16 @@ function normalizePrivateKey(privateKey) {
 export async function signEvent(event, privateKey) {
     try {
         const privateKeyHex = normalizePrivateKey(privateKey);
+        const privateKeyBytes = hexToBytes(privateKeyHex);
+        // Refuse to produce an event that can never verify: the signing key must be
+        // the key behind event.pubkey. A missing pubkey is filled in from the key.
+        const derivedPubkey = bytesToHex(schnorr.getPublicKey(privateKeyBytes));
+        if (!event.pubkey) {
+            event = { ...event, pubkey: derivedPubkey };
+        }
+        else if (event.pubkey !== derivedPubkey) {
+            throw new Error('event.pubkey does not match the signing key');
+        }
         // Serialize event for signing (NIP-01 format)
         const serialized = JSON.stringify([
             0,
@@ -172,8 +134,7 @@ export async function signEvent(event, privateKey) {
         ]);
         // Calculate event hash
         const eventHash = sha256(new TextEncoder().encode(serialized));
-        // Convert private key to bytes and sign
-        const privateKeyBytes = hexToBytes(privateKeyHex);
+        // Sign
         const signatureBytes = schnorr.sign(eventHash, privateKeyBytes);
         // Create signed event
         return {
@@ -183,7 +144,7 @@ export async function signEvent(event, privateKey) {
         };
     }
     catch (error) {
-        logger.error({ error }, 'Failed to sign event');
+        logger.debug({ error }, 'Failed to sign event');
         throw error;
     }
 }
@@ -207,21 +168,29 @@ export function getPublicKeySync(privateKey) {
  */
 export async function finalizeEvent(event, privateKey) {
     const pubkey = event.pubkey || getPublicKeySync(privateKey);
-    const timestamp = event.created_at || Math.floor(Date.now() / 1000);
+    const timestamp = event.created_at ?? Math.floor(Date.now() / 1000);
     const fullEvent = {
         kind: event.kind ?? 1,
         created_at: timestamp,
-        tags: event.tags || [],
-        content: event.content || '',
+        tags: event.tags ?? [],
+        content: event.content ?? '',
         pubkey,
     };
     return signEvent(fullEvent, privateKey);
 }
 /**
- * Verifies an event signature
+ * Verifies an event signature (NIP-01).
+ *
+ * Returns `false` — silently, without logging — for any invalid input: a
+ * non-canonical (uppercase / wrong-length / non-hex) `id`, `pubkey` or `sig`,
+ * an `id` that is not the hash of the event, or a bad signature.
  */
 export async function verifySignature(event) {
     try {
+        if (!event || typeof event !== 'object')
+            return false;
+        if (!isHex32(event.id) || !isHex32(event.pubkey) || !isHex64(event.sig))
+            return false;
         // Serialize event for verification (NIP-01 format)
         const serialized = JSON.stringify([
             0,
@@ -231,23 +200,14 @@ export async function verifySignature(event) {
             event.tags,
             event.content
         ]);
-        // Calculate event hash
+        // The id must be the hash of the serialized event
         const eventHash = sha256(new TextEncoder().encode(serialized));
-        // Verify event ID
-        const calculatedId = bytesToHex(eventHash);
-        if (calculatedId !== event.id) {
-            logger.error('Event ID mismatch');
+        if (bytesToHex(eventHash) !== event.id)
             return false;
-        }
-        // Convert hex strings to bytes
-        const signatureBytes = hexToBytes(event.sig);
-        const pubkeyBytes = hexToBytes(event.pubkey);
-        // Verify signature
-        return schnorr.verify(signatureBytes, eventHash, pubkeyBytes);
+        return schnorr.verify(hexToBytes(event.sig), eventHash, hexToBytes(event.pubkey));
     }
     catch (error) {
-        logger.error({ error }, 'Failed to verify signature');
+        logger.debug({ error }, 'Signature verification threw');
         return false;
     }
 }
-//# sourceMappingURL=crypto.js.map

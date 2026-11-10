@@ -94,4 +94,3 @@ exports.NOSTR_TAG = {
     /** Proof of work nonce */
     NONCE: 'nonce'
 };
-//# sourceMappingURL=constants.js.map

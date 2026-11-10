@@ -5,17 +5,19 @@
  * @see https://github.com/nostr-protocol/nips/blob/master/01.md
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.validateEvent = void 0;
 exports.createEvent = createEvent;
 exports.serializeEvent = serializeEvent;
 exports.getEventHash = getEventHash;
 exports.signEvent = signEvent;
 exports.verifySignature = verifySignature;
 exports.calculateEventId = calculateEventId;
-exports.validateEvent = validateEvent;
+exports.validateEventStructure = validateEventStructure;
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const logger_js_1 = require("../utils/logger.js");
+const strict_hex_js_1 = require("../utils/strict-hex.js");
 /**
  * Creates a new Nostr event with the specified parameters (NIP-01)
  * @param params - Event parameters
@@ -58,7 +60,7 @@ async function getEventHash(event) {
         return (0, utils_js_1.bytesToHex)(hash);
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to get event hash');
+        logger_js_1.logger.debug({ error }, 'Failed to get event hash');
         throw error;
     }
 }
@@ -70,8 +72,17 @@ async function getEventHash(event) {
  */
 async function signEvent(event, privateKey) {
     try {
+        const privateKeyBytes = (0, utils_js_1.hexToBytes)(privateKey);
+        // Same rule as the root signEvent: never produce an unverifiable event.
+        const derivedPubkey = (0, utils_js_1.bytesToHex)(secp256k1_js_1.schnorr.getPublicKey(privateKeyBytes));
+        if (!event.pubkey) {
+            event = { ...event, pubkey: derivedPubkey };
+        }
+        else if (event.pubkey !== derivedPubkey) {
+            throw new Error('event.pubkey does not match the signing key');
+        }
         const hash = await getEventHash(event);
-        const sig = secp256k1_js_1.schnorr.sign((0, utils_js_1.hexToBytes)(hash), (0, utils_js_1.hexToBytes)(privateKey));
+        const sig = secp256k1_js_1.schnorr.sign((0, utils_js_1.hexToBytes)(hash), privateKeyBytes);
         return {
             ...event,
             id: hash,
@@ -79,7 +90,7 @@ async function signEvent(event, privateKey) {
         };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to sign event');
+        logger_js_1.logger.debug({ error }, 'Failed to sign event');
         throw error;
     }
 }
@@ -90,6 +101,10 @@ async function signEvent(event, privateKey) {
  */
 function verifySignature(event) {
     try {
+        if (!event || typeof event !== 'object')
+            return false;
+        if (!(0, strict_hex_js_1.isHex32)(event.id) || !(0, strict_hex_js_1.isHex32)(event.pubkey) || !(0, strict_hex_js_1.isHex64)(event.sig))
+            return false;
         // Verify event ID
         const expectedId = calculateEventId(event);
         if (event.id !== expectedId) {
@@ -99,7 +114,7 @@ function verifySignature(event) {
         return secp256k1_js_1.schnorr.verify((0, utils_js_1.hexToBytes)(event.sig), (0, utils_js_1.hexToBytes)(event.id), (0, utils_js_1.hexToBytes)(event.pubkey));
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to verify signature');
+        logger_js_1.logger.debug({ error }, 'Failed to verify signature');
         return false;
     }
 }
@@ -114,11 +129,13 @@ function calculateEventId(event) {
     return (0, utils_js_1.bytesToHex)(hash);
 }
 /**
- * Validates a Nostr event structure (NIP-01)
- * @param event - Event to validate
- * @returns True if event structure is valid
+ * STRUCTURE-ONLY check of a Nostr event (NIP-01): field types and tag shape.
+ * Does NOT check the id, hex format or signature — use the root
+ * `validateEvent` or `verifySignature` to decide whether an event is authentic.
+ * @param event - Event to check
+ * @returns True if the event structure is well-formed
  */
-function validateEvent(event) {
+function validateEventStructure(event) {
     try {
         if (typeof event.content !== 'string')
             return false;
@@ -142,8 +159,13 @@ function validateEvent(event) {
         return true;
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate event');
+        logger_js_1.logger.debug({ error }, 'Failed to validate event');
         return false;
     }
 }
-//# sourceMappingURL=nip-01.js.map
+/**
+ * @deprecated Structure-only, despite the name — it does NOT verify the id or
+ * signature (unlike the root `validateEvent`). Use {@link validateEventStructure}
+ * for the same check, or the root `validateEvent` / `verifySignature` for trust.
+ */
+exports.validateEvent = validateEventStructure;

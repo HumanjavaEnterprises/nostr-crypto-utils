@@ -75,4 +75,3 @@ export * from './guards.js';
 export type { Nip19DataType } from '../nips/nip-19.js';
 /** Re-export NIP-46 types */
 export * from './nip46.js';
-//# sourceMappingURL=index.d.ts.map

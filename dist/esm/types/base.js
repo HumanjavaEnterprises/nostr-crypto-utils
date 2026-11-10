@@ -35,4 +35,3 @@ export var NostrMessageType;
     NostrMessageType["CLOSE"] = "CLOSE";
     NostrMessageType["AUTH"] = "AUTH";
 })(NostrMessageType || (NostrMessageType = {}));
-//# sourceMappingURL=base.js.map

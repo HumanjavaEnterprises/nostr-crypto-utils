@@ -9,6 +9,7 @@ exports.validateEventId = validateEventId;
 exports.validateEventSignature = validateEventSignature;
 exports.validateEvent = validateEvent;
 exports.validateSignedEvent = validateSignedEvent;
+exports.validateSignedEventFormat = validateSignedEventFormat;
 exports.validateEventBase = validateEventBase;
 exports.validateFilter = validateFilter;
 exports.validateSubscription = validateSubscription;
@@ -18,14 +19,12 @@ const logger_js_1 = require("../utils/logger.js");
 const sha2_js_1 = require("@noble/hashes/sha2.js");
 const utils_js_1 = require("@noble/hashes/utils.js");
 const secp256k1_js_1 = require("@noble/curves/secp256k1.js");
+const strict_hex_js_1 = require("../utils/strict-hex.js");
 /**
  * Gets the hex string from a PublicKey or string
  */
 function getPublicKeyHex(pubkey) {
     return typeof pubkey === 'string' ? pubkey : pubkey.hex;
-}
-function hexToBytes(hex) {
-    return new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
 }
 /**
  * Validates a Nostr event ID by checking if it matches the SHA-256 hash of the canonical event serialization.
@@ -42,6 +41,9 @@ function hexToBytes(hex) {
  */
 function validateEventId(event) {
     try {
+        if (!(0, strict_hex_js_1.isHex32)(event?.id)) {
+            return { isValid: false, error: 'Invalid event ID format' };
+        }
         const serialized = JSON.stringify([
             0,
             getPublicKeyHex(event.pubkey),
@@ -57,7 +59,7 @@ function validateEventId(event) {
         };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate event ID');
+        logger_js_1.logger.debug({ error }, 'Failed to validate event ID');
         return {
             isValid: false,
             error: 'Failed to validate event ID'
@@ -79,6 +81,12 @@ function validateEventId(event) {
  */
 function validateEventSignature(event) {
     try {
+        if (!(0, strict_hex_js_1.isHex64)(event?.sig)) {
+            return { isValid: false, error: 'Invalid signature format' };
+        }
+        if (!(0, strict_hex_js_1.isHex32)(getPublicKeyHex(event.pubkey))) {
+            return { isValid: false, error: 'Invalid public key format' };
+        }
         // Verify the signature
         const serialized = JSON.stringify([
             0,
@@ -90,15 +98,15 @@ function validateEventSignature(event) {
         ]);
         const hash = (0, sha2_js_1.sha256)(new TextEncoder().encode(serialized));
         const pubkeyHex = getPublicKeyHex(event.pubkey);
-        const pubkeyBytes = hexToBytes(pubkeyHex);
-        const isValid = secp256k1_js_1.schnorr.verify(hexToBytes(event.sig), hash, pubkeyBytes);
+        const pubkeyBytes = (0, utils_js_1.hexToBytes)(pubkeyHex);
+        const isValid = secp256k1_js_1.schnorr.verify((0, utils_js_1.hexToBytes)(event.sig), hash, pubkeyBytes);
         return {
             isValid,
             error: isValid ? undefined : 'Invalid signature'
         };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate event signature');
+        logger_js_1.logger.debug({ error }, 'Failed to validate event signature');
         return {
             isValid: false,
             error: 'Failed to validate event signature'
@@ -119,6 +127,10 @@ function validateEventSignature(event) {
  * ```
  */
 function validateEvent(event) {
+    // A wire event's pubkey is a lowercase hex string — nothing else.
+    if (!event || typeof event !== 'object' || !(0, strict_hex_js_1.isHex32)(event.pubkey)) {
+        return { isValid: false, error: 'Invalid public key format' };
+    }
     // First validate the event structure
     const baseValidation = validateEventBase(event);
     if (!baseValidation.isValid) {
@@ -133,57 +145,41 @@ function validateEvent(event) {
     return validateEventSignature(event);
 }
 /**
- * Validates a signed Nostr event by checking its structure and signature format.
+ * Validates a signed Nostr event: structure, canonical id/pubkey/sig format,
+ * id = hash(event), AND the schnorr signature. Equivalent to {@link validateEvent}.
+ *
+ * Before 0.10.0 this only checked the format of `id`/`sig`; that check is now
+ * {@link validateSignedEventFormat}.
  *
  * @param {SignedNostrEvent} event - The event to validate
  * @returns {ValidationResult} Object containing validation result and any error message
- * @example
- * ```typescript
- * const result = validateSignedEvent(event);
- * if (!result.isValid) {
- *   console.error(result.error);
- * }
- * ```
  */
 function validateSignedEvent(event) {
-    try {
-        // Check basic event structure
-        const baseValidation = validateEventBase(event);
-        if (!baseValidation.isValid) {
-            return baseValidation;
-        }
-        // Get pubkey hex
-        const pubkeyHex = getPublicKeyHex(event.pubkey);
-        // Validate pubkey format
-        if (!pubkeyHex || typeof pubkeyHex !== 'string' || pubkeyHex.length !== 64) {
-            return {
-                isValid: false,
-                error: 'Invalid public key format'
-            };
-        }
-        // Validate signature format
-        if (!event.sig || typeof event.sig !== 'string' || event.sig.length !== 128) {
-            return {
-                isValid: false,
-                error: 'Invalid signature format'
-            };
-        }
-        // Validate ID format
-        if (!event.id || typeof event.id !== 'string' || event.id.length !== 64) {
-            return {
-                isValid: false,
-                error: 'Invalid event ID format'
-            };
-        }
-        return { isValid: true };
+    return validateEvent(event);
+}
+/**
+ * FORMAT-ONLY check of a signed event: structure plus canonical lowercase hex
+ * `pubkey` (64), `id` (64) and `sig` (128). Does NOT recompute the id or verify
+ * the signature — use {@link validateEvent} to decide whether an event is authentic.
+ *
+ * @param {SignedNostrEvent} event - The event to check
+ * @returns {ValidationResult} Object containing validation result and any error message
+ */
+function validateSignedEventFormat(event) {
+    if (!event || typeof event !== 'object' || !(0, strict_hex_js_1.isHex32)(event.pubkey)) {
+        return { isValid: false, error: 'Invalid public key format' };
     }
-    catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate signed event');
-        return {
-            isValid: false,
-            error: 'Failed to validate signed event'
-        };
+    const baseValidation = validateEventBase(event);
+    if (!baseValidation.isValid) {
+        return baseValidation;
     }
+    if (!(0, strict_hex_js_1.isHex64)(event.sig)) {
+        return { isValid: false, error: 'Invalid signature format' };
+    }
+    if (!(0, strict_hex_js_1.isHex32)(event.id)) {
+        return { isValid: false, error: 'Invalid event ID format' };
+    }
+    return { isValid: true };
 }
 /**
  * Validates a Nostr event by checking its structure and fields.
@@ -216,6 +212,15 @@ function validateEventBase(event) {
     const pubkeyHex = getPublicKeyHex(event.pubkey);
     if (typeof pubkeyHex !== 'string' || !/^[0-9a-f]{64}$/.test(pubkeyHex)) {
         return { isValid: false, error: 'Invalid public key format' };
+    }
+    // id / sig are optional here (unsigned events), but when present they must be
+    // canonical lowercase hex of the right length.
+    const maybeSigned = event;
+    if (maybeSigned.id !== undefined && !(0, strict_hex_js_1.isHex32)(maybeSigned.id)) {
+        return { isValid: false, error: 'Invalid event ID format' };
+    }
+    if (maybeSigned.sig !== undefined && !(0, strict_hex_js_1.isHex64)(maybeSigned.sig)) {
+        return { isValid: false, error: 'Invalid signature format' };
     }
     // Validate tags
     if (!Array.isArray(event.tags)) {
@@ -288,7 +293,7 @@ function validateFilter(filter) {
         return { isValid: true };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate filter');
+        logger_js_1.logger.debug({ error }, 'Failed to validate filter');
         return { isValid: false, error: 'Failed to validate filter' };
     }
 }
@@ -329,7 +334,7 @@ function validateSubscription(subscription) {
         return { isValid: true };
     }
     catch (error) {
-        logger_js_1.logger.error({ error }, 'Failed to validate subscription');
+        logger_js_1.logger.debug({ error }, 'Failed to validate subscription');
         return { isValid: false, error: 'Failed to validate subscription' };
     }
 }
@@ -453,4 +458,3 @@ function validateResponse(message) {
             };
     }
 }
-//# sourceMappingURL=index.js.map

@@ -28,4 +28,3 @@ export declare function validateEvent(event: SignedNostrEvent): boolean;
  * @returns Event ID
  */
 export declare function calculateEventId(event: NostrEvent): Promise<string>;
-//# sourceMappingURL=signing.d.ts.map

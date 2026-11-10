@@ -13,7 +13,7 @@ export function formatEventForRelay(event: unknown): string {
   try {
     return JSON.stringify(['EVENT', event]);
   } catch (error) {
-    logger.error({ error }, 'Failed to format event for relay');
+    logger.debug({ error }, 'Failed to format event for relay');
     throw error;
   }
 }
@@ -25,7 +25,7 @@ export function parseNostrMessage(message: string): unknown {
   try {
     return JSON.parse(message);
   } catch (error) {
-    logger.error({ error }, 'Failed to parse Nostr message');
+    logger.debug({ error }, 'Failed to parse Nostr message');
     throw error;
   }
 }
@@ -89,7 +89,7 @@ export function valueToString(value: unknown): string {
     try {
       return JSON.stringify(value);
     } catch (error) {
-      logger.error({ error }, 'Failed to stringify object');
+      logger.debug({ error }, 'Failed to stringify object');
       return String(value);
     }
   }
